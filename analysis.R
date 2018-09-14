@@ -4,19 +4,24 @@
 # saved important/general analyses codes from console
 
 # choose file name, starts in the same directory as Rproject
-flnm <- 'excel files/Chk2c MHT.xls'  
+flnm <- 'excel files/Chk2b MHT.xls'  
 
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
-# Factorise the sample name in the order to be plotted : the avg and Stdev is already calculated by quantstudio
-# separate(fcl,value,c('a','b'), ' ')
+# Separate primer pair from sample name
+fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','Primer pair'),' ')
+
+# Factorise the sample name in the order for plotting: the avg and Stdev is already calculated by quantstudio
 fl$Results$`Sample Name` <- fl$Results$`Sample Name` %>% factor(levels = unique(.))
 
+# Factorise the primer pairs in the order for plotting
+fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.))
+
 # plot the Tm ; Graph will now show
-plttm <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 1) +
+plttm <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
   theme_classic() + scale_color_brewer(palette="Set1") + 
   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-  ggtitle('qPCR on minipreps Chk1: Melting curves') 
+  ggtitle('qPCR on Gibson reaction: Chk2b : Melting curves') + facet_grid(~`Primer pair`)
 
 # print(plttm)
 
@@ -25,7 +30,7 @@ plt <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(co
   geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
   theme_classic() + scale_color_brewer(palette="Set1") + 
   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-  ggtitle('qPCR - minipreps on Gibson reaction: Chk2c') 
+  ggtitle('qPCR on Gibson reaction: Chk2b') + facet_grid(~`Primer pair`)
 
 print(plt)
 

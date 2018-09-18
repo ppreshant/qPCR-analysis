@@ -4,7 +4,7 @@
 # saved important/general analyses codes from console
 
 # choose file name, starts in the same directory as Rproject
-flnm <- 'excel files/Chk2b MHT.xls'  
+flnm <- 'excel files/Chk2 MHT.xls'  
 
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
@@ -21,7 +21,7 @@ fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(
 plttm <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
   theme_classic() + scale_color_brewer(palette="Set1") + 
   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-  ggtitle('qPCR on Gibson reaction: Chk2b : Melting curves') + facet_grid(~`Primer pair`)
+  ggtitle('qPCR on fresh minipreps: Chk1: Melting curves') + facet_grid(~`Primer pair`)
 
 # print(plttm)
 
@@ -30,7 +30,7 @@ plt <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(co
   geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
   theme_classic() + scale_color_brewer(palette="Set1") + 
   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-  ggtitle('qPCR on Gibson reaction: Chk2b') + facet_grid(~`Primer pair`)
+  ggtitle('qPCR on fresh minipreps: Chk1') + facet_grid(~`Primer pair`)
 
 print(plt)
 

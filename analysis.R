@@ -17,11 +17,14 @@ fl$Results$`Sample Name` <- fl$Results$`Sample Name` %>% factor(levels = unique(
 # Factorise the primer pairs in the order for plotting
 fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.))
 
+# Gather the Tm's into another data frame and merge into 1 column
+tmfl <- fl$Results %>% select(`Sample Name`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`)
+
 # plot the Tm ; Graph will now show
 plttm <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
   theme_classic() + scale_color_brewer(palette="Set1") + 
   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-  ggtitle('qPCR on fresh minipreps: Chk1: Melting curves') + facet_grid(~`Primer pair`)
+  ggtitle('qPCR on Gibson: Chk2: Melting curves') + facet_grid(~`Primer pair`)
 
 # print(plttm)
 
@@ -30,7 +33,7 @@ plt <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(co
   geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
   theme_classic() + scale_color_brewer(palette="Set1") + 
   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-  ggtitle('qPCR on fresh minipreps: Chk1') + facet_grid(~`Primer pair`)
+  ggtitle('qPCR on Gibson: Chk2') + facet_grid(~`Primer pair`)
 
 print(plt)
 

@@ -6,6 +6,7 @@
 # calling libraries ; make sure they are installed (install.packages)
 library(readxl); library(magrittr); library(tidyverse); library(ggrepel)  
 
+# reading files and manipulating columns ----
 
 # read in the excel file (from row 44 onwards)
 readqpcr <- function(flnm)
@@ -20,6 +21,23 @@ readqpcr <- function(flnm)
   fl
 }
 
+# Separate primer pair from sample name and make factors in the right order (same order as the plate setup)
+separate_primer_names <- function(fl)
+{
+  # Separate primer pair from sample name
+  fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','Primer pair'),' ')
+  
+  # Factorise the sample name in the order for plotting: the avg and Stdev is already calculated by quantstudio
+  fl$Results$`Sample Name` <- fl$Results$`Sample Name` %>% factor(levels = unique(.))
+  
+  # Factorise the primer pairs in the order for plotting
+  fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.))
+  
+  return(fl)
+}
+
+
+# standard curve and regressions ----
 # Plot Standard curve
 plotstdcurve <- function(fl, plttitle)
 {
@@ -47,3 +65,4 @@ lm_eqn <- function(df, trig = 0){
     {# output the difference between consecutive CT values
     tsumrev <- trev %>% group_by(`Sample Name`) %>% summarise(CT = mean(CT), Quantity = mean(Quantity), CT_sd = sd(CT))
     diff(tsumrev$CT) %>% round(2)}
+

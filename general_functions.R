@@ -21,21 +21,10 @@ readqpcr <- function(flnm)
   fl
 }
 
-# Separate primer pair from sample name and make factors in the right order (same order as the plate setup)
-separate_primer_names <- function(fl)
+order_columnwise <- function(fl)
 {
-  # Separate primer pair from sample name
-  fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','Primer pair'),' ')
-  
-  # Factorise the sample name in the order for plotting: the avg and Stdev is already calculated by quantstudio
-  fl$Results$`Sample Name` <- fl$Results$`Sample Name` %>% factor(levels = unique(.))
-  
-  # Factorise the primer pairs in the order for plotting
-  fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.))
-  
-  return(fl)
+  fl$Results$`Well Position` %>%  str_sub(2) %>% as.integer() %>% order()
 }
-
 
 # standard curve and regressions ----
 # Plot Standard curve

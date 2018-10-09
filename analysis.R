@@ -4,6 +4,12 @@
 # Source the general_functions file before running this
 # The last part of the script contains important codes from the console that were used for specific situations : These will be commented
 
+
+# choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject)----
+flnm <- 'excel files/Int_Assay1 MHT.xls'  
+title_name <-'Integrase induction'
+experiment_mode <- 'assay' # 'small_scale'  # 'assay' ; 'custom'
+
 # plotting functions ----
 
 # plots all the Tm's if samples have multiple peaks in the melting curve
@@ -31,11 +37,7 @@ plottm1 <- function(fl)
 
 # Input the data ----
 
-# choose file name, starts in the same directory as Rproject
-flnm <- 'excel files/Int_Assay1 MHT.xls'  
-title_name <-'Integrase induction'
-experiment_mode <- 'assay' # 'small_scale'  # 'assay' ; 'custom'
-
+# reading in file and transformations
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
 sample_order = order_columnwise(fl) # this order is columnwise (data is shown row-wise) => useful for plotting column wise order
@@ -64,9 +66,6 @@ if (experiment_mode == 'small_scale')
   print(plt)
 }
 
-# Save plots manually - copy paste this command to console ----
-# ggsave('qPCR analysis/Chk1.png', dpi = 600)
-# ggsave('qPCR analysis/Chk1.png', plot = plttm, dpi = 600)
 
 # Plots for Assays ----
 if (experiment_mode == 'assay')
@@ -106,3 +105,7 @@ if (experiment_mode == 'assay')
 
 
 # Custom codes ----
+
+# Save plots manually - copy paste this command to console
+# ggsave('qPCR analysis/Chk1.png', dpi = 600)
+# ggsave('qPCR analysis/Chk1.png', plot = plttm, dpi = 600)

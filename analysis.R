@@ -33,7 +33,7 @@ plottm1 <- function(fl)
 
 # choose file name, starts in the same directory as Rproject
 flnm <- 'excel files/Int_Assay1 MHT.xls'  
-title_name <-'Water troubleshooting: Int_Assay1'
+title_name <-'Integrase induction'
 experiment_mode <- 'assay' # 'small_scale'  # 'assay' ; 'custom'
 
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
@@ -85,20 +85,20 @@ if (experiment_mode == 'assay')
   # plot the Tm of multiple peaks in melting curve ; Graph will now show
   
   # Gather the Tm's into another data frame and merge into 1 column
-  tmfl <- fl$Results %>% select(`Sample Name`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`)
+  tmfl <- fl$Results %>% select(`Sample Name`, `[Arabinose]`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`, -`[Arabinose]`)
   
   # plot the Tm ; Graph will now show
   plttm2 <- tmfl %>% ggplot(.) + aes(x = `[Arabinose]`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Sample Name`)
+    ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
   # plot the CT mean along with replicates
   plt <- fl$Results %>% ggplot(aes(x = `[Arabinose]`, y = CT, color = `Sample Name`)) + geom_point(size = 1, show.legend = T) +
     geom_line(aes(x = `[Arabinose]`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) #+ facet_wrap(~`Sample Name`)
+    ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
   print(plt)
   

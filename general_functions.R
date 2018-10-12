@@ -28,12 +28,12 @@ order_columnwise <- function(fl)
 
 # standard curve and regressions ----
 # Plot Standard curve
-plotstdcurve <- function(fl, plttitle)
+plotstdcurve <- function(fl, plttitle, xlabel)
 {
   plt <- fl$Results %>% filter(Task == 'STANDARD') %>% 
 ggplot(.) + aes(x = log10(Quantity), y = CT, color = `Target Name`) + geom_point() +
 theme_classic() + scale_color_brewer(palette="Set1") + theme(plot.title = element_text(hjust = 0.5)) + 
-ggtitle(plttitle) +
+ggtitle(plttitle) + xlab(xlabel) +
 stat_smooth(method ="lm", se = F)
 }
 

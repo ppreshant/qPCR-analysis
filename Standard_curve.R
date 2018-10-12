@@ -1,10 +1,10 @@
 # Plots standard curve for a given file (make sure it has quantities and it is standard curve data)
 
 # choose file name, in the same directory as Rproject
-flnm <- 'excel files/2018-07-11_MHT Std3.xls'  
+flnm <- 'excel files/Std4 MHT.xls'  
 
 fl <- readqpcr(flnm) # read file
-plt <- plotstdcurve(fl,'qPCR Standard curve : Run 2') # plot standard curve
+plt <- plotstdcurve(fl,'qPCR Standard curve 4', 'log(Copy #)') # plot standard curve
 
 # Isolating standard curves of the two different targets
 tfw <- fl$Results %>% filter(Task == 'STANDARD', `Target Name` == 'fMHT')

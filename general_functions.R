@@ -33,7 +33,7 @@ plotstdcurve <- function(fl, plttitle, xlabel)
   plt <- fl$Results %>% filter(Task == 'STANDARD') %>% 
 ggplot(.) + aes(x = log10(Quantity), y = CT, color = `Target Name`) + geom_point() +
 theme_classic() + scale_color_brewer(palette="Set1") + theme(plot.title = element_text(hjust = 0.5)) + 
-ggtitle(plttitle) + xlab(xlabel) +
+ggtitle(plttitle) + xlab(xlabel) + ylab(expression(C[q])) +
 stat_smooth(method ="lm", se = F)
 }
 

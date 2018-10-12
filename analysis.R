@@ -61,7 +61,7 @@ if (experiment_mode == 'small_scale')
     geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + facet_grid(~`Primer pair`)
+    ggtitle(title_name) + ylab(expression(C[q])) + facet_grid(~`Primer pair`)
   
   print(plt)
 }
@@ -97,7 +97,7 @@ if (experiment_mode == 'assay')
     geom_line(aes(x = `[Arabinose]`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')
+    ggtitle(title_name) + ylab(expression(C[q])) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
   print(plt)
   

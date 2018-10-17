@@ -6,9 +6,14 @@
 
 
 # choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject)----
-flnm <- 'excel files/Std4 MHT.xls'  
-title_name <-'Standard curve : 4'
-experiment_mode <- 'assay' # 'small_scale'  # 'assay' ; 'custom'
+flnm <- 'excel files/Int_Assay1 MHT.xls'  
+title_name <-'Integrase induction'
+experiment_mode <- 'assay' # 'small_scale' ; 'assay' ; 'absolute_quantification'  ; 'custom'
+
+# Assay mode features for absolute quantification
+plot_mode <- 'absolute_quantification'  # CT
+f_slope <- -3.36; f_intercept <- 42 
+r_slope <- -3.23; r_intercept <- 38
 
 # plotting functions ----
 
@@ -22,7 +27,7 @@ plotalltms <- function(fl)
   plttm2 <- tmfl %>% ggplot(.) + aes(x = `Sample Name`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`)
+    ggtitle(paste(title_name,': Melting curves')) + facet_wrap(~`Primer pair`, scales = 'free_x')
 }
 
 # plot the first Tm only ; Graph will now show
@@ -31,7 +36,7 @@ plottm1 <- function(fl)
   plttm <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`)
+    ggtitle(paste(title_name,': Melting curves')) + facet_wrap(~`Primer pair`, scales = 'free_x')
 }
 
 
@@ -42,7 +47,7 @@ fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
 sample_order = order_columnwise(fl) # this order is columnwise (data is shown row-wise) => useful for plotting column wise order
 
-# Transform and Plots for typical troubleshooting or small scale assays (facetted by primer names)----
+# Plots for small scale assays (facetted by primer names;typical troubleshooting; naming: 'Sample Name' primer-pair)----
 
 if (experiment_mode == 'small_scale')
 {
@@ -67,7 +72,7 @@ if (experiment_mode == 'small_scale')
 }
 
 
-# Plots for Assays ----
+# Plots for Assays (facetted by Sample category; naming: 'Sample Name'_variable primer pair) ----
 if (experiment_mode == 'assay')
 {
   # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
@@ -92,19 +97,33 @@ if (experiment_mode == 'assay')
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
+  if(plot_mode == 'absolute_quantification')
+  { # Computing copy number from standard curve linear fit information
+    flf <- fl$Results %>% filter(`Target Name` == 'fMHT') %>% mutate(`Copy #` = 10^( (CT - f_intercept)/f_slope ) )  
+    flr <- fl$Results %>% filter(`Target Name` == 'rMHT') %>% mutate(`Copy #` = 10^( (CT - r_intercept)/r_slope ) )  
+    fljoin <- bind_rows(flf, flr)
+    
+    plt <- fljoin %>% ggplot(aes(x = `[Arabinose]`, y = `Copy #`, color = `Sample Name`)) +   # plotting
+      scale_y_log10(  # logscale for y axis with tick marks
+        breaks = scales::trans_breaks("log10", function(x) 10^x),
+        labels = scales::trans_format("log10", scales::math_format(10^.x) )
+      )
+  } else plt <- fl$Results %>% ggplot(aes(x = `[Arabinose]`, y = CT, color = `Sample Name`))+ ylab(expression(C[q]))   
+    
   # plot the CT mean along with replicates
-  plt <- fl$Results %>% ggplot(aes(x = `[Arabinose]`, y = CT, color = `Sample Name`)) + geom_point(size = 1, show.legend = T) +
-    geom_line(aes(x = `[Arabinose]`, y = `Ct Mean`), show.legend = T) +
+  plt <- plt + geom_point(size = 1, show.legend = T) +
+    # geom_line(aes(x = `[Arabinose]`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + ylab(expression(C[q])) + facet_wrap(~`Sample Name`, scales = 'free_x')
+    ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
   print(plt)
   
 }
 
 
-# Custom codes ----
+# Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----
+
 
 # Save plots manually - copy paste this command to console
 # ggsave('qPCR analysis/Chk1.png', dpi = 600)

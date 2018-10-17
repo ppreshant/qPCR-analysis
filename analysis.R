@@ -6,8 +6,8 @@
 
 
 # choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject)----
-flnm <- 'excel files/Int_Assay1 MHT.xls'  
-title_name <-'Integrase induction'
+flnm <- 'excel files/Std4 MHT.xls'  
+title_name <-'Standard curve : 4'
 experiment_mode <- 'assay' # 'small_scale'  # 'assay' ; 'custom'
 
 # plotting functions ----
@@ -61,7 +61,7 @@ if (experiment_mode == 'small_scale')
     geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + ylab(expression(C[q])) + facet_grid(~`Primer pair`)
+    ggtitle(title_name) + ylab(expression(C[q])) + facet_wrap(~`Primer pair`, scales = 'free_x') 
   
   print(plt)
 }

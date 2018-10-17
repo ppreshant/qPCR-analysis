@@ -6,14 +6,15 @@
 
 
 # choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject)----
-flnm <- 'excel files/Int_Assay1 MHT.xls'  
-title_name <-'Integrase induction'
+flnm <- 'excel files/mix MHT.xls'  
+title_name <-'Plasmid titration assay'
 experiment_mode <- 'assay' # 'small_scale' ; 'assay' ; 'absolute_quantification'  ; 'custom'
 
 # Assay mode features for absolute quantification
 plot_mode <- 'absolute_quantification'  # CT
 f_slope <- -3.36; f_intercept <- 42 
 r_slope <- -3.23; r_intercept <- 38
+plot_exclude <- quo('Controls2') # exclude plotting controls etc.: filters based on `Sample Name`: works only in assay mode
 
 # plotting functions ----
 
@@ -59,7 +60,7 @@ if (experiment_mode == 'small_scale')
   fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   
   # plot the Tm ; Graph will now show
-  plttm2 <- plotalltms(fl) # plots tms of multiple peaks in melting curve
+  plttm <- plotalltms(fl) # plots tms of multiple peaks in melting curve
   
   # plot the CT mean along with replicates
   plt <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(color = 'red', size = 1, show.legend = T) +
@@ -92,10 +93,12 @@ if (experiment_mode == 'assay')
   tmfl <- fl$Results %>% select(`Sample Name`, `[Arabinose]`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`, -`[Arabinose]`)
   
   # plot the Tm ; Graph will now show
-  plttm2 <- tmfl %>% ggplot(.) + aes(x = `[Arabinose]`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
+  plttm <- tmfl %>% ggplot(.) + aes(x = `[Arabinose]`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
+  
+  if(plot_exclude != '')  {fl$Results <- fl$Results %>% filter(`Sample Name` != (!!plot_exclude))}
   
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information
@@ -123,7 +126,6 @@ if (experiment_mode == 'assay')
 
 
 # Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----
-
 
 # Save plots manually - copy paste this command to console
 # ggsave('qPCR analysis/Chk1.png', dpi = 600)

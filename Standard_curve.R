@@ -4,6 +4,8 @@
 flnm <- 'excel files/Std4 MHT.xls'  
 
 fl <- readqpcr(flnm) # read file
+# fl$Results <- fl$Results %>% filter(`Ct Mean` < 27) # filtering only standard curve within the linear range
+
 plt <- plotstdcurve(fl,'qPCR Standard curve 4', 'log(Copy #)') # plot standard curve
 
 # Isolating standard curves of the two different targets

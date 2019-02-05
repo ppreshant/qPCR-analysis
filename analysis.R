@@ -8,13 +8,15 @@
 # choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject)----
 flnm <- 'excel files/mix MHT.xls'  
 title_name <-'Plasmid titration assay'
-experiment_mode <- 'assay' # 'small_scale' ; 'assay' ; 'absolute_quantification'  ; 'custom'
+experiment_mode <- 'assay' # 'small_scale' ; 'assay' ; future : 'absolute_quantification'  ; 'custom'
+# 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
+# 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
 
 # Assay mode features for absolute quantification
-plot_mode <- 'absolute_quantification'  # CT
+plot_mode <- 'absolute_quantification'  # this will calculate copy #'s based on intercept and slope below ; else , Cq values are plotted
 f_slope <- -3.36; f_intercept <- 42 
 r_slope <- -3.23; r_intercept <- 38
-plot_exclude <- quo('Controls2') # exclude plotting controls etc.: filters based on `Sample Name`: works only in assay mode
+plot_exclude <- quo('Controls2') # exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 # plotting functions ----
 

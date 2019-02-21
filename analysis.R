@@ -6,17 +6,20 @@
 
 
 # choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject)----
-flnm <- 'excel files/mix MHT.xls'  
-title_name <-'Plasmid titration assay'
-experiment_mode <- 'assay' # 'small_scale' ; 'assay' ; future : 'absolute_quantification'  ; 'custom'
+flnm <- 'excel files/S4_1 intrinsic flip.xls'  
+title_name <-'Intrinsic flipping with time assay'
+experiment_mode <- 'small_scale' # 'small_scale' ; 'assay' ; future implementation: 'custom'
 # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
 # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
 
+# small_scale mode features
+plot_select <- quo('fMHT') # '' or quo('something') ; filters out a particular template name to plot 
+
 # Assay mode features for absolute quantification
-plot_mode <- 'absolute_quantification'  # this will calculate copy #'s based on intercept and slope below ; else , Cq values are plotted
+plot_mode <-  'absolute_quantification'  # 'absolute_quantification' or ''; this will calculate copy #'s based on intercept and slope below ; else , Cq values are plotted
 f_slope <- -3.36; f_intercept <- 42 
 r_slope <- -3.23; r_intercept <- 38
-plot_exclude <- quo('Controls2') # exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
+plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 # plotting functions ----
 
@@ -60,6 +63,9 @@ if (experiment_mode == 'small_scale')
   # Factorise the sample name in the order for plotting
   fl$Results$`Sample Name` <- fl$Results$`Sample Name` %>% factor(levels = unique(.[sample_order]))
   fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
+  
+  # select samples to plot or to exclude
+  if(plot_select != '')  {fl$Results <- fl$Results %>% filter(`Sample Name` == (!!plot_select))}
   
   # plot the Tm ; Graph will now show
   plttm <- plotalltms(fl) # plots tms of multiple peaks in melting curve

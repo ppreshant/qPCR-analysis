@@ -65,7 +65,7 @@ if (experiment_mode == 'small_scale')
   fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   
   # select samples to plot or to exclude
-  if(plot_select != '')  {fl$Results <- fl$Results %>% filter(str_detect(`Sample Name`, paste('^', plot_select, sep = '')))}
+  if(plot_select != '')  {fl$Results <- fl$Results %>% filter(str_detect(`Sample Name`, paste('^', plot_select, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
   
   # plot the Tm ; Graph will now show
   plttm <- plotalltms(fl) # plots tms of multiple peaks in melting curve

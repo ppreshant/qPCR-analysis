@@ -26,6 +26,10 @@ order_columnwise <- function(fl)
   fl$Results$`Well Position` %>%  str_sub(2) %>% as.integer() %>% order()
 }
 
+primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped', 
+                  'q5-11' = 'Unflipped', 'q1-2' = 'Unflipped', 'q9-10' = 'Unflipped', 'q4-2' = 'Unflipped', 'q2-4' = 'Unflipped', 'q5-11' = 'Unflipped', 'q6-7' = 'Unflipped',
+                  'q12-13' = 'Backbone')
+
 # standard curve and regressions ----
 # Plot Standard curve
 plotstdcurve <- function(fl, plttitle, xlabel)

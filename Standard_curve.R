@@ -1,4 +1,4 @@
-# Plots standard curve for a given file (make sure it has quantities and it is standard curve data)
+# Plots standard curve for a given file (make sure it has quantities and targets and it is standard curve data)
 
 # choose file name, in the same directory as Rproject
 flnm <- 'excel files/Std4 MHT.xls'  

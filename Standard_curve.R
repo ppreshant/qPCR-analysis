@@ -1,14 +1,21 @@
 # Plots standard curve for a given file (make sure it has quantities and targets and it is standard curve data)
 
 # choose file name, in the same directory as Rproject
-flnm <- 'excel files/Std4 MHT.xls'  
+flnm <- 'excel files/Std5.xls'  
 
 fl <- readqpcr(flnm) # read file
 # fl$Results <- fl$Results %>% filter(`Ct Mean` < 27) # filtering only standard curve within the linear range
 
 plt <- plotstdcurve(fl,'qPCR Standard curve 4', 'log(Copy #)') # plot standard curve
 
-# Isolating standard curves of the two different targets
+# # Extract the names of the targets in use
+# targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target Name`) %>% unique(.)  
+
+# Isolating standard curve (Quantity,CT) of the different targets
+# standard_tables <- map(targets_used, function(t) fl$Results %>% filter(Task == 'STANDARD', `Target Name` == t)  %>% select(Quantity, CT,`Target Name`))
+standard_tables <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT,`Target Name`) %>% group_by(`Target Name`)
+
+
 tfw <- fl$Results %>% filter(Task == 'STANDARD', `Target Name` == 'fMHT')
 trev <- fl$Results %>% filter(Task == 'STANDARD', `Target Name` == 'rMHT') 
 

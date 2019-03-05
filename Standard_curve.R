@@ -16,7 +16,7 @@ standard_curve_vars <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Qua
 
 # Apply linear regression and find the model fitting results (equation and slope, R2 values) for each target
 std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn(., trig = 'coeff'), dat = .[1,] )
-std_table$params %<>% bind_rows() # make parameters and data into tibbles
+std_table$params %<>% bind_rows() # make parameters and data into tibbles : do function makes lists
 std_table$dat %<>% bind_rows()  
 
 # Add labels to plot - linear regression equation

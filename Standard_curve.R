@@ -11,13 +11,16 @@ plt <- plotstdcurve(fl,'qPCR Standard curve 4', 'log(Copy #)') # plot standard c
 # # Extract the names of the targets in use
 # targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target Name`) %>% unique(.)  
 
-# Isolating standard curve (Quantity,CT) of the different targets
-# standard_tables <- map(targets_used, function(t) fl$Results %>% filter(Task == 'STANDARD', `Target Name` == t)  %>% select(Quantity, CT,`Target Name`))
-standard_tables <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT,`Target Name`) %>% group_by(`Target Name`)
+# Isolating standard curve variables (Quantity,CT) of the different targets into groups
+standard_curve_vars <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT,`Target Name`) %>% group_by(`Target Name`) # select required columns and group
 
+# Apply linear regression and find the model fitting results (equation and slope, R2 values) for each target
+std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn(., trig = 'coeff'), dat = .[[1]] )
 
-tfw <- fl$Results %>% filter(Task == 'STANDARD', `Target Name` == 'fMHT')
-trev <- fl$Results %>% filter(Task == 'STANDARD', `Target Name` == 'rMHT') 
+# function to add labels to plot - linear regression equation
+function(std_table_entry){
+  
+}
 
 # if both targets are present
 if(nrow(trev) > 0)

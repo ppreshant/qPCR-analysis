@@ -49,7 +49,8 @@ lm_eqn <- function(df, trig = 0){
                    list(a = format(coef(m)[1], digits = 2), 
                         b = format(coef(m)[2], digits = 3), 
                         r2 = format(summary(m)$r.squared, digits = 3)))
-  if(trig == 'coeff') c(round(coef(m)[2], 2), round(summary(m)$r.squared, 2))
+  # if(trig == 'coeff') c(round(coef(m)[2], 2), round(summary(m)$r.squared, 2))
+  if(trig == 'coeff') tibble(slope = round(coef(m)[2], 2), r_square = round(summary(m)$r.squared, 2))
   else as.character(as.expression(eq)); 
 }
 

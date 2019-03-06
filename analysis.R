@@ -4,24 +4,24 @@
 # Source the general_functions file before running this
 # The last part of the script contains important codes from the console that were used for specific situations : These will be commented
 
+# User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-# choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject)----
 flnm <- 'excel files/S4_1 intrinsic flip.xls'  
 title_name <-'Intrinsic flipping with time assay'
-experiment_mode <- 'small_scale' # 'small_scale' ; 'assay' ; future implementation: 'custom'
-# 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
-# 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
+experiment_mode <- 'small_scale' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
+  # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
+  # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
 
 # small_scale mode features
-plot_select <- 'rMHT' # '' or quo('something') ; filters out a particular template name to plot 
+plot_select_template <- 'rMHT' # '' or quo('something') ; filters out a particular template name to plot 
 
-# Assay mode features for absolute quantification
-plot_mode <-  'absolute_quantification'  # 'absolute_quantification' or ''; this will calculate copy #'s based on intercept and slope below ; else , Cq values are plotted
+# Assay mode features (choose if you want absolute quantification)
+plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
 f_slope <- -3.36; f_intercept <- 42 
 r_slope <- -3.23; r_intercept <- 38
 plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
-# plotting functions ----
+# plotting functions for Melting temperature ----
 
 # plots all the Tm's if samples have multiple peaks in the melting curve
 plotalltms <- function(fl)
@@ -51,9 +51,9 @@ plottm1 <- function(fl)
 # reading in file and transformations
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
-sample_order = order_columnwise(fl) # this order is columnwise (data is shown row-wise) => useful for plotting column wise order
+sample_order = order_columnwise(fl) # this orders the samples columnwise in the PCR plate or strip (data is shown row-wise) => This command will enable plotting column wise order
 
-# Plots for small scale assays (facetted by primer names;typical troubleshooting; naming: 'Sample Name' primer-pair)----
+# Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)----
 
 if (experiment_mode == 'small_scale')
 {
@@ -65,7 +65,7 @@ if (experiment_mode == 'small_scale')
   fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   
   # select samples to plot or to exclude
-  if(plot_select != '')  {fl$Results <- fl$Results %>% filter(str_detect(`Sample Name`, paste('^', plot_select, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
+  if(plot_select_template != '')  {fl$Results <- fl$Results %>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
   
   # plot the Tm ; Graph will now show
   plttm <- plotalltms(fl) # plots tms of multiple peaks in melting curve

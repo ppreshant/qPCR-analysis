@@ -61,8 +61,8 @@ if (experiment_mode == 'small_scale')
   fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','Primer pair'),' ')
   
   # Factorise the sample name in the order for plotting
-  fl$Results$`Sample Name` <- fl$Results$`Sample Name` %>% factor(levels = unique(.[sample_order]))
-  fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
+  fl$Results$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
+  fl$Results$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   
   # select samples to plot or to exclude
   if(plot_select_template != '')  {fl$Results <- fl$Results %>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = '')))} # str_detect will find for regular expression; ^x => starting with x

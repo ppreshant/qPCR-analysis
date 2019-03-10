@@ -8,7 +8,7 @@
 
 flnm <- 'excel files/S4_1 intrinsic flip.xls'  
 title_name <-'Intrinsic flipping with time assay'
-experiment_mode <- 'small_scale' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
+experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
 
@@ -52,7 +52,7 @@ plottm1 <- function(results_relevant)
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
 sample_order = columnwise_index(fl) # this orders the samples columnwise in the PCR plate or strip (data is shown row-wise) => This command will enable plotting column wise order
-results_relevant <- fl$Results %>% select(`Sample Name`, CT, `Ct Mean`, starts_with('Tm')) # select only the results used for plotting, calculations etc.
+results_relevant <- fl$Results %>% select(`Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) # select only the results used for plotting, calculations etc.
 
 # Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)----
 
@@ -94,6 +94,7 @@ if (experiment_mode == 'assay')
   results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
   results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   results_relevant$`assay_variable` %<>% factor(levels = unique(.[sample_order])) # assay_variable
+  # results_relevant %<>% mutate_if(is.character, as_factor(levels = arrange(sample_order))) # fancy way of vectorizing - doesn't work
   
   # plot the Tm of multiple peaks in melting curve ; Graph will now show
   
@@ -106,7 +107,7 @@ if (experiment_mode == 'assay')
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
-  if(plot_exclude != '')  {results_relevant %<>% filter(`Sample Name` != (!!plot_exclude))}
+  results_relevant %<>% filter(`Sample Name` != (!!plot_exclude))
   
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information

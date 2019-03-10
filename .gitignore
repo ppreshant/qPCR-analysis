@@ -4,11 +4,6 @@
 .Ruserdata
 *.eds
 *.edt
-*.xls
-*.png
-*.jpeg
-*.pdf
-LinRegPCR/
-excel files/
-qPCR analysis/
-.~lock.2018-07-11_MHT Std3.xls#
+/excel files
+/qPCR analysis
+/LinRegPCR

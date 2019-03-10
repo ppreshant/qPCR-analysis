@@ -27,7 +27,7 @@ plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex
 plotalltms <- function(fl)
 { 
   # Gather the Tm's into another data frame and merge into 1 column
-  tmfl <- fl$Results %>% select(`Sample Name`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`)
+  tmfl <- results_relevant%>% select(`Sample Name`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`)
   
   # plot the Tm ; Graph will now show
   plttm2 <- tmfl %>% ggplot(.) + aes(x = `Sample Name`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
@@ -39,7 +39,7 @@ plotalltms <- function(fl)
 # plot the first Tm only ; Graph will now show
 plottm1 <- function(fl)
 { 
-  plttm <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
+  plttm <- results_relevant%>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting curves')) + facet_wrap(~`Primer pair`, scales = 'free_x')
@@ -48,30 +48,31 @@ plottm1 <- function(fl)
 
 # Input the data ----
 
-# reading in file and transformations
+# reading in file and polishing
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
 sample_order = order_columnwise(fl) # this orders the samples columnwise in the PCR plate or strip (data is shown row-wise) => This command will enable plotting column wise order
+results_relevant <- fl$Results %>% select(`Sample Name`, CT, `Ct Mean`, starts_with('Tm')) # select only the results used for plotting, calculations etc.
 
 # Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)----
 
 if (experiment_mode == 'small_scale')
 {
   # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
-  fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','Primer pair'),' ')
+  results_relevant <- separate(results_relevant,`Sample Name`,c('Sample Name','Primer pair'),' ')
   
   # Factorise the sample name in the order for plotting
-  fl$Results$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
-  fl$Results$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
+  results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
+  results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   
   # select samples to plot or to exclude
-  if(plot_select_template != '')  {fl$Results %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
+  if(plot_select_template != '')  {results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
   
   # plot the Tm ; Graph will now show
   plttm <- plotalltms(fl) # plots tms of multiple peaks in melting curve
   
   # plot the CT mean along with replicates
-  plt <- fl$Results %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(color = 'red', size = 1, show.legend = T) +
+  plt <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(color = 'red', size = 1, show.legend = T) +
     geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
@@ -87,17 +88,17 @@ if (experiment_mode == 'assay')
   # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
   
   # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
-  fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','Primer pair'),' ') %>% separate(fl$Results,`Sample Name`,c('Sample Name','assay_variable'),'_')
+  results_relevant %<>% separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ') %>% separate(.,`Sample Name`,c('Sample Name','assay_variable'),'_')
   
   # Factorise the sample name in the order for plotting
-  fl$Results$`Sample Name` <- fl$Results$`Sample Name` %>% factor(levels = unique(.[sample_order]))
-  fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
-  fl$Results$`assay_variable` <- fl$Results$`assay_variable` %>% factor(levels = unique(.[sample_order])) # assay_variable
+  results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
+  results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
+  results_relevant$`assay_variable` %<>% factor(levels = unique(.[sample_order])) # assay_variable
   
   # plot the Tm of multiple peaks in melting curve ; Graph will now show
   
   # Gather the Tm's into another data frame and merge into 1 column
-  tmfl <- fl$Results %>% select(`Sample Name`, `assay_variable`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`, -`assay_variable`)
+  tmfl <- results_relevant %>% select(`Sample Name`, `assay_variable`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`, -`assay_variable`)
   
   # plot the Tm ; Graph will now show
   plttm <- tmfl %>% ggplot(.) + aes(x = `assay_variable`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
@@ -105,12 +106,12 @@ if (experiment_mode == 'assay')
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
-  if(plot_exclude != '')  {fl$Results <- fl$Results %>% filter(`Sample Name` != (!!plot_exclude))}
+  if(plot_exclude != '')  {results_relevant %<>% filter(`Sample Name` != (!!plot_exclude))}
   
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information
-    flf <- fl$Results %>% filter(`Target Name` == 'fMHT') %>% mutate(`Copy #` = 10^( (CT - f_intercept)/f_slope ) )  
-    flr <- fl$Results %>% filter(`Target Name` == 'rMHT') %>% mutate(`Copy #` = 10^( (CT - r_intercept)/r_slope ) )  
+    flf <- results_relevant %>% filter(`Target Name` == 'fMHT') %>% mutate(`Copy #` = 10^( (CT - f_intercept)/f_slope ) )  # not vectorized
+    flr <- results_relevant %>% filter(`Target Name` == 'rMHT') %>% mutate(`Copy #` = 10^( (CT - r_intercept)/r_slope ) )  # not vectorized
     fljoin <- bind_rows(flf, flr)
     
     plt <- fljoin %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = `Sample Name`)) +   # plotting
@@ -118,7 +119,7 @@ if (experiment_mode == 'assay')
         breaks = scales::trans_breaks("log10", function(x) 10^x),
         labels = scales::trans_format("log10", scales::math_format(10^.x) )
       )
-  } else plt <- fl$Results %>% ggplot(aes(x = `assay_variable`, y = CT, color = `Sample Name`))+ ylab(expression(C[q]))   
+  } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = `Sample Name`))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates
   plt <- plt + geom_point(size = 1, show.legend = T) +

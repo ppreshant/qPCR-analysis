@@ -69,7 +69,7 @@ if (experiment_mode == 'small_scale')
   if(plot_select_template != '')  {results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
   
   # plot the Tm ; Graph will now show
-  plttm <- plotalltms(fl) # plots tms of multiple peaks in melting curve
+  plttm <- plotalltms(results_relevant) # plots tms of multiple peaks in melting curve
   
   # plot the CT mean along with replicates
   plt <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(color = 'red', size = 1, show.legend = T) +

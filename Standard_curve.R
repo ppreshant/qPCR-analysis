@@ -15,8 +15,8 @@ plt <- plotstdcurve(fl,'qPCR Standard curve 5', 'log(Copy #)') # plot standard c
 standard_curve_vars <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT,`Target Name`) %>% group_by(`Target Name`) # select required columns and group
 
 # Apply linear regression and find the model fitting results (equation and slope, R2 values) for each target
-std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn(., trig = 'coeff'), dat = .[1,] )
-std_table$params %<>% bind_rows() # make parameters and data into tibbles : do function makes lists
+std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn(., trig = 'coeff'), dat = .[1,] ) # "do" applies functions to each group of the data
+std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes htem lists
 std_table$dat %<>% bind_rows()  
 
 # Add labels to plot - linear regression equation

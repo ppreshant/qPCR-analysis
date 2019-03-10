@@ -51,7 +51,7 @@ plottm1 <- function(results_relevant)
 # reading in file and polishing
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
-sample_order = order_columnwise(fl) # this orders the samples columnwise in the PCR plate or strip (data is shown row-wise) => This command will enable plotting column wise order
+sample_order = columnwise_index(fl) # this orders the samples columnwise in the PCR plate or strip (data is shown row-wise) => This command will enable plotting column wise order
 results_relevant <- fl$Results %>% select(`Sample Name`, CT, `Ct Mean`, starts_with('Tm')) # select only the results used for plotting, calculations etc.
 
 # Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)----
@@ -59,14 +59,14 @@ results_relevant <- fl$Results %>% select(`Sample Name`, CT, `Ct Mean`, starts_w
 if (experiment_mode == 'small_scale')
 {
   # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
-  results_relevant <- separate(results_relevant,`Sample Name`,c('Sample Name','Primer pair'),' ')
+  results_relevant %<>%  separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ')
   
   # Factorise the sample name in the order for plotting
   results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
   results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   
-  # select samples to plot or to exclude
-  if(plot_select_template != '')  {results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
+  # select samples to plot (or to exclude write a similar command)
+  results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
   
   # plot the Tm ; Graph will now show
   plttm <- plotalltms(results_relevant) # plots tms of multiple peaks in melting curve

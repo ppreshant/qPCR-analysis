@@ -22,8 +22,8 @@ readqpcr <- function(flnm)
 }
 
 order_columnwise <- function(fl)
-{
-  fl$Results$`Well Position` %>%  str_sub(2) %>% as.integer() %>% order()
+{ # this orders the samples columnwise in the PCR plate or strip : order will give indices for A1,B1,C1 ... A2,B2,C2... (wherever samples exist)
+  fl$Results$`Well Position` %>%  str_sub(2) %>% as.integer() %>% order() # Take the well position A1 etc., extract the number, read as integer (instead of char), order it (1,1,1.. 2,2,... 12,12...) and regurn indices 
 }
 
 primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped', 

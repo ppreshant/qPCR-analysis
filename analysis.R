@@ -24,10 +24,10 @@ plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex
 # plotting functions for Melting temperature ----
 
 # plots all the Tm's if samples have multiple peaks in the melting curve
-plotalltms <- function(fl)
+plotalltms <- function(results_relevant)
 { 
   # Gather the Tm's into another data frame and merge into 1 column
-  tmfl <- results_relevant%>% select(`Sample Name`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`)
+  tmfl <- results_relevant %>% select(`Sample Name`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`)
   
   # plot the Tm ; Graph will now show
   plttm2 <- tmfl %>% ggplot(.) + aes(x = `Sample Name`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
@@ -37,9 +37,9 @@ plotalltms <- function(fl)
 }
 
 # plot the first Tm only ; Graph will now show
-plottm1 <- function(fl)
+plottm1 <- function(results_relevant)
 { 
-  plttm <- results_relevant%>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
+  plttm <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting curves')) + facet_wrap(~`Primer pair`, scales = 'free_x')

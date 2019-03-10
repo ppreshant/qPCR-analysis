@@ -65,7 +65,7 @@ if (experiment_mode == 'small_scale')
   fl$Results$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   
   # select samples to plot or to exclude
-  if(plot_select_template != '')  {fl$Results <- fl$Results %>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
+  if(plot_select_template != '')  {fl$Results %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = '')))} # str_detect will find for regular expression; ^x => starting with x
   
   # plot the Tm ; Graph will now show
   plttm <- plotalltms(fl) # plots tms of multiple peaks in melting curve
@@ -86,22 +86,21 @@ if (experiment_mode == 'assay')
 {
   # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
   
-  # isolate the primer pair and [Arabinose] into 2 columns
-  fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','Primer pair'),' ')
-  fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','[Arabinose]'),'_') 
+  # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
+  fl$Results <- separate(fl$Results,`Sample Name`,c('Sample Name','Primer pair'),' ') %>% separate(fl$Results,`Sample Name`,c('Sample Name','assay_variable'),'_')
   
   # Factorise the sample name in the order for plotting
   fl$Results$`Sample Name` <- fl$Results$`Sample Name` %>% factor(levels = unique(.[sample_order]))
   fl$Results$`Primer pair` <- fl$Results$`Primer pair` %>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
-  fl$Results$`[Arabinose]` <- fl$Results$`[Arabinose]` %>% factor(levels = unique(.[sample_order])) # [Arabinose]
+  fl$Results$`assay_variable` <- fl$Results$`assay_variable` %>% factor(levels = unique(.[sample_order])) # assay_variable
   
   # plot the Tm of multiple peaks in melting curve ; Graph will now show
   
   # Gather the Tm's into another data frame and merge into 1 column
-  tmfl <- fl$Results %>% select(`Sample Name`, `[Arabinose]`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`, -`[Arabinose]`)
+  tmfl <- fl$Results %>% select(`Sample Name`, `assay_variable`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`, -`assay_variable`)
   
   # plot the Tm ; Graph will now show
-  plttm <- tmfl %>% ggplot(.) + aes(x = `[Arabinose]`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
+  plttm <- tmfl %>% ggplot(.) + aes(x = `assay_variable`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
@@ -114,16 +113,16 @@ if (experiment_mode == 'assay')
     flr <- fl$Results %>% filter(`Target Name` == 'rMHT') %>% mutate(`Copy #` = 10^( (CT - r_intercept)/r_slope ) )  
     fljoin <- bind_rows(flf, flr)
     
-    plt <- fljoin %>% ggplot(aes(x = `[Arabinose]`, y = `Copy #`, color = `Sample Name`)) +   # plotting
+    plt <- fljoin %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = `Sample Name`)) +   # plotting
       scale_y_log10(  # logscale for y axis with tick marks
         breaks = scales::trans_breaks("log10", function(x) 10^x),
         labels = scales::trans_format("log10", scales::math_format(10^.x) )
       )
-  } else plt <- fl$Results %>% ggplot(aes(x = `[Arabinose]`, y = CT, color = `Sample Name`))+ ylab(expression(C[q]))   
+  } else plt <- fl$Results %>% ggplot(aes(x = `assay_variable`, y = CT, color = `Sample Name`))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates
   plt <- plt + geom_point(size = 1, show.legend = T) +
-    # geom_line(aes(x = `[Arabinose]`, y = `Ct Mean`), show.legend = T) +
+    # geom_line(aes(x = `assay_variable`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')

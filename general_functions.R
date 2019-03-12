@@ -26,9 +26,13 @@ columnwise_index <- function(fl)
   fl$Results$`Well Position` %>%  str_sub(2) %>% as.integer() %>% order() # Take the well position A1 etc., extract the number, read as integer (instead of char), order it (1,1,1.. 2,2,... 12,12...) and regurn indices 
 }
 
+# lookup table of primer pairs and respective targets - not useful as same information is in `Target` already
 primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped', 
                   'q5-11' = 'Unflipped', 'q1-2' = 'Unflipped', 'q9-10' = 'Unflipped', 'q4-2' = 'Unflipped', 'q2-4' = 'Unflipped', 'q5-11' = 'Unflipped', 'q6-7' = 'Unflipped',
                   'q12-13' = 'Backbone')
+
+# function to back-calculate CT using standard curve parameters
+
 
 # standard curve and regressions ----
 # Plot Standard curve

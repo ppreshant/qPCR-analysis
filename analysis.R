@@ -13,7 +13,7 @@ experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implemen
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
 
 # small_scale mode features
-plot_select_template <- 'rMHT' # Options ('' or 'something') ; filters out a particular template name to plot 
+plot_select_template <- '' # Options ('' or 'something') ; filters out a particular template name to plot 
 
 # Assay mode features (choose if you want absolute quantification)
 plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted

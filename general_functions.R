@@ -35,7 +35,7 @@ primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped',
 plotstdcurve <- function(fl, plttitle, xlabel)
 {
   plt <- fl$Results %>% filter(Task == 'STANDARD') %>% 
-ggplot(.) + aes(x = log10(Quantity), y = CT, color = `Target Name`) + geom_point() +
+ggplot(.) + aes(x = log10(Quantity), y = CT, color = `Target`) + geom_point() +
 theme_classic() + scale_color_brewer(palette="Set1") + theme(plot.title = element_text(hjust = 0.5)) + 
 ggtitle(plttitle) + xlab(xlabel) + ylab(expression(C[q])) +
 stat_smooth(method ="lm", se = F) # plots linear regression line

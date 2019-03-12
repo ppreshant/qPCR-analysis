@@ -4,7 +4,9 @@
 flnm <- 'excel files/Std5.xls'  
 
 fl <- readqpcr(flnm) # read file
-# fl$Results <- fl$Results %>% filter(`Ct Mean` < 27) # filtering only standard curve within the linear range
+
+# optional filtering to remove low concentration points in standard curve
+# fl$Results <- fl$Results %>% filter(`Quantity` > 1e4) # filtering only standard curve within the linear range
 
 plt <- plotstdcurve(fl,'qPCR Standard curve 5', 'log(Copy #)') # plot standard curve
 
@@ -12,7 +14,7 @@ plt <- plotstdcurve(fl,'qPCR Standard curve 5', 'log(Copy #)') # plot standard c
 # targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target Name`) %>% unique(.)  
 
 # Isolating standard curve variables (Quantity,CT) of the different targets into groups
-standard_curve_vars <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT,`Target Name`) %>% group_by(`Target Name`) # select required columns and group
+standard_curve_vars <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT,`Target`) %>% group_by(`Target`) # select required columns and group
 
 # Apply linear regression and find the model fitting results (equation and slope, R2 values) for each target
 std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn(., trig = 'coeff'), dat = .[1,] ) # "do" applies functions to each group of the data
@@ -24,5 +26,5 @@ plt + geom_label_repel(data = std_table$dat, label = std_table$equation, parse =
 
 # processing linear regression out
 efficiency_table <- tibble(Slope = std_table$params %>% pull(slope), Efficiency = 10^(-1/Slope), '% Efficiency' = (Efficiency -1)*100 , 'R-square' = std_table$params %>% pull(r_square) %>% round(2))
-rownames(efficiency_table) <- std_table$dat$`Target Name`
+rownames(efficiency_table) <- std_table$dat$`Target`
 View(efficiency_table)

@@ -32,7 +32,10 @@ primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped',
                   'q12-13' = 'Backbone')
 
 # function to back-calculate CT using standard curve parameters
-
+absolute_backcalc <- function(df, std_par)
+{
+  
+}
 
 # standard curve and regressions ----
 # Plot Standard curve

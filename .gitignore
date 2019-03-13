@@ -4,6 +4,10 @@
 .Ruserdata
 *.eds
 *.edt
+*.html
 /excel files
-/qPCR analysis
+/qPCR analysis/.Rproj*
+/qPCR analysis/Extra*
+*.png
+*.jp*
 /LinRegPCR

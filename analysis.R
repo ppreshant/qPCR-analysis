@@ -11,9 +11,10 @@ title_name <-'Intrinsic flipping with time assay'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
+plot_select_template <- '' # Options ('' or 'something') ; filters a particular template name to plot 
 
 # small_scale mode features
-plot_select_template <- '' # Options ('' or 'something') ; filters out a particular template name to plot 
+
 
 # Assay mode features (choose if you want absolute quantification)
 plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
@@ -98,6 +99,9 @@ if (experiment_mode == 'assay')
   results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   results_relevant$`assay_variable` %<>% factor(levels = unique(.[sample_order])) # assay_variable
   # results_relevant %<>% mutate_if(is.character, as_factor(levels = arrange(sample_order))) # fancy way of vectorizing - doesn't work
+  
+  # select samples to plot (or to exclude write a similar command)
+  results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
   
   # plot the Tm of multiple peaks in melting curve ; Graph will now show
   

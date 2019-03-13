@@ -17,8 +17,11 @@ plot_select_template <- '' # Options ('' or 'something') ; filters out a particu
 
 # Assay mode features (choose if you want absolute quantification)
 plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
-f_slope <- -3.36; f_intercept <- 42 
-r_slope <- -3.23; r_intercept <- 38
+std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
+  target = c('Flipped', 'Unflipped', 'Backbone'),
+  slope =  c(-3.36, -4.39, -3.55),
+  intercept = c(42, 53, 42)
+)
 plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 # plotting functions for Melting temperature ----
@@ -111,11 +114,10 @@ if (experiment_mode == 'assay')
   
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information
-    flf <- results_relevant %>% filter(`Target Name` == 'fMHT') %>% mutate(`Copy #` = 10^( (CT - f_intercept)/f_slope ) )  # not vectorized
-    flr <- results_relevant %>% filter(`Target Name` == 'rMHT') %>% mutate(`Copy #` = 10^( (CT - r_intercept)/r_slope ) )  # not vectorized
-    fljoin <- bind_rows(flf, flr)
-    
-    plt <- fljoin %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = `Sample Name`)) +   # plotting
+    results_relevant_grouped <- results_relevant %>% group_by(Target) 
+    results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
+      
+    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = `Sample Name`)) +   # plotting
       scale_y_log10(  # logscale for y axis with tick marks
         breaks = scales::trans_breaks("log10", function(x) 10^x),
         labels = scales::trans_format("log10", scales::math_format(10^.x) )

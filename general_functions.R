@@ -34,7 +34,10 @@ primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped',
 # function to back-calculate CT using standard curve parameters
 absolute_backcalc <- function(df, std_par)
 {
+  target_current <- df$Target %>% unique()
+  std_current <- std_par %>% filter(target == target_current)
   
+  df %>% mutate(`Copy #` = 10^( (CT - std_current$intercept)/std_current$slope) )
 }
 
 # standard curve and regressions ----

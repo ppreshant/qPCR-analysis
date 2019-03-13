@@ -1,0 +1,70 @@
+---
+title: "S4_1_intrinsic flip plots"
+author: "Prashant Kalvapalle"
+date: "13 March 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Goal of the analyses
+
+I have done qPCR for flipped, unflipped and a neutral backbone. I have code that generates copy # by inputing the equation of the standard curve. 
+
+Here, I'm normalizing the copy #'s to that of the backbone.
+
+## Running source codes
+
+```{r cars}
+setwd("../..")
+source('general_functions.R')
+source('analysis.R')
+```
+
+
+## Transforming data and normalization
+
+1. The data is filtered to remove controls (not present in all templates) - for ease of data normalization
+2. Data divided into 3 tibbles for each primer-pair (also called as Target)
+
+
+3. Ratio of Flipped/Backbone and Unflipped/backbone are calculated
+
+4. data is combined into 1 data frame
+5. And plotted in next section
+
+```{r}
+sel <- results_abs %>% select(`Sample Name`,assay_variable,`Primer pair`,Target,`Copy #`) %>% filter(!str_detect(assay_variable,'^0'))
+sel_b <- sel %>% filter(Target == 'Backbone')
+sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped');
+
+sel_f %<>% mutate("Normalized copy #" = sel_f$`Copy #`/sel_b$`Copy #`); 
+sel_u %<>% mutate("Normalized copy #" = sel_u$`Copy #`/sel_b$`Copy #`);
+
+results_ratio <- bind_rows(sel_f, sel_u)  
+```
+
+## Including Plots
+
+Plots here
+
+```{r pressure, echo=FALSE}
+  
+plt <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting
+  scale_y_log10(  # logscale for y axis with tick marks
+    breaks = scales::trans_breaks("log10", function(x) 10^x),
+    labels = scales::trans_format("log10", scales::math_format(10^.x) )
+  )
+
+plt <- plt + geom_point(size = 1, show.legend = T) +
+    theme_classic() + scale_color_brewer(palette="Set1") + 
+    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
+    ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')
+
+print(plt)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

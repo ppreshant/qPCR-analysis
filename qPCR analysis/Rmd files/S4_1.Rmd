@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Goal of the analyses
+## Goal of the analysis
 
 I have done qPCR for flipped, unflipped and a neutral backbone. I have code that generates copy # by inputing the equation of the standard curve. 
 

@@ -70,6 +70,7 @@ if (experiment_mode == 'small_scale')
   # Factorise the sample name in the order for plotting
   results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
   results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
+  results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
   
   # select samples to plot (or to exclude write a similar command)
   results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
@@ -82,7 +83,7 @@ if (experiment_mode == 'small_scale')
     geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + ylab(expression(C[q])) + facet_wrap(~`Primer pair`, scales = 'free_x') 
+    ggtitle(title_name) + ylab(expression(C[q])) + facet_wrap(~Target, scales = 'free_x') 
   
   print(plt)
 }
@@ -135,7 +136,7 @@ if (experiment_mode == 'assay')
     # geom_line(aes(x = `assay_variable`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')
+    ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
   print(plt)
   

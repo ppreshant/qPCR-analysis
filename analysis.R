@@ -6,8 +6,8 @@
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'excel files/S4_1 intrinsic flip.xls'  
-title_name <-'Intrinsic flipping with time assay'
+flnm <- 'excel files/S05a_AHL induction.xls'  
+title_name <-'AHL induction'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -17,11 +17,13 @@ plot_select_template <- '' # Options ('' or 'something') ; filters a particular 
 
 
 # Assay mode features (choose if you want absolute quantification)
+plot_assay_variable <- 'Sample'
+plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours
 plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
   target = c('Flipped', 'Unflipped', 'Backbone'),
-  slope =  c(-3.36, -4.39, -3.55),
-  intercept = c(42, 53, 42)
+  slope =  c(-3.36, -3.21, -3.55),
+  intercept = c(42, 38, 42)
 )
 plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
@@ -121,12 +123,12 @@ if (experiment_mode == 'assay')
     results_relevant_grouped <- results_relevant %>% group_by(Target) 
     results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
       
-    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = `Sample Name`)) +   # plotting
+    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = !!plot_colour_by)) + ylab('Copy #') +   # plotting
       scale_y_log10(  # logscale for y axis with tick marks
         breaks = scales::trans_breaks("log10", function(x) 10^x),
         labels = scales::trans_format("log10", scales::math_format(10^.x) )
       )
-  } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = `Sample Name`))+ ylab(expression(C[q]))   
+  } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates
   plt <- plt + geom_point(size = 1, show.legend = T) +

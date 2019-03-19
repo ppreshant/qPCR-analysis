@@ -58,7 +58,7 @@ plottm1 <- function(results_relevant)
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
 sample_order = columnwise_index(fl) # this orders the samples columnwise in the PCR plate or strip (data is shown row-wise) => This command will enable plotting column wise order
-results_relevant <- fl$Results %>% select(`Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) # select only the results used for plotting, calculations etc.
+results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) # select only the results used for plotting, calculations etc.
 
 # Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)----
 
@@ -68,6 +68,7 @@ if (experiment_mode == 'small_scale')
   results_relevant %<>%  separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ')
   
   # Factorise the sample name in the order for plotting
+  results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
   results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
   results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
@@ -98,10 +99,15 @@ if (experiment_mode == 'assay')
   results_relevant %<>% separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ') %>% separate(.,`Sample Name`,c('Sample Name','assay_variable'),'_')
   
   # Factorise the sample name in the order for plotting
+  results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
   results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
   results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
   results_relevant$`assay_variable` %<>% factor(levels = unique(.[sample_order])) # assay_variable
-  # results_relevant %<>% mutate_if(is.character, as_factor(levels = arrange(sample_order))) # fancy way of vectorizing - doesn't work
+  results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
+  # results_relevant %<>% mutate_if(is.character, as_factor(levels = arrange(sample_order))) or factor(levels = unique(.[sample_order])) # fancy way of vectorizing - doesn't work
+  
+  # re-arrange the results in same order as the above factors (columnwise order of the plate)
+  results_relevant %<>% arrange(`Well Position`) 
   
   # select samples to plot (or to exclude write a similar command)
   results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
@@ -148,3 +154,17 @@ if (experiment_mode == 'assay')
 # Save plots manually - copy paste this command to console
 # ggsave('qPCR analysis/Chk1.png', dpi = 600)
 # ggsave('qPCR analysis/Chk1.png', plot = plttm, dpi = 600)
+
+# assay mode : plotting different colour and facet variables
+# plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = `Sample Name`)) + ylab('Copy #') +   # plotting
+#   scale_y_log10(  # logscale for y axis with tick marks
+#     breaks = scales::trans_breaks("log10", function(x) 10^x),
+#     labels = scales::trans_format("log10", scales::math_format(10^.x) ))
+# 
+# plt <- plt + geom_point(size = 1, show.legend = T) +
+#   # geom_line(aes(x = `assay_variable`, y = `Ct Mean`), show.legend = T) +
+#   theme_classic() + scale_color_brewer(palette="Set1") + 
+#   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
+#   ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~Target, scales = 'free_x')
+# 
+# print(plt)

@@ -80,7 +80,7 @@ if (experiment_mode == 'small_scale')
   plttm <- plotalltms(results_relevant) # plots tms of multiple peaks in melting curve
   
   # plot the CT mean along with replicates
-  plt <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(color = 'red', size = 1, show.legend = T) +
+  plt <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(color = 'red', size = 2, show.legend = T) +
     geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
@@ -138,8 +138,7 @@ if (experiment_mode == 'assay')
   } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates
-  plt <- plt + geom_point(size = 1, show.legend = T) +
-    # geom_line(aes(x = `assay_variable`, y = `Ct Mean`), show.legend = T) +
+  plt <- plt + geom_point(size = 2, show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~`Sample Name`, scales = 'free_x')
@@ -161,10 +160,7 @@ if (experiment_mode == 'assay')
 #     breaks = scales::trans_breaks("log10", function(x) 10^x),
 #     labels = scales::trans_format("log10", scales::math_format(10^.x) ))
 # 
-# plt <- plt + geom_point(size = 1, show.legend = T) +
-#   # geom_line(aes(x = `assay_variable`, y = `Ct Mean`), show.legend = T) +
-#   theme_classic() + scale_color_brewer(palette="Set1") + 
-#   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
+# plt + geom_point(size = 2, show.legend = T) +
+#   theme_classic() + scale_color_brewer(palette="Set1") +
+#   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +
 #   ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~Target, scales = 'free_x')
-# 
-# print(plt)

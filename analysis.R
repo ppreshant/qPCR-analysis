@@ -57,8 +57,8 @@ plottm1 <- function(results_relevant)
 # reading in file and polishing
 fl <- readqpcr(flnm) # read excel file exported by Quantstudio
 
-sample_order = columnwise_index(fl) # this orders the samples columnwise in the PCR plate or strip (data is shown row-wise) => This command will enable plotting column wise order
-results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) # select only the results used for plotting, calculations etc.
+sample_order = columnwise_index(fl) # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
+results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) %>%  .[sample_order,] # select only the results used for plotting, calculations etc. and arrange them according to sample order
 
 # Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)----
 
@@ -68,10 +68,11 @@ if (experiment_mode == 'small_scale')
   results_relevant %<>%  separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ')
   
   # Factorise the sample name in the order for plotting
-  results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
-  results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
-  results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
-  results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
+  results_relevant %<>% mutate_if(is.character,as_factor) 
+  # results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
+  # results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
+  # results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
+  # results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
   
   # select samples to plot (or to exclude write a similar command)
   results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
@@ -99,11 +100,12 @@ if (experiment_mode == 'assay')
   results_relevant %<>% separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ') %>% separate(.,`Sample Name`,c('Sample Name','assay_variable'),'_')
   
   # Factorise the sample name in the order for plotting
-  results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
-  results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
-  results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
-  results_relevant$`assay_variable` %<>% factor(levels = unique(.[sample_order])) # assay_variable
-  results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
+  results_relevant %<>% mutate_if(is.character,as_factor) 
+  # results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
+  # results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
+  # results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
+  # results_relevant$`assay_variable` %<>% factor(levels = unique(.[sample_order])) # assay_variable
+  # results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
   # results_relevant %<>% mutate_if(is.character, as_factor(levels = arrange(sample_order))) or factor(levels = unique(.[sample_order])) # fancy way of vectorizing - doesn't work
   
   # re-arrange the results in same order as the above factors (columnwise order of the plate)

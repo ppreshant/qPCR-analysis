@@ -6,8 +6,8 @@
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'excel files/S05a_AHL induction.xls'  
-title_name <-'AHL induction'
+flnm <- 'excel files/S05c_AHL induction.xls'  
+title_name <-'AHL induced flipping'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -17,7 +17,7 @@ plot_select_template <- '' # Options ('' or 'something') ; filters a particular 
 
 
 # Assay mode features (choose if you want absolute quantification)
-plot_assay_variable <- 'Sample'
+plot_assay_variable <- 'Sample' # printed on the x axis of the graph
 plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours
 plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
@@ -25,6 +25,7 @@ std_par <- tibble(                       # Input the slope and intercept from st
   slope =  c(-3.36, -3.21, -3.55),
   intercept = c(42, 38, 42)
 )
+plot_normalized_backbone <- 'yes' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 # plotting functions for Melting temperature ----
@@ -146,7 +147,35 @@ if (experiment_mode == 'assay')
     ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
   print(plt)
-  
+
+  # normalizing copy #s to backbone ----  
+  if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
+  { # computing ratio of copy #s of targets : flipped and unflipped to the backbone
+    
+    sel <- results_abs %>% select(`Sample Name`,assay_variable,`Primer pair`,Target,`Copy #`) # select relevant columns (other numeric columns will throw errors)
+    
+    sel_b <- sel %>% filter(Target == 'Backbone') # filter out each Target
+    sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped');
+    
+    sel_f %<>% mutate("Normalized copy #" = sel_f$`Copy #`/sel_b$`Copy #`); # make ratios to the backbone 
+    sel_u %<>% mutate("Normalized copy #" = sel_u$`Copy #`/sel_b$`Copy #`);
+    
+    results_ratio <- bind_rows(sel_f, sel_u) # bind results into 1 tibble (for easy plotting)
+    
+    # plotting the normalized copy #'s
+    plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting
+      scale_y_log10(  # logscale for y axis with tick marks
+        breaks = scales::trans_breaks("log10", function(x) 10^x),
+        labels = scales::trans_format("log10", scales::math_format(10^.x) )
+      )
+    
+    plt_norm <- plt_norm + geom_point() +
+      theme_classic() + scale_color_brewer(palette="Set1") + 
+      theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
+      ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')
+    
+    print(plt_norm)
+  }
 }
 
 

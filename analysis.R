@@ -169,7 +169,7 @@ if (experiment_mode == 'assay')
         labels = scales::trans_format("log10", scales::math_format(10^.x) )
       )
     
-    plt_norm <- plt_norm + geom_point() +
+    plt_norm <- plt_norm + geom_point(size = 2) +
       theme_classic() + scale_color_brewer(palette="Set1") + 
       theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
       ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')

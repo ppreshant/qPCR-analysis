@@ -7,7 +7,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'excel files/S05c_AHL induction.xls'  
+flnm <- 'excel files/Int_Assay1 MHT.xls'  
 title_name <-'AHL induced flipping'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
@@ -26,7 +26,7 @@ std_par <- tibble(                       # Input the slope and intercept from st
   slope =  c(-3.36, -3.21, -3.55),
   intercept = c(42, 38, 42)
 )
-plot_normalized_backbone <- 'yes' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
+plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 # plotting functions for Melting temperature ----

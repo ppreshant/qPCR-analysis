@@ -14,7 +14,7 @@ readqpcr <- function(flnm)
   fl <- flnm %>%  
     excel_sheets() %>% 
     set_names(.,.) %>% 
-    map(read_excel, path = flnm, skip = 35)
+    map(read_excel, path = flnm, skip = 43)
   
   # convert CT values into numeric 
   class(fl$Results$CT) <- 'numeric'

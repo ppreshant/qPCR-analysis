@@ -1,8 +1,9 @@
 # Read in the file and do manual analysis and plotting
 # Author: Prashant Kalvapalle;  October 10 2018
 
-# Source the general_functions file before running this
 # The last part of the script contains important codes from the console that were used for specific situations : These will be commented
+
+source('./general_functions.R') # Source the general_functions file before running this
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 

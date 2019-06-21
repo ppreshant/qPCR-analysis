@@ -102,6 +102,10 @@ if (experiment_mode == 'assay')
   # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
   results_relevant %<>% separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ') %>% separate(.,`Sample Name`,c('Sample Name','assay_variable'),'_')
   
+  # Merging 2 biological controls for r and f MHTs
+  results_relevant$assay_variable[results_relevant$assay_variable == 'rMHT2'] <- 'rMHT1'
+  results_relevant$assay_variable[results_relevant$assay_variable == 'fMHT2'] <- 'fMHT1'
+  
   # Factorise the sample name in the order for plotting
   results_relevant %<>% mutate_if(is.character,as_factor) 
   # results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
@@ -156,7 +160,7 @@ if (experiment_mode == 'assay')
   plt <- plt + geom_point(size = 2, show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~`Sample Name`, scales = 'free_x')
+    ggtitle(title_name) + xlab(plot_assay_variable) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x')
   
   print(plt)
 

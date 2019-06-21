@@ -8,7 +8,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
 flnm <- 'excel files/Int_Assay1 MHT.xls'  
-title_name <-'AHL induced flipping'
+title_name <-'Arabinose induced flipping'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -27,7 +27,8 @@ std_par <- tibble(                       # Input the slope and intercept from st
   intercept = c(42, 38, 42)
 )
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
-plot_exclude <- '' # quo('Controls2') or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
+plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode
+plot_exclude <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*' or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 # plotting functions for Melting temperature ----
 
@@ -127,18 +128,28 @@ if (experiment_mode == 'assay')
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
-  results_relevant %<>% filter(`Sample Name` != (!!plot_exclude))
+  results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
+  results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable
   
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information
     results_relevant_grouped <- results_relevant %>% group_by(Target) 
     results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
-      
-    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = !!plot_colour_by)) + ylab('Copy #') +   # plotting
+    
+    if(plot_mean_and_sd == 'yes') {
+      y_variable = quo(mean)
+      results_abs %<>% group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd))
+      } 
+    else {y_variable = quo(`Copy #`)}
+    
+    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #') +   # plotting
       scale_y_log10(  # logscale for y axis with tick marks
         breaks = scales::trans_breaks("log10", function(x) 10^x),
         labels = scales::trans_format("log10", scales::math_format(10^.x) )
       )
+    
+    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .25))} 
+    
   } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates

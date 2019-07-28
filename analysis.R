@@ -7,8 +7,8 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'excel files/Int_Assay1 MHT.xls'  
-title_name <-'Arabinose induced flipping'
+flnm <- 'excel files/S017_qPCR.xls'  
+title_name <-'AHL influence on reporter copy #'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -23,8 +23,8 @@ plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Dete
 plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
   target = c('Flipped', 'Unflipped', 'Backbone'),
-  slope =  c(-3.36, -3.21, -3.55),
-  intercept = c(42, 38, 42)
+  slope =  c(-3.36, -3.23, -3.55),
+  intercept = c(42, 38, 42) # values for primer pairs: Flipped:q4-5. Unflipped:q9-10, Backbone:q12-13
 )
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode

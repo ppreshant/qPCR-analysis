@@ -190,6 +190,7 @@ if (experiment_mode == 'assay')
   }
 }
 
+ggsave('qPCR analysis/S017.png')
 
 # Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----
 

@@ -142,23 +142,19 @@ if (experiment_mode == 'assay')
       } 
     else {y_variable = quo(`Copy #`)}
     
-    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #') +   # plotting
-      scale_y_log10(  # logscale for y axis with tick marks
-        breaks = scales::trans_breaks("log10", function(x) 10^x),
-        labels = scales::trans_format("log10", scales::math_format(10^.x) )
-      )
+    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
+
+    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .25))} # plot errorbars if mean and SD are desired
     
-    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .25))} 
-    
-  } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q]))   
-    
-  # plot the CT mean along with replicates
-  plt <- plt + geom_point(size = 2, show.legend = T) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~`Sample Name`, scales = 'free_x')
+  } 
   
-  print(plt)
+  else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
+    
+  # plot the CT mean and formatting plots
+  plt <- plt + geom_point(size = 2) + facet_wrap(~`Sample Name`, scales = 'free_x') # plot points and facetting
+  plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
+  
+  print(plt.formatted)
 
   # normalizing copy #s to backbone ----  
   if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
@@ -176,21 +172,15 @@ if (experiment_mode == 'assay')
     
     # plotting the normalized copy #'s
     plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting
-      scale_y_log10(  # logscale for y axis with tick marks
-        breaks = scales::trans_breaks("log10", function(x) 10^x),
-        labels = scales::trans_format("log10", scales::math_format(10^.x) )
-      )
+    geom_point(size = 2) + facet_wrap(~`Sample Name`, scales = 'free_x') # plot points and facetting
     
-    plt_norm <- plt_norm + geom_point(size = 2) +
-      theme_classic() + scale_color_brewer(palette="Set1") + 
-      theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-      ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x')
+    plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
     
     print(plt_norm)
   }
 }
 
-ggsave('qPCR analysis/S017.png')
+# ggsave('qPCR analysis/S017.png')
 
 # Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----
 

@@ -70,3 +70,23 @@ lm_eqn <- function(df, trig = 0){
     tsumrev <- trev %>% group_by(`Sample Name`) %>% summarise(CT = mean(CT), Quantity = mean(Quantity), CT_sd = sd(CT))
     diff(tsumrev$CT) %>% round(2)}
 
+
+# plot formatting ---- 
+  
+  # plot formatting function : format as classic, colours = Set1
+  format_classic <- function(plt, title_name, plot_assay_variable)
+  { # formats plot as classic, with colour palette Set1, centred title, angled x axis labels
+    plt <- plt +
+      theme_classic() + scale_color_brewer(palette="Set1") + 
+      theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +
+      ggtitle(title_name) + xlab(plot_assay_variable)
+  }
+  
+  # plot formatting function : format as logscale
+  format_logscale <- function(plt)
+  { # extra comments
+    plt <- plt +
+      scale_y_log10(  # logscale for y axis with tick marks
+        labels = scales::trans_format("log10", scales::math_format(10^.x) )
+      )
+  }

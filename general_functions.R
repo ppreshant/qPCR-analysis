@@ -4,7 +4,7 @@
   # Make sure to include raw data as well
 
 # calling libraries ; make sure they are installed (install.packages)
-library(readxl); library(magrittr); library(tidyverse); library(ggrepel)  
+library(readxl); library(magrittr); library(tidyverse); library(ggrepel); library(openxlsx)  
 
 # reading files and manipulating columns ----
 

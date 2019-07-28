@@ -28,7 +28,8 @@ std_par <- tibble(                       # Input the slope and intercept from st
 )
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode
-plot_exclude <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*' or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
+plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
+plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; exclude assay_variables for plotting; ex: no template control etc.: filters based on assay_variable: works only in assay mode
 
 # plotting functions for Melting temperature ----
 
@@ -128,8 +129,8 @@ if (experiment_mode == 'assay')
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
-  results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
-  results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable
+  results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude_category)) # exclude unwanted samples categories (sample_name) 
+  results_relevant %<>% filter(!str_detect(assay_variable, plot_exclude_assay_variable)) # excluding unwanted samples from assay_variable
   
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information
@@ -138,7 +139,7 @@ if (experiment_mode == 'assay')
     
     if(plot_mean_and_sd == 'yes') {
       y_variable = quo(mean)
-      results_abs %<>% group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd))
+      results_abs %<>% group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
       } 
     else {y_variable = quo(`Copy #`)}
     
@@ -181,6 +182,7 @@ if (experiment_mode == 'assay')
 }
 
 # ggsave('qPCR analysis/S017.png')
+# write.xlsx(results_abs, 'excel files/Test.xls', sheetName = 'analysis', append = TRUE, borders = 'surrounding') # saving data table of inferred copy #s to an excel sheet
 
 # Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----
 

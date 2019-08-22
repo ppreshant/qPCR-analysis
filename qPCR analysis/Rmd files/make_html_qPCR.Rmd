@@ -1,0 +1,78 @@
+---
+title: "S06b_Lysate qPCR"
+author: "Prashant Kalvapalle"
+date: "21 Aug 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = F)
+```
+
+## Goal of the analysis
+
+We want to test by qPCR if AHL is flipping any constructs. Using this file to normalize copy #s to that of the Backbone
+
+## Running source codes
+
+```{r cars}
+setwd("../..")
+source('general_functions.R')
+source('analysis.R')
+```
+
+## Data output
+
+```{r datadisplay}
+results_abs %<>% mutate(mean = format(mean, digits = 3))
+kable(results_abs, caption = 'Summary of estimated copy #s')
+```
+
+<!-- ## Transforming data and normalization -->
+
+<!-- 1. Select only relevant data from the results -->
+<!-- 2. Data divided into 3 tibbles for each primer-pair (also called as Target) -->
+
+
+<!-- 3. Ratio of Flipped/Backbone and Unflipped/backbone are calculated -->
+
+<!-- 4. data is combined into 1 data frame -->
+<!-- 5. And plotted in next section -->
+
+<!-- ```{r} -->
+<!-- # sel <- results_abs %>% select(`Sample Name`,assay_variable,`Primer pair`,Target,`Copy #`) -->
+<!-- # # sel_grouped <- sel %>% group_by(Target) %>% mutate(id = 1:n()) -->
+<!-- # # sel_spread <- sel_grouped %>% spread(Target,`Copy #`) -->
+<!-- #  -->
+<!-- #  -->
+<!-- # sel_b <- sel %>% filter(Target == 'Backbone') -->
+<!-- # sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped'); -->
+<!-- #  -->
+<!-- # sel_f %<>% mutate("Normalized copy #" = sel_f$`Copy #`/sel_b$`Copy #`);  -->
+<!-- # sel_u %<>% mutate("Normalized copy #" = sel_u$`Copy #`/sel_b$`Copy #`); -->
+<!-- #  -->
+<!-- # results_ratio <- bind_rows(sel_f, sel_u)   -->
+<!-- ``` -->
+
+<!-- ## Including Plots -->
+
+<!-- Plots here -->
+
+<!-- ```{r pressure, echo=FALSE} -->
+
+<!-- # plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting -->
+<!-- #   scale_y_log10(  # logscale for y axis with tick marks -->
+<!-- #     breaks = scales::trans_breaks("log10", function(x) 10^x), -->
+<!-- #     labels = scales::trans_format("log10", scales::math_format(10^.x) ) -->
+<!-- #   ) -->
+<!-- #  -->
+<!-- # plt_norm <- plt_norm + geom_point(size = 2) + -->
+<!-- #     theme_classic() + scale_color_brewer(palette="Set1") +  -->
+<!-- #     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +  -->
+<!-- #     ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x') -->
+<!-- #  -->
+<!-- # print(plt_norm) -->
+<!-- # ggsave('S5a_AHL flip_normalized.png') -->
+
+<!-- ``` -->

@@ -7,8 +7,8 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'excel files/S017_qPCR.xls'  
-title_name <-'AHL influence on reporter copy #'
+flnm <- 'excel files/S06b.xls'  
+title_name <-'qPCR on cell lysates'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -180,6 +180,8 @@ if (experiment_mode == 'assay')
     print(plt_norm)
   }
 }
+
+print(plttm)
 
 # ggsave('qPCR analysis/S017.png')
 # write.xlsx(results_abs, 'excel files/Test.xls', sheetName = 'analysis', append = TRUE, borders = 'surrounding') # saving data table of inferred copy #s to an excel sheet

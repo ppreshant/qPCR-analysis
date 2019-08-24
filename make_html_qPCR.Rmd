@@ -25,7 +25,7 @@ source('analysis.R')
 ## Data output
 
 ```{r datadisplay}
-results_abs %<>% mutate(mean = format(mean, digits = 3))
+results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
 kable(results_abs, caption = 'Summary of estimated copy #s')
 ```
 

@@ -7,7 +7,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'excel files/S06d_W vs B.xls'  
+flnm <- 'excel files/S06d_0 lysis buffer.xls'  
 title_name <-'qPCR on cell lysates'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)

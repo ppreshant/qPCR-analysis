@@ -87,6 +87,25 @@ lm_eqn <- function(df, trig = 0){
   { # extra comments
     plt <- plt +
       scale_y_log10(  # logscale for y axis with tick marks
-        labels = scales::trans_format("log10", scales::math_format(10^.x) )
+        labels = fancy_scientific
+        #labels = scales::trans_format("log10", scales::math_format(10^.x) )
       )
   }
+  
+  # formatting labels in logscale cleanly : a x 10^b
+  fancy_scientific <- function(l) {
+    # turn in to character string in scientific notation
+    l <- format(l, scientific = TRUE)
+    # quote the part before the exponent to keep all the digits
+    l <- gsub("^(.*)e", "'\\1'e", l)
+    # remove + after exponent, if exists. E.g.: (3x10^+2 -> 3x10^2) 
+    l <- gsub("e\\+","e",l)
+    # convert 1x10^ or 1.000x10^ -> 10^ 
+    l <- gsub("\\'1[\\.0]*\\'\\%\\*\\%", "", l)
+    # turn the 'e+' into plotmath format
+    l <- gsub("e", "%*%10^", l)
+    # return this as an expression
+    parse(text=l)
+  }
+  
+  # use as ggplot(df,aes(x,y)) + geom_point() + scale_y_log10(labels = fancy_scientific)

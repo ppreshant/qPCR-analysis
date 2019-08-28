@@ -17,7 +17,6 @@ We want to test by qPCR if AHL is flipping any constructs. Using this file to no
 ## Running source codes
 
 ```{r cars}
-setwd("../..")
 source('general_functions.R')
 source('analysis.R')
 ```

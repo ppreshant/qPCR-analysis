@@ -100,10 +100,10 @@ lm_eqn <- function(df, trig = 0){
     l <- gsub("^(.*)e", "'\\1'e", l)
     # remove + after exponent, if exists. E.g.: (3x10^+2 -> 3x10^2) 
     l <- gsub("e\\+","e",l)
-    # convert 1x10^ or 1.000x10^ -> 10^ 
-    l <- gsub("\\'1[\\.0]*\\'\\%\\*\\%", "", l)
     # turn the 'e+' into plotmath format
     l <- gsub("e", "%*%10^", l)
+    # convert 1x10^ or 1.000x10^ -> 10^ 
+    l <- gsub("\\'1[\\.0]*\\'\\%\\*\\%", "", l)
     # return this as an expression
     parse(text=l)
   }

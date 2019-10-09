@@ -135,6 +135,7 @@ if (experiment_mode == 'assay')
   results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
   results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable
   
+  # Plot absolute quantification copy # : inferred from standard curve parameters (input in the start)
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information
     results_relevant_grouped <- results_relevant %>% group_by(Target) 
@@ -146,23 +147,18 @@ if (experiment_mode == 'assay')
       } 
     else {y_variable = quo(`Copy #`)}
     
-    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #') +   # plotting
-      scale_y_log10(  # logscale for y axis with tick marks
-        breaks = scales::trans_breaks("log10", function(x) 10^x),
-        labels = scales::trans_format("log10", scales::math_format(10^.x) )
-      )
-    
+    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # plotting only mean
+      
     if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .25))} 
     
   } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates
-  plt <- plt + geom_point(size = 2, show.legend = T) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + xlab(plot_assay_variable) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x')
+  plt <- plt + geom_point(size = 2, show.legend = T) + facet_wrap(~`Sample Name`, scales = 'free_x') # plot points and facetting
+    
+  plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
   
-  print(plt)
+  print(plt.formatted) # print the formatted plot
 
   # normalizing copy #s to backbone ----  
   if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')

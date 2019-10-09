@@ -134,12 +134,14 @@ if (experiment_mode == 'assay')
   
   results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
   results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable
+  results_relevant %<>% mutate(`Sample Name` = str_replace(`Sample Name`, 'GFP', 'Reporter'), `Sample Name` = fct_inorder(`Sample Name`))
   
   # Plot absolute quantification copy # : inferred from standard curve parameters (input in the start)
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information
     results_relevant_grouped <- results_relevant %>% group_by(Target) 
     results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
+    
     
     if(plot_mean_and_sd == 'yes') {
       y_variable = quo(mean)
@@ -154,7 +156,7 @@ if (experiment_mode == 'assay')
   } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates
-  plt <- plt + geom_point(size = 2, show.legend = T) + facet_wrap(~`Sample Name`, scales = 'free_x') # plot points and facetting
+  plt <- plt + geom_point(size = 2, show.legend = T) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
     
   plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
   

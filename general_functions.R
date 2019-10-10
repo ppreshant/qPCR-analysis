@@ -91,6 +91,15 @@ lm_eqn <- function(df, trig = 0){
       )
   }
   
+  # plot formatting function : format x axis as logscale
+  format_logscale_x <- function(plt)
+  { # extra comments
+    plt <- plt +
+      scale_x_log10(  # logscale for x axis with tick marks
+        labels = fancy_scientific
+      )
+  }
+  
   # formatting labels in logscale cleanly : a x 10^b
   fancy_scientific <- function(l) {
     # turn in to character string in scientific notation

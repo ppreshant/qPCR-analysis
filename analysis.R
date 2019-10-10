@@ -134,13 +134,18 @@ if (experiment_mode == 'assay')
   
   results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
   results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable
-  results_relevant %<>% mutate(`Sample Name` = str_replace(`Sample Name`, 'GFP', 'Reporter'), `Sample Name` = fct_inorder(`Sample Name`))
+  results_relevant %<>% mutate(`Sample Name` = str_replace(`Sample Name`, 'GFP', 'Reporter'), `Sample Name` = fct_inorder(`Sample Name`)) # change GFP to reporter - for plot
+  results_relevant %<>%  mutate(`Sample Name` = if_else(str_detect(assay_variable, 'Glu'), 'Controls', as.character(`Sample Name`))) # change glucose data point into controls
   
   # Plot absolute quantification copy # : inferred from standard curve parameters (input in the start)
   if(plot_mode == 'absolute_quantification')
   { # Computing copy number from standard curve linear fit information
     results_relevant_grouped <- results_relevant %>% group_by(Target) 
     results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
+    
+    # changing text from assay variables into numbers (to be plotted on logscale) 
+    init_var <- c('Gluc.*', 'rM.*', 'fM.*','Wa.*'); fin_var <- c('30','3','10','1'); names(fin_var) = init_var; 
+    results_abs %<>% mutate( assay_variable = str_replace_all(assay_variable, fin_var), assay_variable = as.numeric(assay_variable)) 
     
     
     if(plot_mean_and_sd == 'yes') {
@@ -149,16 +154,16 @@ if (experiment_mode == 'assay')
       } 
     else {y_variable = quo(`Copy #`)}
     
-    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # plotting only mean
+    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable)) + ylab('Copy #')    # plotting only mean
       
-    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .25))} 
+    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .1))} 
     
   } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates
   plt <- plt + geom_point(size = 2, show.legend = T) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
     
-  plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
+  plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
   
   print(plt.formatted) # print the formatted plot
 

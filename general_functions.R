@@ -64,6 +64,35 @@ lm_eqn <- function(df, trig = 0){
   else as.character(as.expression(eq)); 
 }
 
+hill_fit <- function(results_array)
+{
+  # source: https://github.com/dritoshi/Fitting-Hill-equation/blob/master/bin/hill.r
+  # Fittiing Hill equation
+  # Itoshi NIKAIDO <dritoshi@gmail.com>
+  
+  # make demo data
+  L  <- results_array$assay_variable
+  y  <- results_array$mean
+  
+  # # conf
+  # output <- "results/hill.pdf"
+  
+  # initial
+  y0 <- min(y)
+  ymax.init <- 1e10
+  n.init  <- 1
+  Kd.init <- .005
+  
+  # fitting Hill equation
+  y.nls <- nlsLM(y ~ y0 + (ymax - y0) * L^n / (Kd^n + L^n), start = c(ymax = ymax.init, n = n.init, Kd = Kd.init))
+  
+  # # extract fitting data
+  # y.nls.summary <- summary(y.nls)
+  # y.nls.n       <- y.nls.summary$param[1]
+  # y.nls.Kd      <- y.nls.summary$param[2]
+  # y.nls.predict <- predict(y.nls)
+  # results <- cbind(y, y.nls.predict)
+}
   
   optional1 <- function()
     {# output the difference between consecutive CT values

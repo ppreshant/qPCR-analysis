@@ -144,7 +144,7 @@ if (experiment_mode == 'assay')
     results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
     
     # changing text from assay variables into numbers (to be plotted on logscale) 
-    init_var <- c('Gluc.*', 'rM.*', 'fM.*','Wa.*'); fin_var <- c('30','3','10','1'); names(fin_var) = init_var; 
+    init_var <- c('Gluc.*', 'rM.*', 'fM.*','Wa.*'); fin_var <- c('.3','.03','.1','.01'); names(fin_var) = init_var; 
     results_abs %<>% mutate( assay_variable = str_replace_all(assay_variable, fin_var), assay_variable = as.numeric(assay_variable)) 
     
     
@@ -154,6 +154,11 @@ if (experiment_mode == 'assay')
       } 
     else {y_variable = quo(`Copy #`)}
     
+    # calculate hill function fit
+    reporter_set <- results_abs %>% filter(str_detect(`Sample Name`,'Rep')) # filter only reporter values for hill function fitting
+    hill_param <- reporter_set %>% hill_fit() # call hill fitting function on only reporter samples
+    reporter_set  %<>% mutate(hill_fit = predict(hill_param)) # take the fit curve for plotting
+    
     plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable)) + ylab('Copy #')    # plotting only mean
       
     if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .1))} 
@@ -161,7 +166,7 @@ if (experiment_mode == 'assay')
   } else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q]))   
     
   # plot the CT mean along with replicates
-  plt <- plt + geom_point(size = 2, show.legend = T) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
+  plt <- plt + geom_point(size = 2, show.legend = T) + geom_line(data = reporter_set, aes(x = assay_variable, y = hill_fit), linetype = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
     
   plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
   

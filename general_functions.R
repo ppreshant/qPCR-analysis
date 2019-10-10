@@ -71,8 +71,8 @@ hill_fit <- function(results_array)
   # Itoshi NIKAIDO <dritoshi@gmail.com>
   
   # make demo data
-  L  <- results_array$assay_variable
-  y  <- results_array$mean
+  L  <- results_array$L
+  y  <- results_array$y
   
   # # conf
   # output <- "results/hill.pdf"
@@ -106,7 +106,7 @@ hill_fit <- function(results_array)
   { # formats plot as classic, with colour palette Set1, centred title, angled x axis labels
     plt <- plt +
       theme_classic() + scale_color_brewer(palette="Set1") + 
-      theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +
+      # theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 0, hjust = 1, vjust = .3)) +
       ggtitle(title_name) + xlab(plot_assay_variable)
   }
   

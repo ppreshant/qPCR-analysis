@@ -18,7 +18,7 @@ plot_select_template <- '' # Options ('' or 'something') ; filters a particular 
 
 
 # Assay mode features (choose if you want absolute quantification)
-plot_assay_variable <- 'Sample' # printed on the x axis of the graph
+plot_assay_variable <- '[Arabinose] (mM)' # printed on the x axis of the graph
 plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours
 plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
@@ -134,8 +134,8 @@ if (experiment_mode == 'assay')
   
   results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
   results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable
-  results_relevant %<>% mutate(`Sample Name` = str_replace(`Sample Name`, 'GFP', 'Reporter'), `Sample Name` = fct_inorder(`Sample Name`)) # change GFP to reporter - for plot
-  results_relevant %<>%  mutate(`Sample Name` = if_else(str_detect(assay_variable, 'Glu'), 'Controls', as.character(`Sample Name`))) # change glucose data point into controls
+  results_relevant %<>% mutate(`Sample Name` = str_replace(`Sample Name`, 'GFP', 'Reporter')) # change GFP to reporter - for plot
+  results_relevant %<>%  mutate(`Sample Name` = if_else(str_detect(assay_variable, 'Glu'), 'Controls', as.character(`Sample Name`)), `Sample Name` = fct_inorder(`Sample Name`), `Sample Name` = fct_relevel(`Sample Name`,'Reporter') ) # change glucose data point into controls
   
   # Plot absolute quantification copy # : inferred from standard curve parameters (input in the start)
   if(plot_mode == 'absolute_quantification')
@@ -156,7 +156,7 @@ if (experiment_mode == 'assay')
     
     # calculate hill function fit
     reporter_set <- results_abs %>% filter(str_detect(`Sample Name`,'Rep')) # filter only reporter values for hill function fitting
-    hill_param <- reporter_set %>% hill_fit() # call hill fitting function on only reporter samples
+    hill_param <- reporter_set %>% rename(L = assay_variable, y = mean) %>%  hill_fit() # call hill fitting function on only reporter samples
     reporter_set  %<>% mutate(hill_fit = predict(hill_param)) # take the fit curve for plotting
     
     plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable)) + ylab('Copy #')    # plotting only mean
@@ -202,6 +202,18 @@ if (experiment_mode == 'assay')
   }
 }
 
+# plate reader data ----
+plate_data <- read_tsv(clipboard(), col_names = T) # read table from clipboard
+plate_data$`[Arabinose]`[1:2] <- c(10,0) # glucose will be 10 and 0 will be 0
+
+plate_subset <- plate_data %>% filter(`[Arabinose]` <= 1)
+hill_plate <- plate_subset %>% rename(L = `[Arabinose]`, y = GFP ) %>% hill_fit() # call hill fitting function on only reporter samples
+plate_subset  %<>% mutate(GFP.fit = predict(hill_plate)) # take the fit curve for plotting
+
+plt.plate <- ggplot(plate_data, aes(`[Arabinose]`, GFP)) + geom_point(size = 2) + geom_line(data = plate_subset, aes(x = `[Arabinose]`, y = GFP.fit), linetype = 2) + ylab('GFP/OD (a.u.)')
+plt.plate_formatted <- plt.plate %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
+
+print(plt.plate_formatted) # print the formatted plot
 
 # Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----
 

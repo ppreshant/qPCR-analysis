@@ -144,7 +144,7 @@ if (experiment_mode == 'assay')
     results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
     
     # changing text from assay variables into numbers (to be plotted on logscale) 
-    init_var <- c('Gluc.*', 'rM.*', 'fM.*','Wa.*'); fin_var <- c('.3','.03','.1','.01'); names(fin_var) = init_var; 
+    init_var <- c('Gluc.*', 'rM.*', 'fM.*','Wa.*'); fin_var <- c('.01','.03','.1','.3'); names(fin_var) = init_var; 
     results_abs %<>% mutate( assay_variable = str_replace_all(assay_variable, fin_var), assay_variable = as.numeric(assay_variable)) 
     
     

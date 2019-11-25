@@ -43,7 +43,7 @@ plotalltms <- function(results_relevant)
   plttm2 <- tmfl %>% ggplot(.) + aes(x = `Sample Name`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_wrap(~`Primer pair`, scales = 'free_x')
+    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`, scales = 'free_x', space = 'free_x')
 }
 
 # plot the first Tm only ; Graph will now show
@@ -52,7 +52,7 @@ plottm1 <- function(results_relevant)
   plttm <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_wrap(~`Primer pair`, scales = 'free_x')
+    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`, scales = 'free_x', space = 'free_x')
 }
 
 
@@ -89,7 +89,7 @@ if (experiment_mode == 'small_scale')
     geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + ylab(expression(C[q])) + facet_wrap(~Target, scales = 'free_x') 
+    ggtitle(title_name) + ylab(expression(C[q])) + facet_grid(~Target, scales = 'free_x', space = 'free_x') 
   
   print(plt)
 }
@@ -127,7 +127,7 @@ if (experiment_mode == 'assay')
   plttm <- tmfl %>% ggplot(.) + aes(x = `assay_variable`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
+    ggtitle(paste(title_name,': Melting')) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x')
   
   results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude_category)) # exclude unwanted samples categories (sample_name) 
   results_relevant %<>% filter(!str_detect(assay_variable, plot_exclude_assay_variable)) # excluding unwanted samples from assay_variable
@@ -152,7 +152,7 @@ if (experiment_mode == 'assay')
   else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
     
   # plot the CT mean and formatting plots
-  plt <- plt + geom_point(size = 2) + facet_wrap(~`Sample Name`, scales = 'free_x') # plot points and facetting
+  plt <- plt + geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
   plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
   
   print(plt.formatted)
@@ -173,7 +173,7 @@ if (experiment_mode == 'assay')
     
     # plotting the normalized copy #'s
     plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting
-    geom_point(size = 2) + facet_wrap(~`Sample Name`, scales = 'free_x') # plot points and facetting
+    geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
     
     plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
     

@@ -13,6 +13,7 @@ experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implemen
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
 plot_select_template <- '' # Options ('' or 'something') ; filters a particular template name to plot 
+errorbar_width = 0.1; # width of errorbars - emperically change
 
 # small_scale mode features
 
@@ -145,7 +146,7 @@ if (experiment_mode == 'assay')
     
     plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
 
-    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .25))} # plot errorbars if mean and SD are desired
+    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width))} # plot errorbars if mean and SD are desired
     
   } 
   

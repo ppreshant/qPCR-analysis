@@ -1,5 +1,5 @@
 ---
-title: "S06b_Lysate qPCR"
+title: "S019_Lysate qPCR"
 author: "Prashant Kalvapalle"
 date: "21 Aug 2019"
 output: html_document
@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = F, fig.width = 4, fig.height = 5)
+knitr::opts_chunk$set(echo = F, fig.width = 6, fig.height = 4)
 ```
 
 ## Goal of the analysis
@@ -16,7 +16,7 @@ We want to test by qPCR if AHL is flipping any constructs. Using this file to no
 
 ## Running source codes
 
-```{r cars}
+```{r calling functions}
 source('general_functions.R')
 source('analysis.R')
 ```

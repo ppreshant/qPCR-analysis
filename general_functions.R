@@ -73,13 +73,28 @@ lm_eqn <- function(df, trig = 0){
 
 # plot formatting ---- 
   
+  # add elements to plot: points, lines, point shapes for inducer conc. 
+  plot_layers_and_additions <- function(plt_init, induction_duration = c(0,6/24), x_breaks = c(0,1,3,4), stroke_width = 1, x_axis_label = 'Time (days)', plot_title = 'AHL flipping with time' )
+  {
+    plt <- plt_init + geom_line() + geom_point(size = 2, fill = 'white', stroke = stroke_width) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') + # plot points and facetting
+      # annotate('rect', xmin = induction_duration[1], ymin = 0, xmax = induction_duration[2], ymax = Inf, alpha = .2) +  # grey rectangle for induction duration
+      scale_shape_manual(values = c(21,19)) +  scale_x_continuous(breaks = x_breaks) + 
+      xlab(x_axis_label) + ggtitle(plot_title)
+    
+    format_classic(plt) # output a classic formatted plot
+  }
+  
+  # add rectangle for inducer duration at desired places
+  add_rectangles <- function(plt_init, results_data)
+  {
+    # trying : plt + annotate('rect', xmin = 4, xmax = 6, ymin = 0, ymax = Inf, facets = data.frame(`Sample Name` = factor('pRV01', levels = c('pRV01','fGFP','Water'))))
+  }
+  
   # plot formatting function : format as classic, colours = Set1
-  format_classic <- function(plt, title_name, plot_assay_variable)
+  format_classic <- function(plt)
   { # formats plot as classic, with colour palette Set1, centred title, angled x axis labels
     plt <- plt +
-      theme_classic() + scale_color_brewer(palette="Set1") + 
-      theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +
-      ggtitle(title_name) + xlab(plot_assay_variable)
+      theme_classic() + scale_color_brewer(palette="Set1")
   }
   
   # plot formatting function : format as logscale

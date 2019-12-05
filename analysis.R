@@ -7,7 +7,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'S019 25-11-19'  # set the filename
+flnm <- 'S019_2 fGFP 30-11-19'  # set the filename
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
 
 title_name <-'qPCR on time progression S019'

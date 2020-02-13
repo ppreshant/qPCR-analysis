@@ -1,7 +1,7 @@
 ---
-title: "S019_Lysate qPCR"
+title: "S023_qPCR for flipping"
 author: "Prashant Kalvapalle"
-date: "4 Dec 2019"
+date: "13 Feb 2020"
 output: html_document
 ---
 
@@ -17,8 +17,7 @@ We want to test by qPCR if AHL is flipping any constructs. Using this file to no
 ## Running source codes
 
 ```{r calling functions}
-source('general_functions.R')
-source('analysis.R')
+source('analysis.R') # Loads excel data, does all the analysis and makes plots
 ```
 
 ## Data output

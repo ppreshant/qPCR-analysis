@@ -7,10 +7,10 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'S019_2 fGFP 30-11-19'  # set the filename
+flnm <- 'q-S023a 12-2-20'  # set the filename
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
 
-title_name <-'qPCR on time progression S019'
+title_name <-'qPCR on time progression S023'
 experiment_mode <- 'assay' # no other options: future implementation: 'custom'. Explanation below, 'small_scale' is in master branch
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -105,7 +105,7 @@ if (experiment_mode == 'assay')
   else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = Target))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
     
   # plot the CT mean and formatting plots
-  plt %<>%  plot_layers_and_additions(x_breaks = x_axis_breaks) # plot points and facetting
+  plt %<>%  plot_layers_and_additions(x_breaks = x_axis_breaks, plot_title = title_name) # plot points and facetting
   plt.logscale <- plt %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
   
   print(plt)
@@ -127,7 +127,7 @@ if (experiment_mode == 'assay')
     
     # plotting the normalized copy #'s
     plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target, shape = Inducer)) + ylab('Fraction of plasmid')  # plotting
-    plt_norm  %<>% plot_layers_and_additions(x_breaks = x_axis_breaks) 
+    plt_norm  %<>% plot_layers_and_additions(x_breaks = x_axis_breaks, plot_title = title_name) 
     
     plt_norm.logscale <- plt_norm %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
     

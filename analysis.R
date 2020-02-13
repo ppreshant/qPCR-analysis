@@ -105,7 +105,7 @@ if (experiment_mode == 'assay')
   else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = Target))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
     
   # plot the CT mean and formatting plots
-  plt %<>%  plot_layers_and_additions(x_breaks = x_axis_breaks) # plot points and facetting
+  plt %<>%  plot_layers_and_additions(x_breaks = x_axis_breaks, plot_title = title_name) # plot points and facetting
   plt.logscale <- plt %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
   
   print(plt)
@@ -127,7 +127,7 @@ if (experiment_mode == 'assay')
     
     # plotting the normalized copy #'s
     plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target, shape = Inducer)) + ylab('Fraction of plasmid')  # plotting
-    plt_norm  %<>% plot_layers_and_additions(x_breaks = x_axis_breaks) 
+    plt_norm  %<>% plot_layers_and_additions(x_breaks = x_axis_breaks, plot_title = title_name) 
     
     plt_norm.logscale <- plt_norm %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
     

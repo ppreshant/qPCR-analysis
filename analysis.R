@@ -135,7 +135,7 @@ if (experiment_mode == 'assay')
   results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
   results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable
   results_relevant %<>% mutate(`Sample Name` = str_replace(`Sample Name`, 'GFP', 'Reporter')) # change GFP to reporter - for plot
-  results_relevant %<>%  mutate(`Sample Name` = if_else(str_detect(assay_variable, 'Glu'), 'Controls', as.character(`Sample Name`)), `Sample Name` = fct_inorder(`Sample Name`), `Sample Name` = fct_relevel(`Sample Name`,'Reporter') ) # change glucose data point into controls
+  results_relevant %<>%  mutate(`Sample Name` = if_else(str_detect(assay_variable, 'Glu'), 'Controls', as.character(`Sample Name`)), `Sample Name` = fct_inorder(`Sample Name`), `Sample Name` = fct_relevel(`Sample Name`,'Controls') ) # change glucose data point into controls and plot controls first
   
   # Plot absolute quantification copy # : inferred from standard curve parameters (input in the start)
   if(plot_mode == 'absolute_quantification')
@@ -143,8 +143,8 @@ if (experiment_mode == 'assay')
     results_relevant_grouped <- results_relevant %>% group_by(Target) 
     results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
     
-    # changing text from assay variables into numbers (to be plotted on logscale) 
-    init_var <- c('Gluc.*', 'rM.*', 'fM.*','Wa.*'); fin_var <- c('.01','.03','.1','.3'); names(fin_var) = init_var; 
+    # changing text from assay variables into numbers (to be plotted on logscale) (change them back in inkscape)
+    init_var <- c('Wa.*', 'rM.*', 'Gluc.*', 'fM.*'); fin_var <- c('.01','.03','.1','.3'); names(fin_var) = init_var; 
     results_abs %<>% mutate( assay_variable = str_replace_all(assay_variable, fin_var), assay_variable = as.numeric(assay_variable)) 
     
     

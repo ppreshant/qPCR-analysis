@@ -205,12 +205,14 @@ if (experiment_mode == 'assay')
 # plate reader data ----
 plate_data <- read_tsv(clipboard(), col_names = T) # read table from clipboard
 plate_data$`[Arabinose]`[1:2] <- c(10,0) # glucose will be 10 and 0 will be 0
+plate_data %<>% mutate(category = c('Control', rep('Reporter',7)))
 
 plate_subset <- plate_data %>% filter(`[Arabinose]` <= 1)
 hill_plate <- plate_subset %>% rename(L = `[Arabinose]`, y = GFP ) %>% hill_fit() # call hill fitting function on only reporter samples
 plate_subset  %<>% mutate(GFP.fit = predict(hill_plate)) # take the fit curve for plotting
 
-plt.plate <- ggplot(plate_data, aes(`[Arabinose]`, GFP)) + geom_point(size = 2) + geom_line(data = plate_subset, aes(x = `[Arabinose]`, y = GFP.fit), linetype = 2) + ylab('GFP/OD (a.u.)')
+plt.plate <- ggplot(plate_data, aes(`[Arabinose]`, GFP)) + geom_point(size = 2) + geom_line(data = plate_subset, aes(x = `[Arabinose]`, y = GFP.fit), linetype = 2) + ylab('GFP/OD (a.u.)') +
+  facet_grid(~ category, scales = "free_x", space = "free_x") 
 plt.plate_formatted <- plt.plate %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
 
 print(plt.plate_formatted) # print the formatted plot

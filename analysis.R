@@ -28,7 +28,7 @@ std_par <- tibble(                       # Input the slope and intercept from st
 )
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode
-plot_exclude <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*' or ''; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
+plot_exclude <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*' or '-'; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 # plotting functions for Melting temperature ----
 
@@ -108,12 +108,6 @@ if (experiment_mode == 'assay')
   
   # Factorise the sample name in the order for plotting
   results_relevant %<>% mutate_if(is.character,as_factor) 
-  # results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
-  # results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
-  # results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
-  # results_relevant$`assay_variable` %<>% factor(levels = unique(.[sample_order])) # assay_variable
-  # results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
-  # results_relevant %<>% mutate_if(is.character, as_factor(levels = arrange(sample_order))) or factor(levels = unique(.[sample_order])) # fancy way of vectorizing - doesn't work
   
   # re-arrange the results in same order as the above factors (columnwise order of the plate)
   results_relevant %<>% arrange(`Well Position`) 
@@ -132,8 +126,9 @@ if (experiment_mode == 'assay')
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
   
+  # more data processing
   results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
-  results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable
+  results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable such as 'NTC'
   results_relevant %<>% mutate(`Sample Name` = str_replace(`Sample Name`, 'GFP', 'Reporter')) # change GFP to reporter - for plot
   results_relevant %<>%  mutate(`Sample Name` = if_else(str_detect(assay_variable, 'Glu'), 'Controls', as.character(`Sample Name`)), `Sample Name` = fct_inorder(`Sample Name`), `Sample Name` = fct_relevel(`Sample Name`,'Controls') ) # change glucose data point into controls and plot controls first
   
@@ -203,7 +198,10 @@ if (experiment_mode == 'assay')
 }
 
 # plate reader data ----
-plate_data <- read_tsv(clipboard(), col_names = T) # read table from clipboard
+plateflnm <- '../Plate reader/S03_Ara memory GFP_26-9-18.xlsx' # file name for plate reader data
+
+plate_data <- read_xlsx(plateflnm, sheet = 'in water', range = 'G68:J76')
+# plate_data <- read_tsv(clipboard(), col_names = T) # read table from clipboard - really lazy
 plate_data$`[Arabinose]`[1:2] <- c(10,0) # glucose will be 10 and 0 will be 0
 plate_data %<>% mutate(category = c('Control', rep('Reporter',7)))
 

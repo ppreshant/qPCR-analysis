@@ -5,9 +5,14 @@
 
 source('./general_functions.R') # Source the general_functions file before running this
 
-# User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'excel files/Int_Assay1 MHT.xls'  
+# User inputs -------------------------------------------------------------
+
+
+# User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject)
+
+flnm <- 'Int_Assay1 MHT' 
+flpath <- str_c('excel files/', flnm, '.xls') 
 title_name <-'Arabinose induced flipping'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
@@ -27,41 +32,20 @@ std_par <- tibble(                       # Input the slope and intercept from st
   intercept = c(42, 38, 42)
 )
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
-plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode
-plot_exclude <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*' or '-'; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
-
-# plotting functions for Melting temperature ----
-
-# plots all the Tm's if samples have multiple peaks in the melting curve
-plotalltms <- function(results_relevant)
-{ 
-  # Gather the Tm's into another data frame and merge into 1 column
-  tmfl <- results_relevant %>% select(`Sample Name`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`)
-  
-  # plot the Tm ; Graph will now show
-  plttm2 <- tmfl %>% ggplot(.) + aes(x = `Sample Name`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_wrap(~`Primer pair`, scales = 'free_x')
-}
-
-# plot the first Tm only ; Graph will now show
-plottm1 <- function(results_relevant)
-{ 
-  plttm <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_wrap(~`Primer pair`, scales = 'free_x')
-}
+plot_mean_and_sd <- 'no' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode
+plot_exclude <- 'none' # Regex pattern: 'Controls2', '^MHT*' or 'none'; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 
-# Input the data ----
+# Data loading and manipulation ------------------------------------------------------------
+
+
+# Loading the data ----
 
 # reading in file and polishing
-fl <- readqpcr(flnm) # read excel file exported by Quantstudio
+fl <- readqpcr(flpath) # read excel file exported by Quantstudio
 
 sample_order = columnwise_index(fl) # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
-results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) %>%  .[sample_order,] # select only the results used for plotting, calculations etc. and arrange them according to sample order
+results_raw <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) %>%  .[sample_order,] # select only the results used for plotting, calculations etc. and arrange them according to sample order
 
 # Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)----
 
@@ -72,10 +56,6 @@ if (experiment_mode == 'small_scale')
   
   # Factorise the sample name in the order for plotting
   results_relevant %<>% mutate_if(is.character,as_factor) 
-  # results_relevant$`Well Position` %<>% factor(levels = unique(.[sample_order]))
-  # results_relevant$`Sample Name` %<>% factor(levels = unique(.[sample_order]))
-  # results_relevant$`Primer pair` %<>% factor(levels = unique(.[sample_order])) # Factorise the primer pairs
-  # results_relevant$Target %<>% factor(levels = unique(.[sample_order]))
   
   # select samples to plot (or to exclude write a similar command)
   results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
@@ -100,37 +80,23 @@ if (experiment_mode == 'assay')
   # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
   
   # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
-  results_relevant %<>% separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ') %>% separate(.,`Sample Name`,c('Sample Name','assay_variable'),'_')
+  results_relevant <- results_raw %>% separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ') %>% separate(.,`Sample Name`,c('Sample Name','assay_variable'),'_')
   
-  # Merging 2 biological controls for r and f MHTs
-  results_relevant$assay_variable[results_relevant$assay_variable == 'rMHT2'] <- 'rMHT1'
-  results_relevant$assay_variable[results_relevant$assay_variable == 'fMHT2'] <- 'fMHT1'
-  
-  # Factorise the sample name in the order for plotting
-  results_relevant %<>% mutate_if(is.character,as_factor) 
-  
-  # re-arrange the results in same order as the above factors (columnwise order of the plate)
-  results_relevant %<>% arrange(`Well Position`) 
+  # Factorise the sample name in the order for plotting       re-arrange the results in same order as the above factors (columnwise order of the plate)
+  results_relevant %<>% mutate_if(is.character,as_factor) %>% arrange(`Well Position`) 
   
   # select samples to plot (or to exclude write a similar command)
   results_relevant %<>% filter(str_detect(`Sample Name`, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
   
   # plot the Tm of multiple peaks in melting curve ; Graph will now show
-  
-  # Gather the Tm's into another data frame and merge into 1 column
-  tmfl <- results_relevant %>% select(`Sample Name`, `assay_variable`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`, -`assay_variable`)
-  
-  # plot the Tm ; Graph will now show
-  plttm <- tmfl %>% ggplot(.) + aes(x = `assay_variable`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting')) + facet_wrap(~`Sample Name`, scales = 'free_x')
+  plttm_assay <- plotalltms_assay(results_relevant) # plots tms of multiple peaks in melting curve
   
   # more data processing
   results_relevant %<>% filter(!str_detect(`Sample Name`, plot_exclude)) # exclude unwanted samples categories (sample_name) 
-  results_relevant %<>% filter(!str_detect(assay_variable, '^N')) # excluding unwanted samples from assay_variable such as 'NTC'
-  results_relevant %<>% mutate(`Sample Name` = str_replace(`Sample Name`, 'GFP', 'Reporter')) # change GFP to reporter - for plot
-  results_relevant %<>%  mutate(`Sample Name` = if_else(str_detect(assay_variable, 'Glu'), 'Controls', as.character(`Sample Name`)), `Sample Name` = fct_inorder(`Sample Name`), `Sample Name` = fct_relevel(`Sample Name`,'Controls') ) # change glucose data point into controls and plot controls first
+
+  results_relevant %<>% mutate(sample_type  = `Sample Name`, `Sample Name` = str_replace(`Sample Name`, 'GFP|MHT.*', 'Reporter')) # change GFP and MHT to reporter - for plot facetting
+  results_relevant %<>% mutate(`Sample Name` = if_else(str_detect(assay_variable, 'Glu'), 'Controls', as.character(`Sample Name`)), `Sample Name` = fct_inorder(`Sample Name`), `Sample Name` = fct_relevel(`Sample Name`,'Controls') ) # change glucose data point into controls and plot controls first
+  
   
   # Plot absolute quantification copy # : inferred from standard curve parameters (input in the start)
   if(plot_mode == 'absolute_quantification')
@@ -139,22 +105,22 @@ if (experiment_mode == 'assay')
     results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
     
     # changing text from assay variables into numbers (to be plotted on logscale) (change them back in inkscape)
-    init_var <- c('Wa.*', 'rM.*', 'Gluc.*', 'fM.*'); fin_var <- c('.01','.03','.1','.3'); names(fin_var) = init_var; 
+    init_var <- c('Wa.*', 'rM.*', 'Gluc.*', 'fM.*','N'); fin_var <- c('.01','.03','.1','.3', '.01'); names(fin_var) = init_var; # N (NTC) merged with Water
     results_abs %<>% mutate( assay_variable = str_replace_all(assay_variable, fin_var), assay_variable = as.numeric(assay_variable)) 
     
     
     if(plot_mean_and_sd == 'yes') {
       y_variable = quo(mean)
-      results_abs %<>% group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd))
+      results_abs %<>% group_by(`Sample Name`, Target, assay_variable, sample_type) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd))
       } 
     else {y_variable = quo(`Copy #`)}
     
     # calculate hill function fit
     reporter_set <- results_abs %>% filter(str_detect(`Sample Name`,'Rep')) # filter only reporter values for hill function fitting
-    hill_param <- reporter_set %>% rename(L = assay_variable, y = mean) %>%  hill_fit() # call hill fitting function on only reporter samples
+    hill_param <- reporter_set %>% rename(L = assay_variable, y = !!y_variable) %>%  hill_fit() # call hill fitting function on only reporter samples
     reporter_set  %<>% mutate(hill_fit = predict(hill_param)) # take the fit curve for plotting
     
-    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable)) + ylab('Copy #')    # plotting only mean
+    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, colour = sample_type)) + ylab('Copy #')    # plotting only mean
       
     if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = .1))} 
     
@@ -163,9 +129,9 @@ if (experiment_mode == 'assay')
   # plot the CT mean along with replicates
   plt <- plt + geom_point(size = 2, show.legend = T) + geom_line(data = reporter_set, aes(x = assay_variable, y = hill_fit), linetype = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
     
-  plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
+  plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale_x() # formatting plot, axes labels, title and logcale x plotting
   
-  print(plt.formatted) # print the formatted plot
+  print(plt.formatted %>% format_logscale()) # print the formatted plot
 
   # normalizing copy #s to backbone ----  
   if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
@@ -197,23 +163,24 @@ if (experiment_mode == 'assay')
   }
 }
 
-# plate reader data ----
-plateflnm <- '../Plate reader/S03_Ara memory GFP_26-9-18.xlsx' # file name for plate reader data
+# # plate reader data ----
+# plateflnm <- '../Plate reader/S03_Ara memory GFP_26-9-18.xlsx' # file name for plate reader data
+# 
+# plate_data <- read_xlsx(plateflnm, sheet = 'in water', range = 'G68:J76')
+# # plate_data <- read_tsv(clipboard(), col_names = T) # read table from clipboard - really lazy
+# plate_data$`[Arabinose]`[1:2] <- c(10,0) # glucose will be 10 and 0 will be 0
+# plate_data %<>% mutate(category = c('Control', rep('Reporter',7)))
+# 
+# plate_subset <- plate_data %>% filter(`[Arabinose]` <= 1)
+# hill_plate <- plate_subset %>% rename(L = `[Arabinose]`, y = GFP ) %>% hill_fit() # call hill fitting function on only reporter samples
+# plate_subset  %<>% mutate(GFP.fit = predict(hill_plate)) # take the fit curve for plotting
+# 
+# plt.plate <- ggplot(plate_data, aes(`[Arabinose]`, GFP)) + geom_point(size = 2) + geom_line(data = plate_subset, aes(x = `[Arabinose]`, y = GFP.fit), linetype = 2) + ylab('GFP/OD (a.u.)') +
+#   facet_grid(~ category, scales = "free_x", space = "free_x")
+# plt.plate_formatted <- plt.plate %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
+# 
+# print(plt.plate_formatted) # print the formatted plot
 
-plate_data <- read_xlsx(plateflnm, sheet = 'in water', range = 'G68:J76')
-# plate_data <- read_tsv(clipboard(), col_names = T) # read table from clipboard - really lazy
-plate_data$`[Arabinose]`[1:2] <- c(10,0) # glucose will be 10 and 0 will be 0
-plate_data %<>% mutate(category = c('Control', rep('Reporter',7)))
-
-plate_subset <- plate_data %>% filter(`[Arabinose]` <= 1)
-hill_plate <- plate_subset %>% rename(L = `[Arabinose]`, y = GFP ) %>% hill_fit() # call hill fitting function on only reporter samples
-plate_subset  %<>% mutate(GFP.fit = predict(hill_plate)) # take the fit curve for plotting
-
-plt.plate <- ggplot(plate_data, aes(`[Arabinose]`, GFP)) + geom_point(size = 2) + geom_line(data = plate_subset, aes(x = `[Arabinose]`, y = GFP.fit), linetype = 2) + ylab('GFP/OD (a.u.)') +
-  facet_grid(~ category, scales = "free_x", space = "free_x") 
-plt.plate_formatted <- plt.plate %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
-
-print(plt.plate_formatted) # print the formatted plot
 
 # Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----
 

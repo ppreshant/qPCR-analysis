@@ -64,7 +64,7 @@ lm_eqn <- function(df, trig = 0){
   else as.character(as.expression(eq)); 
 }
 
-hill_fit <- function(results_array)
+hill_fitting_fn <- function(results_array)
 {
   # source: https://github.com/dritoshi/Fitting-Hill-equation/blob/master/bin/hill.r
   # Fittiing Hill equation

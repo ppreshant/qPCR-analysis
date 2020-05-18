@@ -33,7 +33,7 @@ std_par <- tibble(                       # Input the slope and intercept from st
 )
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_mean_and_sd <- 'no' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode
-plot_exclude <- 'none' # Regex pattern: 'Controls2', '^MHT*' or 'none'; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
+plot_exclude <- '^MHT' # Regex pattern: 'Controls2', '^MHT*' or 'none'; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 
 
 # Data loading and manipulation ------------------------------------------------------------
@@ -117,7 +117,7 @@ if (experiment_mode == 'assay')
     
     # calculate hill function fit
     reporter_set <- results_abs %>% filter(str_detect(`Sample Name`,'Rep')) # filter only reporter values for hill function fitting
-    hill_param <- reporter_set %>% rename(L = assay_variable, y = !!y_variable) %>%  hill_fit() # call hill fitting function on only reporter samples
+    hill_param <- reporter_set %>% rename(L = assay_variable, y = !!y_variable) %>%  hill_fitting_fn() # call hill fitting function on only reporter samples
     reporter_set  %<>% mutate(hill_fit = predict(hill_param)) # take the fit curve for plotting
     
     plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, colour = sample_type)) + ylab('Copy #')    # plotting only mean
@@ -163,23 +163,23 @@ if (experiment_mode == 'assay')
   }
 }
 
-# # plate reader data ----
-# plateflnm <- '../Plate reader/S03_Ara memory GFP_26-9-18.xlsx' # file name for plate reader data
-# 
-# plate_data <- read_xlsx(plateflnm, sheet = 'in water', range = 'G68:J76')
-# # plate_data <- read_tsv(clipboard(), col_names = T) # read table from clipboard - really lazy
-# plate_data$`[Arabinose]`[1:2] <- c(10,0) # glucose will be 10 and 0 will be 0
-# plate_data %<>% mutate(category = c('Control', rep('Reporter',7)))
-# 
-# plate_subset <- plate_data %>% filter(`[Arabinose]` <= 1)
-# hill_plate <- plate_subset %>% rename(L = `[Arabinose]`, y = GFP ) %>% hill_fit() # call hill fitting function on only reporter samples
-# plate_subset  %<>% mutate(GFP.fit = predict(hill_plate)) # take the fit curve for plotting
-# 
-# plt.plate <- ggplot(plate_data, aes(`[Arabinose]`, GFP)) + geom_point(size = 2) + geom_line(data = plate_subset, aes(x = `[Arabinose]`, y = GFP.fit), linetype = 2) + ylab('GFP/OD (a.u.)') +
-#   facet_grid(~ category, scales = "free_x", space = "free_x")
-# plt.plate_formatted <- plt.plate %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
-# 
-# print(plt.plate_formatted) # print the formatted plot
+# plate reader data ----
+plateflnm <- '../Plate reader/plate reader data/S03_Ara memory GFP_26-9-18.xlsx' # file name for plate reader data
+
+plate_data <- read_xlsx(plateflnm, sheet = 'in water', range = 'G68:J76')
+# plate_data <- read_tsv(clipboard(), col_names = T) # read table from clipboard - really lazy
+plate_data$`[Arabinose]`[1:2] <- c(10,0) # glucose will be 10 and 0 will be 0
+plate_data %<>% mutate(category = c('Control', rep('Reporter',7)))
+
+plate_subset <- plate_data %>% filter(`[Arabinose]` <= 1)
+hill_plate <- plate_subset %>% rename(L = `[Arabinose]`, y = GFP ) %>% hill_fitting_fn() # call hill fitting function on only reporter samples
+plate_subset  %<>% mutate(GFP.fit = predict(hill_plate)) # take the fit curve for plotting
+
+plt.plate <- ggplot(plate_data, aes(`[Arabinose]`, GFP)) + geom_point(size = 2) + geom_line(data = plate_subset, aes(x = `[Arabinose]`, y = GFP.fit), linetype = 2) + ylab('GFP/OD (a.u.)') +
+  facet_grid(~ category, scales = "free_x", space = "free_x")
+plt.plate_formatted <- plt.plate %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() %>% format_logscale_x() # formatting plot, axes labels, title and logcale plotting
+
+print(plt.plate_formatted) # print the formatted plot
 
 
 # Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----

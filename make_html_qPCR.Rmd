@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = F)
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
 ```
 
 ## Goal of the analysis
@@ -21,57 +21,39 @@ source('general_functions.R')
 source('analysis.R')
 ```
 
+## Fitting results
+
+Results from fitting hill function - K~d~ (EC~50~), max , min and fold change = $\frac{max}{min}$
+
+```{r hill_table1}
+h1 <- coef(hill_param); min1 <- reporter_set %>% pull(hill_fit) %>% min()
+h2 <- coef(hill_plate); min2 <- plate_subset %>% pull(GFP.fit) %>% min()
+
+# formatting for easy read:
+hill_params_table <- tibble('qPCR' = c(h1, min1, h1[1]/min1), 'GFP' = c(h2, min2, h2[1]/min2)) %>% t() %>% as_tibble() %>% mutate(Method = c('qPCR', 'GFP')) %>% select(Method, everything())
+colnames(hill_params_table) <- c('Detection method', 'Maximum', 'Hill coef','EC50', 'Minimum', 'Fold change')
+hill_params_table %<>% mutate_at(vars(c(3,4,6)), format, digits = 2) %>% mutate_at(vars(c(2,5)), format, digits = 2, scientific = T)
+
+kable(hill_params_table, caption = 'Hill function fitting parameters')
+```
+
+* Considering Glucose inhibition as minimum (fold change recalculated)
+
+```{r hill_table_glu}
+glumin1 <- results_abs  %>% filter(`Sample Name` == 'Controls', assay_variable == .1) %>% pull(`Copy #`) %>% mean()
+glumin2 <- plate_data  %>% filter(`[Arabinose]` == 10) %>% pull(GFP) %>% mean()
+
+hill_params_table %<>% mutate('Glucose' = format(c(glumin1, glumin2), digits = 2, scientific = T), 'Fold over Glu' = format(c(h1[1]/glumin1, h2[1]/glumin2), digits = 2, scientific = F))
+
+kable(hill_params_table, caption = 'Hill function fitting parameters')
+```
+
 ## Data output
+
+qPCR copy number data 
 
 ```{r datadisplay}
 results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
 kable(results_abs, caption = 'Summary of estimated copy #s')
 ```
 
-<!-- ## Transforming data and normalization -->
-
-<!-- 1. Select only relevant data from the results -->
-<!-- 2. Data divided into 3 tibbles for each primer-pair (also called as Target) -->
-
-
-<!-- 3. Ratio of Flipped/Backbone and Unflipped/backbone are calculated -->
-
-<!-- 4. data is combined into 1 data frame -->
-<!-- 5. And plotted in next section -->
-
-<!-- ```{r} -->
-<!-- # sel <- results_abs %>% select(`Sample Name`,assay_variable,`Primer pair`,Target,`Copy #`) -->
-<!-- # # sel_grouped <- sel %>% group_by(Target) %>% mutate(id = 1:n()) -->
-<!-- # # sel_spread <- sel_grouped %>% spread(Target,`Copy #`) -->
-<!-- #  -->
-<!-- #  -->
-<!-- # sel_b <- sel %>% filter(Target == 'Backbone') -->
-<!-- # sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped'); -->
-<!-- #  -->
-<!-- # sel_f %<>% mutate("Normalized copy #" = sel_f$`Copy #`/sel_b$`Copy #`);  -->
-<!-- # sel_u %<>% mutate("Normalized copy #" = sel_u$`Copy #`/sel_b$`Copy #`); -->
-<!-- #  -->
-<!-- # results_ratio <- bind_rows(sel_f, sel_u)   -->
-<!-- ``` -->
-
-<!-- ## Including Plots -->
-
-<!-- Plots here -->
-
-<!-- ```{r pressure, echo=FALSE} -->
-
-<!-- # plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting -->
-<!-- #   scale_y_log10(  # logscale for y axis with tick marks -->
-<!-- #     breaks = scales::trans_breaks("log10", function(x) 10^x), -->
-<!-- #     labels = scales::trans_format("log10", scales::math_format(10^.x) ) -->
-<!-- #   ) -->
-<!-- #  -->
-<!-- # plt_norm <- plt_norm + geom_point(size = 2) + -->
-<!-- #     theme_classic() + scale_color_brewer(palette="Set1") +  -->
-<!-- #     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +  -->
-<!-- #     ggtitle(title_name) + facet_wrap(~`Sample Name`, scales = 'free_x') -->
-<!-- #  -->
-<!-- # print(plt_norm) -->
-<!-- # ggsave('S5a_AHL flip_normalized.png') -->
-
-<!-- ``` -->

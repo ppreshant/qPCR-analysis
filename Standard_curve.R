@@ -1,20 +1,25 @@
 # Plots standard curve for a given file (make sure it has quantities and targets and it is standard curve data)
 
 # choose file name, in the same directory as Rproject
-flnm <- 'excel files/Std5.xls'  
+flnm <- 'Std7_N genes_IDT_25-5-20'  # set the filename
+flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
+target_variable <- 'Target Name' # this is the name entered in quantstudio vs 'Target' entered by loading excel template into quantstudio
 
-fl <- readqpcr(flnm) # read file
+source('./general_functions.R') # Source the general_functions file before running this
 
+fl <- readqpcr(flpath) # read file
+
+if(target_variable == 'Target Name') fl$Results %<>% mutate('Target' = `Target Name`)
 # optional filtering to remove low concentration points in standard curve
 # fl$Results <- fl$Results %>% filter(`Quantity` > 1e4) # filtering only standard curve within the linear range
 
-plt <- plotstdcurve(fl,'qPCR Standard curve 5', 'log(Copy #)') # plot standard curve
+plt <- plotstdcurve(fl,'qPCR Standard curve 7: N genes_IDT', 'log(Copy #)') # plot standard curve
 
 # # Extract the names of the targets in use
 # targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target Name`) %>% unique(.)  
 
 # Isolating standard curve variables (Quantity,CT) of the different targets into groups
-standard_curve_vars <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT,`Target`) %>% group_by(`Target`) # select required columns and group
+standard_curve_vars <- fl$Results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT, Target) %>% group_by(Target) # select required columns and group
 
 # Apply linear regression and find the model fitting results (equation and slope, R2 values) for each target
 std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn(., trig = 'coeff'), dat = .[1,] ) # "do" applies functions to each group of the data

@@ -27,7 +27,8 @@ std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "
 std_table$dat %<>% bind_rows()  
 
 # Add labels to plot - linear regression equation
-plt + geom_label_repel(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F)
+plt + geom_label_repel(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, nudge_x = -2, force = 5)
+# ggsave('qPCR analysis/Std7_N CoV2_IDT.png', width = 5, height = 4)
 
 # processing linear regression out
 efficiency_table <- tibble(Slope = std_table$params %>% pull(slope), Efficiency = 10^(-1/Slope), '% Efficiency' = (Efficiency -1)*100 , 'R-square' = std_table$params %>% pull(r_square) %>% round(2))

@@ -8,13 +8,13 @@ library(readxl); library(magrittr); library(tidyverse); library(ggrepel);
 
 # reading files and manipulating columns ----
 
-# read in the excel file (from row 36 onwards)
+# read in the excel file (from row 39 onwards)
 readqpcr <- function(flnm)
 {
   fl <- flnm %>%  
     excel_sheets() %>% 
     set_names(.,.) %>% 
-    map(read_excel, path = flnm, skip = 34)
+    map(read_excel, path = flnm, skip = 38)
   
   # convert CT values into numeric 
   class(fl$Results$CT) <- 'numeric'

@@ -51,13 +51,14 @@ ggtitle(plttitle) + xlab(xlabel) + ylab(expression(C[q])) +
 stat_smooth(method ="lm", se = F) # plots linear regression line
 }
 
-# getting regression line and R2 values to put into the standard curve plot
+# getting regression line and R2 values to put into the standard curve plot 
+# Source: https://stackoverflow.com/a/7549819/9049673
 lm_eqn <- function(df, trig = 0){
   x = df %>% pull(Quantity) %>% log10 ; y = df %>% pull(CT)
   m <- lm(y ~ x, df);
   eq <- substitute(italic(y) == b %.% italic(x)+ a*","~~italic(r)^2~"="~r2, 
-                   list(a = format(coef(m)[1], digits = 2), 
-                        b = format(coef(m)[2], digits = 3), 
+                   list(a = format(unname(coef(m)[1]), digits = 2), 
+                        b = format(unname(coef(m)[2]), digits = 3), 
                         r2 = format(summary(m)$r.squared, digits = 3)))
   # if(trig == 'coeff') c(round(coef(m)[2], 2), round(summary(m)$r.squared, 2))
   if(trig == 'coeff') tibble(slope = round(coef(m)[2], 2), r_square = round(summary(m)$r.squared, 2))

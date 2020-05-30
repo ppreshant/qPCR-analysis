@@ -1,11 +1,11 @@
 # Plots standard curve for a given file (make sure it has quantities and targets and it is standard curve data)
 
+source('./general_functions.R') # Source the general_functions file before running this
+
 # choose file name, in the same directory as Rproject
 flnm <- 'Std7_N genes_IDT_25-5-20'  # set the filename
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
 target_variable <- 'Target Name' # this is the name entered in quantstudio vs 'Target' entered by loading excel template into quantstudio
-
-source('./general_functions.R') # Source the general_functions file before running this
 
 fl <- readqpcr(flpath) # read file
 

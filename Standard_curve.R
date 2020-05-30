@@ -26,8 +26,10 @@ std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn
 std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes htem lists
 std_table$dat %<>% bind_rows()  
 
+std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - seq_along(std_table) # manual numbering for neat labelling with geom_text
+
 # Add labels to plot - linear regression equation
-plt + geom_label_repel(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, nudge_x = -3, force = 10)
+plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward')e_x = -3, force = 10)
 # ggsave('qPCR analysis/Std7_N CoV2_IDT.png', width = 5, height = 4)
 
 # processing linear regression out

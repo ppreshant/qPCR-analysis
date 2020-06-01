@@ -42,7 +42,7 @@ plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; exc
 fl <- readqpcr(flpath) # read excel file exported by Quantstudio
 
 sample_order = columnwise_index(fl) # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
-results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`) %>% rename(Target = `Target Name`) %>%  .[sample_order,] # select only the results used for plotting, calculations etc. and arrange them according to sample order
+results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, starts_with('Tm'),`Target Name`) %>% rename(Target = `Target Name`) %>%  .[sample_order,] # select only the results used for plotting, calculations etc. and arrange them according to sample order
 
 plate_template <- read_plate_to_column(plate_template_raw, 'Sample Name') # convert plate template (sample names) into a single vector, columnwise
 results_relevant %<>% mutate(`Sample Name` = plate_template$`Sample Name`) # Incorporate samples names from the google doc 
@@ -66,9 +66,9 @@ if (experiment_mode == 'small_scale')
   # plot the Tm ; Graph will now show
   plttm <- plotalltms(results_relevant) # plots tms of multiple peaks in melting curve
   
-  # plot the CT mean along with replicates
+  # plot the CT along with replicates
   plt <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = CT) + geom_point(color = 'red', size = 2, show.legend = T) +
-    geom_boxplot(aes(x = `Sample Name`, y = `Ct Mean`), show.legend = T) +
+    geom_boxplot(aes(x = `Sample Name`, y = `CT`), show.legend = T) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(title_name) + ylab(expression(C[q])) + facet_grid(~Target, scales = 'free_x', space = 'free_x') 
@@ -86,7 +86,9 @@ if (experiment_mode == 'assay')
   # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
   
   # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
-  results_relevant %<>% separate(`Sample Name`,c(NA, 'Sample Name'),'-') %>% separate(`Sample Name`,c('Sample Name','assay_variable'),'_')
+  results_relevant %<>% separate(`Sample Name`,c(NA, 'Sample Name'),'-') %>% separate(`Sample Name`,c('Sample Name','assay_variable'),'_') %>% mutate(assay_variable = if_else(`Sample Name` == 'NTC', 'NTC', assay_variable))
+  
+  results_relevant %<>% separate(assay_variable, c('assay_variable', 'biological_replicates'))
   
   # Factorise the sample name in the order for plotting
   results_relevant %<>% mutate_if(is.character,as_factor) 
@@ -119,7 +121,7 @@ if (experiment_mode == 'assay')
   
   else plt <- results_relevant %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
     
-  # plot the CT mean and formatting plots
+  # Formatting plot
   plt <- plt + geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
   plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
   
@@ -148,3 +150,5 @@ if (experiment_mode == 'assay')
     print(plt_norm)
   }
 }
+
+# ggsave('qPCR analysis/WW1_Baylor-bovine_pilot.png', plot = plt.formatted, width = 5, height = 4)

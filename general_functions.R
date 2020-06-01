@@ -4,7 +4,7 @@
   # Make sure to include raw data as well
 
 # calling libraries ; make sure they are installed (install.packages)
-library(readxl); library(magrittr); library(tidyverse); library(ggrepel); 
+library(readxl); library(magrittr); library(tidyverse); library(ggrepel); library(googlesheets4) 
 
 # reading files and manipulating columns ----
 
@@ -14,7 +14,7 @@ readqpcr <- function(flnm)
   fl <- flnm %>%  
     excel_sheets() %>% 
     set_names(.,.) %>% 
-    map(read_excel, path = flnm, skip = 34)
+    map(read_excel, path = flnm, skip = 38)
   
   # convert CT values into numeric 
   class(fl$Results$CT) <- 'numeric'
@@ -40,7 +40,17 @@ absolute_backcalc <- function(df, std_par)
   df %>% mutate(`Copy #` = 10^( (CT - std_current$intercept)/std_current$slope) )
 }
 
+read_plate_to_column <- function(data_tibble, val_name)
+{ # transforms a plate reader table into a column (named after the top left cell, unless mentioned)
+  # eliminates plate row,column numbering ; Select 1 row above the plate (even if it doesn't contain a label)
+  
+  val_name <- enquo(val_name)
+  # colnames(data_tibble) <- data_tibble[1,] # set column names as the first row
+  data_tibble[,] %>% gather(key = 'col_num', value = !!val_name, -`<>`) %>% rename(row_num = `<>`) %>% select(!!val_name) %>% drop_na()
+}
+
 # standard curve and regressions ----
+
 # Plot Standard curve
 plotstdcurve <- function(fl, plttitle, xlabel)
 {
@@ -71,6 +81,31 @@ lm_eqn <- function(df, trig = 0){
     tsumrev <- trev %>% group_by(`Sample Name`) %>% summarise(CT = mean(CT), Quantity = mean(Quantity), CT_sd = sd(CT))
     diff(tsumrev$CT) %>% round(2)}
 
+# Tm plots ----
+# plotting functions for Melting temperature
+
+# plots all the Tm's if samples have multiple peaks in the melting curve
+plotalltms <- function(results_relevant)
+{ 
+  # Gather the Tm's into another data frame and merge into 1 column
+  tmfl <- results_relevant %>% select(`Sample Name`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`)
+  
+  # plot the Tm ; Graph will now show
+  plttm2 <- tmfl %>% ggplot(.) + aes(x = `Sample Name`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
+    theme_classic() + scale_color_brewer(palette="Set1") + 
+    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
+    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`, scales = 'free_x', space = 'free_x')
+}
+
+# plot the first Tm only ; Graph will now show
+plottm1 <- function(results_relevant)
+{ 
+  plttm <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
+    theme_classic() + scale_color_brewer(palette="Set1") + 
+    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
+    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`, scales = 'free_x', space = 'free_x')
+}
+  
 
 # plot formatting ---- 
   

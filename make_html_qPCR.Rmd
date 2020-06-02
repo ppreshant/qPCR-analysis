@@ -1,18 +1,22 @@
 ---
-title: "S06b_Lysate qPCR"
+title: "WW1_Baylor-Spike-in pilot"
 author: "Prashant Kalvapalle"
-date: "21 Aug 2019"
-output: html_document
+date: "1 June 2020"
+output: 
+  html_document:
+    theme: flatly
+    toc: TRUE
+    toc_float: TRUE
 ---
 
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = F, fig.width = 4, fig.height = 5)
+knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.width = 8, fig.height = 4)
 ```
 
 ## Goal of the analysis
 
-We want to test by qPCR if AHL is flipping any constructs. Using this file to normalize copy #s to that of the Backbone
+We want to test the efficiency of viral RNA recovery from wastewater by spiking in known ammounts of bovine viruses and quantifying by qPCR. 
 
 ## Running source codes
 

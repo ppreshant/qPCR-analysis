@@ -88,7 +88,7 @@ if (experiment_mode == 'assay')
   # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
   results_relevant %<>% separate(`Sample Name`,c(NA, 'Sample Name'),'-') %>% separate(`Sample Name`,c('Sample Name','assay_variable'),'_') %>% mutate(assay_variable = if_else(`Sample Name` == 'NTC', 'NTC', assay_variable))
   
-  results_relevant %<>% separate(assay_variable, c('assay_variable', 'biological_replicates'))
+  # results_relevant %<>% separate(assay_variable, c('assay_variable', 'biological_replicates'))
   
   # Factorise the sample name in the order for plotting
   results_relevant %<>% mutate_if(is.character,as_factor) 

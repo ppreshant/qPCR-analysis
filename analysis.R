@@ -88,7 +88,7 @@ if (experiment_mode == 'assay')
   # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
   results_relevant %<>% separate(`Sample Name`,c(NA, 'Sample Name'),'-') %>% separate(`Sample Name`,c('Sample Name','assay_variable'),'_') %>% mutate(assay_variable = if_else(`Sample Name` == 'NTC', 'NTC', assay_variable))
   
-  results_relevant %<>% separate(assay_variable, c('assay_variable', 'biological_replicates')) # Merge biological replicates
+  # results_relevant %<>% separate(assay_variable, c('assay_variable', 'biological_replicates'))
   
   # Factorise the sample name in the order for plotting
   results_relevant %<>% mutate_if(is.character,as_factor) 
@@ -109,17 +109,13 @@ if (experiment_mode == 'assay')
     
     if(plot_mean_and_sd == 'yes') {
       y_variable = quo(mean)
-      
-      results_abs_preserved <- results_abs # preserve individual data points before summarizing mean and SD
       results_abs %<>% group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
       } 
     else {y_variable = quo(`Copy #`)}
     
     plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
 
-    if(plot_mean_and_sd == 'yes') {
-      plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width)) +  # plot errorbars if mean and SD are desired
-     geom_jitter(data = results_abs_preserved, aes(x = `assay_variable`, y = `Copy #`), size = 1, colour = 'black', alpha = .2, width = .2 ) } # Also plot the individual data points
+    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width))} # plot errorbars if mean and SD are desired
     
   } 
   

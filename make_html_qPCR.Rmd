@@ -25,16 +25,11 @@ source('general_functions.R')
 source('analysis.R')
 ```
 
-## Normalized recovery calculations
+## Data output
 
 ```{r datadisplay}
-proc_data <- read_sheet('https://docs.google.com/spreadsheets/d/19oRiRcRVS23W3HqRKjhMutJKC2lFOpNK8aNUkC-No-s/edit#gid=1386677460', sheet = 'RT-qPCR results', range = 'C3:I93')
-proc_data %>% separate(`Tube ID`, C(`Tube ID`, 'Biological replicate')) %>% rename('Copy #' = `Copy # (mean)`) # merge biological replicates
-proc_summary %>% proc_data  %>% group_by(Target, `Sample Name`, `Tube ID`) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # Summarize mean and SD
-
-
-plt1 <- proc_data %>% ggplot(aes(x = `Tube ID`, y = `Recovered (copies/l)`, colour = Target)) + ylab('Copy #')
-
+results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
+kable(results_abs, caption = 'Summary of estimated copy #s')
 ```
 
 <!-- ## Transforming data and normalization -->

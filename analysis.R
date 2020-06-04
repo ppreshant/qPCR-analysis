@@ -53,9 +53,9 @@ rm(fl, plate_template_raw)  # remove old data for sparsity
 # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
 
 # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
-results_relevant %<>% separate(`Sample Name`,c(NA, 'Sample Name'),'-') %>% separate(`Sample Name`,c('Sample Name','assay_variable'),'_') %>% mutate(assay_variable = if_else(`Sample Name` == 'NTC', 'NTC', assay_variable))
+results_relevant %<>% separate(`Sample Name`,c(NA, 'Sample Name'),'-') %>% separate(`Sample Name`,c('Sample Name','Tube ID'),'_') %>% mutate(`Tube ID` = if_else(`Sample Name` == 'NTC', '0', `Tube ID`))
 
-# results_relevant %<>% separate(assay_variable, c('assay_variable', 'biological_replicates'))
+results_relevant %<>% separate(`Tube ID`, c('assay_variable', 'biological_replicates'), remove = F)
 
 # Factorise the sample name in the order for plotting
 results_relevant %<>% mutate_if(is.character,as_factor) 
@@ -76,12 +76,15 @@ results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par))
 
 if(plot_mean_and_sd == 'yes') {
   y_variable = quo(mean)
-  results_abs %<>% group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
-  } else {y_variable = quo(`Copy #`)}
+  concise_results_abs <- results_abs %>%  group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
+  data_to_plot <- concise_results_abs
+  
+  } else {y_variable = quo(`Copy #`); data_to_plot <- results_abs}
 
-plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
+plt <- data_to_plot %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
 
-if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width))} # plot errorbars if mean and SD are desired
+if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width)) + # plot errorbars if mean and SD are desired
+  geom_jitter(data = results_abs, aes(x = `assay_variable`, y = `Copy #`), colour = 'black', size = 1, alpha = .2, width = .2)} # plot raw data
 
 
 # Formatting plot

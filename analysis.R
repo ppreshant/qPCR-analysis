@@ -8,7 +8,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 # User inputs ----
 # choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) 
 
-flnm <- 'WW1_Baylor-bovine_test'  # set the filename
+flnm <- 'WW4-BRSV_BCoV_Vaccines'  # set the filename
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
 plate_template_raw <- read_sheet('https://docs.google.com/spreadsheets/d/19oRiRcRVS23W3HqRKjhMutJKC2lFOpNK8aNUkC-No-s/edit#gid=478762118', sheet = 'Plate import setup', range = 'G1:S9')
 
@@ -81,10 +81,10 @@ if(plot_mean_and_sd == 'yes') {
   
   } else {y_variable = quo(`Copy #`); data_to_plot <- results_abs}
 
-plt <- data_to_plot %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
+plt <- data_to_plot %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copies/ul RNA extract')    # Specify the plotting variables 
 
 if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width)) + # plot errorbars if mean and SD are desired
-  geom_jitter(data = results_abs, aes(x = `assay_variable`, y = `Copy #`), colour = 'black', size = 1, alpha = .2, width = .2)} # plot raw data
+  geom_jitter(data = results_abs, aes(x = `assay_variable`, y = `Copy #`), colour = 'black', size = 1, alpha = .2, width = .2) } # plot raw data
 
 
 # Formatting plot

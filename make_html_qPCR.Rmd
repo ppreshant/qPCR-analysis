@@ -1,7 +1,7 @@
 ---
-title: "WW1_Baylor-Spike-in pilot"
+title: "WW4_BRSV_BCoV_Vaccines"
 author: "Prashant Kalvapalle"
-date: "1 June 2020"
+date: "4 June 2020"
 output: 
   html_document:
     theme: flatly
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.width = 8, fig.hei
 
 ## Goal of the analysis
 
-We want to test the efficiency of viral RNA recovery from wastewater by spiking in known ammounts of bovine viruses and quantifying by qPCR. 
+Quantifying RNA recovery from undiluted vaccine by RT-qPCR. 
 
 ## Running source codes
 
@@ -27,7 +27,13 @@ source('analysis.R')
 
 ## Data output
 
+```{r summarydatadisplay}
+concise_results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
+kable(concise_results_abs, caption = 'Summary of estimated copy #s')
+```
+
+### Individual replicates
 ```{r datadisplay}
 results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
-kable(results_abs, caption = 'Summary of estimated copy #s')
+kable(results_abs, caption = 'Raw data and estimated copy #s')
 ```

@@ -3,7 +3,7 @@
 source('./general_functions.R') # Source the general_functions file before running this
 
 # choose file name, in the same directory as Rproject
-flnm <- 'Std7_N genes_IDT_25-5-20'  # set the filename
+flnm <- 'Std9_N1-N2_9-6-20'  # set the filename
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
 target_variable <- 'Target Name' # this is the name entered in quantstudio vs 'Target' entered by loading excel template into quantstudio
 
@@ -13,7 +13,7 @@ if(target_variable == 'Target Name') fl$Results %<>% mutate('Target' = `Target N
 # optional filtering to remove low concentration points in standard curve
 # fl$Results <- fl$Results %>% filter(`Quantity` > 1e4) # filtering only standard curve within the linear range
 
-plt <- plotstdcurve(fl,'qPCR Standard curve 7: N genes_IDT', 'log(Copy #)') # plot standard curve
+plt <- plotstdcurve(fl,'qPCR Standard curve 9: N1-N2 multiplex', 'log(Copy #)') # plot standard curve
 
 # # Extract the names of the targets in use
 # targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target Name`) %>% unique(.)  
@@ -29,7 +29,7 @@ std_table$dat %<>% bind_rows()
 std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - seq_along(std_table) # manual numbering for neat labelling with geom_text
 
 # Add labels to plot - linear regression equation
-plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward')e_x = -3, force = 10)
+plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = -3, force = 10)
 # ggsave('qPCR analysis/Std7_N CoV2_IDT.png', width = 5, height = 4)
 
 # processing linear regression out

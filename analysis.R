@@ -77,6 +77,7 @@ results_abs <- results_relevant_grouped %>% do(., absolute_backcalc(., std_par))
 if(plot_mean_and_sd == 'yes') {
   y_variable = quo(mean)
   concise_results_abs <- results_abs %>%  group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
+  results_abs$`Copy #` %<>% replace_na(0) # make unamplified values 0 for plotting
   data_to_plot <- concise_results_abs
   
   } else {y_variable = quo(`Copy #`); data_to_plot <- results_abs}
@@ -84,7 +85,7 @@ if(plot_mean_and_sd == 'yes') {
 plt <- data_to_plot %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copies/ul RNA extract')    # Specify the plotting variables 
 
 if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width)) + # plot errorbars if mean and SD are desired
-  geom_jitter(data = results_abs, aes(x = `assay_variable`, y = `Copy #`), colour = 'black', size = 1, alpha = .2, width = .2) } # plot raw data
+  geom_jitter(data = results_abs, aes(x = `assay_variable`, y = `Copy #`, alpha = map_dbl(`Copy #`, ~if_else(. == 0, 1, .4))), colour = 'black', size = 1, width = .2, show.legend = F) } # plot raw data
 
 
 # Formatting plot

@@ -1,7 +1,5 @@
-# Read in the file and do manual analysis and plotting
-# Author: Prashant Kalvapalle;  October 10 2018
-
-# The last part of the script contains important codes from the console that were used for specific situations : These will be commented
+# Read in the qPCR file and do manual analysis and plotting
+# Author: Prashant Kalvapalle;  June 13 2020
 
 source('./general_functions.R') # Source the general_functions file before running this
 
@@ -9,6 +7,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 # choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) 
 # Sample naming guide for plate template: in google sheet 'enter cell address of experiment name' (check 'plate_template_raw' for link)
   # BCoV-608_A.2; ignore-facet_(x axis variable).biological replicate (BCoV is ignored, only for pipetting reference, actual target is taken from the qPCR results)
+# If code fails, first thing: check the number of lines to skip before the data begins and tally with the code (including the headings)
 
 flnm <- 'WW9_BCoV_troubleshooting'  # set the filename
 

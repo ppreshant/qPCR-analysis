@@ -85,8 +85,8 @@ if(plot_mean_and_sd == 'yes') {
 plt <- data_to_plot %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copies/ul RNA extract')    # Specify the plotting variables 
 
 if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width)) + # plot errorbars if mean and SD are desired
-  geom_jitter(data = results_abs, aes(x = `assay_variable`, y = `Copy #`, alpha = map_dbl(`Copy #`, ~if_else(. == 0, 1, .4))), colour = 'black', size = 1, width = .2, show.legend = F) } # plot raw data
-
+  geom_jitter(data = results_abs, aes(x = `assay_variable`, y = `Copy #`, alpha = map_chr(`Copy #`, ~. == 0), size = map_chr(`Copy #`, ~. == 0)), colour = 'black', width = .2, show.legend = F) + # plot raw data
+  scale_alpha_manual(values = c(.4, 1)) + scale_size_manual(values = c(1, 2)) } # manual scale for emphasizing unamplified samples
 
 # Formatting plot
 plt <- plt + geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting

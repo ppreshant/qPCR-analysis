@@ -8,11 +8,11 @@ source('./general_functions.R') # Source the general_functions file before runni
 # User inputs ----
 # choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) 
 
-flnm <- 'WW4-BRSV_BCoV_Vaccines'  # set the filename
+flnm <- 'WW9_BCoV_troubleshooting'  # set the filename
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
 plate_template_raw <- read_sheet('https://docs.google.com/spreadsheets/d/19oRiRcRVS23W3HqRKjhMutJKC2lFOpNK8aNUkC-No-s/edit#gid=478762118', sheet = 'Plate import setup', range = 'G1:S9')
 
-title_name <-'Baylor RNA extracts_pilot run'
+title_name <- flnm
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -42,8 +42,8 @@ sample_order = columnwise_index(fl) # this gives a vector to order the samples c
 results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, starts_with('Tm'),`Target Name`) %>% rename(Target = `Target Name`) %>%  .[sample_order,] # select only the results used for plotting, calculations etc. and arrange them according to sample order
 
 plate_template <- read_plate_to_column(plate_template_raw, 'Sample Name') # convert plate template (sample names) into a single vector, columnwise
-results_relevant %<>% mutate(`Sample Name` = plate_template$`Sample Name`) # Incorporate samples names from the google doc 
-results_relevant$Target %<>% str_replace('BSRV', 'BRSV') # correcting mis-spelled name of BRSV target
+results_relevant %<>% select(-`Sample Name`) %>% right_join(plate_template, by = 'Well Position') # Incorporate samples names from the google sheet by matching well position
+ 
 
 rm(fl, plate_template_raw)  # remove old data for sparsity
 
@@ -93,4 +93,5 @@ plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% 
 
 print(plt.formatted)
 
+# write_sheet(results_abs,'https://docs.google.com/spreadsheets/d/1ouk-kCJHERRhOMNP07lXfiC3aGB4wtWXpnYf5-b2CI4/edit#gid=0', sheet = title_name) # save results to a google sheet
 # ggsave('qPCR analysis/WW1_Baylor-bovine_pilot.png', plot = plt.formatted, width = 5, height = 4)

@@ -46,8 +46,7 @@ read_plate_to_column <- function(data_tibble, val_name)
   
   val_name <- enquo(val_name)
   # colnames(data_tibble) <- data_tibble[1,] # set column names as the first row
-  data_tibble[,] %>% gather(key = 'col_num', value = !!val_name, -`<>`) %>% rename(row_num = `<>`) %>% select(!!val_name) %>% drop_na()
-}
+  data_tibble[,] %>% gather(key = 'col_num', value = !!val_name, -`<>`) %>% rename(row_num = `<>`) %>% unite('Well Position', c('row_num', 'col_num'), sep = '') %>% drop_na()}
 
 # standard curve and regressions ----
 

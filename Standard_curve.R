@@ -26,11 +26,13 @@ std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn
 std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes htem lists
 std_table$dat %<>% bind_rows()  
 
-std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - seq_along(std_table) # manual numbering for neat labelling with geom_text
+std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - seq_along(std_table$Target) # manual numbering for neat labelling with geom_text at top right corner : (CT max -1, CT max - 2)
 
 # Add labels to plot - linear regression equation
-plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = -3, force = 10)
-# ggsave('qPCR analysis/Std7_N CoV2_IDT.png', width = 5, height = 4)
+plt_with_equation <- plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = 0, force = 10)
+
+print(plt_with_equation)
+# ggsave(str_c('qPCR analysis/', flnm, '.png'), width = 5, height = 4)
 
 # processing linear regression out
 efficiency_table <- tibble(Slope = std_table$params %>% pull(slope), Efficiency = 10^(-1/Slope), '% Efficiency' = (Efficiency -1)*100 , 'R-square' = std_table$params %>% pull(r_square) %>% round(2))

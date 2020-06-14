@@ -83,9 +83,9 @@ results_abs <- results_relevant_grouped %>% group_by(Target) %>% do(., absolute_
 # Finding mean and standard deviation within replicates (both technical and biological)
 if(plot_mean_and_sd == 'yes') {
   y_variable = quo(mean)
-  concise_results_abs <- results_abs %>%  group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
+  summary_results <- results_abs %>%  group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
   results_abs$`Copy #` %<>% replace_na(0) # make unamplified values 0 for plotting
-  data_to_plot <- concise_results_abs
+  data_to_plot <- summary_results
   
   } else {y_variable = quo(`Copy #`); data_to_plot <- results_abs}
 
@@ -96,8 +96,9 @@ if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, y
   scale_alpha_manual(values = c(.3, 1)) + scale_size_manual(values = c(1, 2)) } # manual scale for emphasizing unamplified samples
 
 # Formatting plot
-plt <- plt + geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') # plot points and facetting
-plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
+plt <- plt + geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') + # plot points and facetting
+  ggtitle(title_name) + xlabel(plot_assay_variable)
+plt.formatted <- plt %>% format_classic(.) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
 
 print(plt.formatted)
 

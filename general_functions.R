@@ -104,20 +104,54 @@ plottm1 <- function(results_relevant)
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`, scales = 'free_x', space = 'free_x')
 }
+
+
+# Plotting functions ----
+
+
+# Plotting mean, sd and individual replicates jitter
+plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = results_abs, long_format = F, measure_var = 'Copy #', sample_var = '.*', colour_var = Target, x_var = assay_variable, y_var = `Copy #`, facet_var = `Sample Name`, title_text = title_name, ylabel = 'Genome copies/ul RNA', xlabel = plot_assay_variable)
+{ # Convenient handle for repetitive plotting in the same format; Reads data only in long format
   
+  # filtering variables by user inputs
+  if(long_format) # use long format if not plotting Copy #s - ex. Recovery, % recovery etc.
+  {
+    summ_relevant <- summary_data %>% filter(Measurement == measure_var, str_detect(`Sample Name`, sample_var))
+    raw_relevant <- raw_data %>% filter(Measurement == measure_var, str_detect(`Sample Name`, sample_var))
+    y_var <- sym(mean) # default y variable is mean
+  } else 
+    {
+      summ_relevant <- summary_data %>% filter(str_detect(`Sample Name`, sample_var))
+      raw_relevant <- raw_data %>% filter(str_detect(`Sample Name`, sample_var))
+    }
+  
+  plt1 <- summ_relevant %>% ggplot(aes(x = {{x_var}}, y = mean, colour = {{colour_var}})) +
+    geom_point(size = 2) + geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = .1) +
+    
+    # Individual data points
+    geom_jitter(data = raw_relevant, aes(y = {{y_var}}, alpha = map_chr(`Copy #`, ~. == 0), size = map_chr(`Copy #`, ~. == 0)), width = .2, shot.legend = F ) +
+    scale_alpha_manual(values = c(.3, 1)) + scale_size_manual(values = c(1, 2)) + # manual scale for emphasizing unamplified samples
+    
+    # Facetting and labelling
+    facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') +
+    ggtitle(title_text) + ylab(ylabel) + xlab(xlabel)
+
+  plt1.formatted <- plt1 %>% format_classic() # clean formatting
+  
+}
 
 # plot formatting ---- 
-  
+ 
+ 
   # plot formatting function : format as classic, colours = Set1
-  format_classic <- function(plt, title_name, plot_assay_variable)
+  format_classic <- function(plt)
   { # formats plot as classic, with colour palette Set1, centred title, angled x axis labels
     plt <- plt +
-      theme_classic() + scale_color_brewer(palette="Set1") + 
-      ggtitle(title_name) + xlab(plot_assay_variable)
+      theme_classic() + scale_color_brewer(palette="Set1")
   }
   
   # plot formatting function : format as logscale
-  format_logscale <- function(plt)
+format_logscale_y <- function(plt)
   { # extra comments
     plt <- plt +
       scale_y_log10(  # logscale for y axis with tick marks

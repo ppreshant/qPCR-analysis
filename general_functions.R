@@ -133,7 +133,7 @@ plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = resul
     scale_alpha_manual(values = c(.3, 1)) + scale_size_manual(values = c(1, 2)) + # manual scale for emphasizing unamplified samples
     
     # Facetting and labelling
-    facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') +
+    facet_grid(cols =  vars({{facet_var}}), scales = 'free_x', space = 'free_x') +
     ggtitle(title_text) + ylab(ylabel) + xlab(xlabel)
 
   plt1.formatted <- plt1 %>% format_classic() # clean formatting

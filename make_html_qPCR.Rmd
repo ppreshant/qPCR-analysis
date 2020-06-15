@@ -116,9 +116,10 @@ presentable_vol_qpcr <- vol_qpcr %>% rename('Facility' = `FACILITY NAME`) %>%
   mutate_at('Sample Name', ~as.character(.)) %>% 
   mutate_at('Facility', ~if_else(is.na(.), `Sample Name`, .)) %>% 
   mutate_at('Facility', ~str_replace(., '609', 'Extraction blank')) %>% 
-  mutate_at('Facility', ~ str_c(., biological_replicates, sep = "-")) %>% 
+  arrange(Facility, biological_replicates) %>% 
+  unite('Facility', c(Facility, biological_replicates), sep = "-", na.rm = T) %>% 
   filter(!str_detect(assay_variable, '11|9')) %>% 
-  arrange(Facility, biological_replicates) %>% mutate_cond(str_detect(Target, 'N'), `Recovery fraction` = NA) %>% 
+  mutate_cond(str_detect(Target, 'N'), `Recovery fraction` = NA) %>% 
   select(Facility, WW_vol, Target, CT, `Copy #`, Recovered, `Recovery fraction`) %>% 
   rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered)
 

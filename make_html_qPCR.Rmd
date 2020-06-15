@@ -1,7 +1,7 @@
 ---
-title: "WW9-BCoV_troubleshooting"
+title: "WW11_608 run1_6-14-20"
 author: "Prashant Kalvapalle"
-date: "12 June 2020"
+date: "14 June 2020"
 output: 
   html_document:
     theme: flatly
@@ -16,20 +16,27 @@ knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.width = 8, fig.hei
 
 ## Goal of the analysis
 
-Quantifying RNA recovery from undiluted vaccine by RT-qPCR. 
+Quantifying CoV2-N1,N2 (multiplexed) and BCoV spike in in 6/8 wastewater samples
 
-## Running source codes
+## Individual biological replicates
 
-```{r cars}
+```{r scripts, fig.width = 12}
 source('general_functions.R')
 source('analysis.R')
 ```
 
+## Summary plot
+
+```{r summary}
+plot_mean_sd_jitter() %>% format_logscale_y() %>% print()
+```
+
+
 ## Data output
 
 ```{r summarydatadisplay}
-concise_results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
-kable(concise_results_abs, caption = 'Summary of estimated copy #s')
+summary_results %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
+kable(summary_results, caption = 'Summary of estimated copy #s')
 ```
 
 ### Individual replicates

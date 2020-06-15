@@ -9,14 +9,15 @@ source('./general_functions.R') # Source the general_functions file before runni
   # BCoV-608_A.2; ignore-facet_(x axis variable).biological replicate (BCoV is ignored, only for pipetting reference, actual target is taken from the qPCR results)
 # If code fails, first thing: check the number of lines to skip before the data begins and tally with the code (including the headings)
 
-flnm <- 'WW9_BCoV_troubleshooting'  # set the filename
+flnm <- 'WW11_608 run1_6-14-20'  # set the filename
 
 title_name <- flnm
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
-  target = c('BRSV_N', 'BCoV_M', 'N1_CoV2', 'N2_CoV2'),
-  slope =  c(-3.62, -3.49, -3, -3.12),
-  intercept = c(39, 39, 39, 40) # values for various targets
+  target = c('BRSV_N', 'BCoV_M', 'N1_CoV2', 'N2_CoV2', 'N1_multiplex',  'N2_multiplex'),
+  slope =  c(-3.62, -3.49, -3, -3.12, -3.09, -3.1),
+  intercept = c(39, 39, 39, 40, 39, 40) # values for various targets
 )
+template_volume <- 4 # ul template volume in qPCR reaction
 
 # Other parameters ----
 
@@ -67,7 +68,8 @@ rm(fl, plate_template_raw)  # remove old data for sparsity
 polished_results <- bring_results %>% separate(`Sample Name`,c(NA, 'Sample Name'),'-') %>% separate(`Sample Name`,c('Sample Name','Tube ID'),'_') %>% 
   mutate(`Tube ID` = if_else(`Sample Name` == 'NTC', '0', `Tube ID`)) %>% 
   separate(`Tube ID`, c('assay_variable', 'biological_replicates'), remove = F) %>%  # Separate out biological replicates 
-  mutate_if(is.character,as_factor) %>% arrange(`Well Position`) # Factorise the sample name and rearrange in column order of appearance on the plate (for plotting)
+  unite('Tube ID', c(assay_variable, biological_replicates), sep = '.', remove = F) %>% # remaking Tube ID - removes spaces after 'dot'
+  arrange(assay_variable, biological_replicates) %>% mutate_if(is.character,as_factor) # Factorise the sample name and rearrange in column order of appearance on the plate (for plotting)
 
 # select samples to plot (or to exclude write a similar command)
 results_relevant <- polished_results %>% filter(str_detect(`Sample Name`, paste('^', plot_select_facet, sep = ''))) %>%  # Include only desired facets : str_detect will find for regular expression; ^x => starting with x
@@ -78,32 +80,23 @@ results_relevant <- polished_results %>% filter(str_detect(`Sample Name`, paste(
 
 
 # Computing copy number from standard curve linear fit information
-results_abs <- results_relevant_grouped %>% group_by(Target) %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
+results_abs <- results_relevant %>% group_by(Target) %>% do(., absolute_backcalc(., std_par)) %>%  # iteratively calculates copy #'s from standard curve parameters of each Target
+  mutate(`Copy #` = `Copy #`/template_volume) # Normalizing copy number per micro litre of template in the reaction
 
 # Finding mean and standard deviation within replicates (both technical and biological)
-if(plot_mean_and_sd == 'yes') {
-  y_variable = quo(mean)
-  summary_results <- results_abs %>%  group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
-  results_abs$`Copy #` %<>% replace_na(0) # make unamplified values 0 for plotting
-  data_to_plot <- summary_results
-  
-  } else {y_variable = quo(`Copy #`); data_to_plot <- results_abs}
 
-plt <- data_to_plot %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copies/ul RNA extract')    # Specify the plotting variables 
+summary_results <- results_abs %>%  group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
+results_abs$`Copy #` %<>% replace_na(0) # make unamplified values 0 for plotting
 
-if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width)) + # plot errorbars if mean and SD are desired
-  geom_jitter(data = results_abs, aes(x = `assay_variable`, y = `Copy #`, alpha = map_chr(`Copy #`, ~. == 0), size = map_chr(`Copy #`, ~. == 0)), colour = 'black', width = .2, show.legend = F) + # plot raw data
-  scale_alpha_manual(values = c(.3, 1)) + scale_size_manual(values = c(1, 2)) } # manual scale for emphasizing unamplified samples
-
-# Formatting plot
-plt <- plt + geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') + # plot points and facetting
-  ggtitle(title_name) + xlabel(plot_assay_variable)
-plt.formatted <- plt %>% format_classic(.) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
+plt <- results_abs %>% ggplot(aes(x = `Tube ID`, y = `Copy #`, color = Target)) + ylab('Copies/ul RNA extract') +    # Specify the plotting variables 
+  geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') + # plot points and facetting
+  ggtitle(title_name) + xlab(plot_assay_variable)
+plt.formatted <- plt %>% format_classic(.) %>% format_logscale_y() # formatting plot, axes labels, title and logcale plotting
 
 print(plt.formatted)
 
 # Data output ----
 # this is usually commented out to prevent overwriting existing data; turn on only when needed for a single run
 
-# write_sheet(results_abs,'https://docs.google.com/spreadsheets/d/1ouk-kCJHERRhOMNP07lXfiC3aGB4wtWXpnYf5-b2CI4/edit#gid=0', sheet = title_name) # save results to a google sheet
+write_sheet(results_abs,'https://docs.google.com/spreadsheets/d/1ouk-kCJHERRhOMNP07lXfiC3aGB4wtWXpnYf5-b2CI4/edit#gid=0', sheet = title_name) # save results to a google sheet
 # ggsave('qPCR analysis/WW1_Baylor-bovine_pilot.png', plot = plt.formatted, width = 5, height = 4)

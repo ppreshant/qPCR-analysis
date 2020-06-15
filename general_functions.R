@@ -142,7 +142,7 @@ plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = resul
   {
     summ_relevant <- summary_data %>% filter(Measurement == measure_var, str_detect(`Sample Name`, sample_var))
     raw_relevant <- raw_data %>% filter(Measurement == measure_var, str_detect(`Sample Name`, sample_var))
-    y_var <- sym(mean) # default y variable is mean
+    y_var <- sym('val') # default y variable is val
   } else 
     {
       summ_relevant <- summary_data %>% filter(str_detect(`Sample Name`, sample_var))
@@ -153,7 +153,7 @@ plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = resul
     geom_point(size = 2) + geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = .1) +
     
     # Individual data points
-    geom_jitter(data = raw_relevant, aes(y = {{y_var}}, alpha = map_chr(`Copy #`, ~. == 0), size = map_chr(`Copy #`, ~. == 0)), width = .2, show.legend = F ) +
+    geom_jitter(data = raw_relevant, aes(y = {{y_var}}, alpha = map_chr({{y_var}}, ~. == 0), size = map_chr({{y_var}}, ~. == 0)), width = .2, show.legend = F ) +
     scale_alpha_manual(values = c(.3, 1)) + scale_size_manual(values = c(1, 2)) + # manual scale for emphasizing unamplified samples
     
     # Facetting and labelling

@@ -55,8 +55,18 @@ qpcr_polished <- results_abs %>% unite('Biobot ID', c(`Sample Name`, assay_varia
 # Join WWTP names to qPCR dataset
 bb_qpcr <- left_join(qpcr_polished, biobot_lookup, by = 'Biobot ID') %>% mutate_at('WWTP', ~if_else(str_detect(., '^X')|is.na(.), assay_variable, .)) %>% 
   mutate_at('Tube ID', ~str_remove(., "\\.")) %>%  unite('Label_tube', c('Sample Name', 'Tube ID'), sep = "", remove = F) # make a unique column for matching volumes
+
+summary_bb_qpcr <- bb_qpcr %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at('Copy #', funs(mean(.,na.rm = T), sd(., na.rm = T)))
+
+plot_mean_sd_jitter(summary_bb_qpcr, bb_qpcr, x_var = WWTP) %>% format_logscale_y() %>% print()
+
+# write_sheet(bb_qpcr,'https://docs.google.com/spreadsheets/d/1ouk-kCJHERRhOMNP07lXfiC3aGB4wtWXpnYf5-b2CI4/edit#gid=0', sheet = title_name) # save results to a google sheet
+
 ```
 
+### Recovery
+
+open circles : Viral copies spiked in
 ```{r Recovery_calculations}
 
 # Get volumes data from google sheet : "Sample registry"
@@ -67,26 +77,38 @@ volumes_data <- read_sheet('https://docs.google.com/spreadsheets/d/1mJcCt1wMiOuB
   mutate_at('Label_tube', ~str_remove_all(., " "))
   
 # join the results with the WWTP identifiers and names
-vol_qpcr <- bb_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV'), !str_detect(assay_variable, 'S11|S9')) %>% left_join(volumes_data, by = 'Label_tube') %>% 
+vol_qpcr <- bb_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV'), !str_detect(assay_variable, '11|9')) %>% left_join(volumes_data, by = 'Label_tube') %>% select(-c(3,4,6,7)) %>% 
   # Calculations for spiked in and recovered copies of the virus
   mutate(`Actual spike-in` = spike_virus_conc * spike_virus_volume / (WW_vol * 1e-3), Recovered = `Copy #` * 1e6/HA_concentration_factor, `Recovery fraction` = 100 * Recovered/`Actual spike-in`) %>% 
   mutate_cond(str_detect(`Sample Name`, 'Vaccine'), `Actual spike-in` = spike_virus_conc * spike_virus_volume / (.050 * 1e-3), Recovered = `Copy #` * 1e6/1, `Recovery fraction` = 100 * Recovered/`Actual spike-in`)
  
-
-
 ```
 
 
-```{r summarizing data}
+```{r summarizing_plot}
 
-proc_summary <- proc_data  %>% group_by(Target, `Sample Name`, `Tube ID`, Symbol) %>% summarise_at(vars(2:6), funs(mean(.,na.rm = T), sd)) # Summarize mean and SD for biological replicates
-Symbol_order <- proc_summary %>% filter(`Sample Name` == '5/12') %>% arrange(`Copy #_mean`) %>% pull(Symbol) # order samples by 5/12 ascending order
-proc_summary$Symbol %<>%  fct_relevel(levels = Symbol_order) # order samples by 5/12 ascending order
-concise_summary <- proc_summary %>% gather(key = 'Measurement', value = 'Reading', -Target, -`Sample Name`, -`Tube ID`, -Symbol) %>% separate(Measurement, into = c('Measurement','val'),"_") %>% spread(val,Reading) # Seperate mean and variance and group by variable of measurement
-concise_raw <- proc_data %>% select(1:3,5:9,18,19) %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -`Tube ID`, -Symbol, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
+vol_qpcr_summary <- vol_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) # Summarize mean and SD for biological replicates
 
+WWTP_order <- vol_qpcr_summary %>% filter(`Sample Name` == '608', str_detect(Target,'BCoV')) %>% arrange(`Copy #_mean`) %>% pull(WWTP) # order samples by 5/12 ascending order
+
+vol_qpcr_summary$WWTP %<>%  fct_relevel(levels = WWTP_order) # order samples by 5/12 ascending order
+
+long_vol_qpcr_summary <- vol_qpcr_summary %>% gather(key = 'Measurement', value = 'Reading', -Target, -`Sample Name`, -`FACILITY NAME`, -WWTP) %>% separate(Measurement, into = c('Measurement','val'),"_") %>% spread(val,Reading) # Seperate mean and variance and group by variable of measurement
+
+long_vol_qpcr_raw <- vol_qpcr %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -WWTP, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
+
+# plot recovery and spiked in
+reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', x_var = WWTP, ylabel = 'Genome copies/l Wastewater') + geom_point(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black', shape = 21) + geom_line(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black')
+
+reco_plot %>%  format_logscale_y() %>% print()
 ```
 
+### % recovery
+
+```{r percentreco}
+
+plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovery fraction', sample_var = '60', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+```
 
 
 ## Data output

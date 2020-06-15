@@ -50,7 +50,7 @@ plot_mean_sd_jitter() %>% format_logscale_y() %>% print()
 biobot_lookup <- map_df(c('Week 9 (6/8)') , ~ read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=233791008', sheet = .x, range = 'G:I')) %>% rename('Biobot ID' = contains('Biobot', ignore.case = T), 'WWTP' = SYMBOL) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
 
 # polishing qPCR data - Make Biobot ID column clean
-qpcr_polished <- results_abs %>% unite('Biobot ID', c(`Sample Name`, assay_variable), sep = '', remove = F) %>% select(-`Well Position`,-biological_replicates) %>% mutate_at('assay_variable', as.character)
+qpcr_polished <- results_abs %>% unite('Biobot ID', c(`Sample Name`, assay_variable), sep = '', remove = F) %>% select(-`Well Position`) %>% mutate_at('assay_variable', as.character)
 
 # Join WWTP names to qPCR dataset
 bb_qpcr <- left_join(qpcr_polished, biobot_lookup, by = 'Biobot ID') %>% mutate_at('WWTP', ~if_else(str_detect(., '^X')|is.na(.), assay_variable, .)) %>% 
@@ -59,9 +59,6 @@ bb_qpcr <- left_join(qpcr_polished, biobot_lookup, by = 'Biobot ID') %>% mutate_
 summary_bb_qpcr <- bb_qpcr %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at('Copy #', funs(mean(.,na.rm = T), sd(., na.rm = T)))
 
 plot_mean_sd_jitter(summary_bb_qpcr, bb_qpcr, x_var = WWTP) %>% format_logscale_y() %>% print()
-
-# write_sheet(bb_qpcr,'https://docs.google.com/spreadsheets/d/1ouk-kCJHERRhOMNP07lXfiC3aGB4wtWXpnYf5-b2CI4/edit#gid=0', sheet = title_name) # save results to a google sheet
-
 ```
 
 ### Recovery
@@ -77,7 +74,7 @@ volumes_data <- read_sheet('https://docs.google.com/spreadsheets/d/1mJcCt1wMiOuB
   mutate_at('Label_tube', ~str_remove_all(., " "))
   
 # join the results with the WWTP identifiers and names
-vol_qpcr <- bb_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV'), !str_detect(assay_variable, '11|9')) %>% left_join(volumes_data, by = 'Label_tube') %>% select(-c(3,4,6,7)) %>% 
+vol_qpcr <- bb_qpcr %>% left_join(volumes_data, by = 'Label_tube') %>% 
   # Calculations for spiked in and recovered copies of the virus
   mutate(`Actual spike-in` = spike_virus_conc * spike_virus_volume / (WW_vol * 1e-3), Recovered = `Copy #` * 1e6/HA_concentration_factor, `Recovery fraction` = 100 * Recovered/`Actual spike-in`) %>% 
   mutate_cond(str_detect(`Sample Name`, 'Vaccine'), `Actual spike-in` = spike_virus_conc * spike_virus_volume / (.050 * 1e-3), Recovered = `Copy #` * 1e6/1, `Recovery fraction` = 100 * Recovered/`Actual spike-in`)
@@ -86,8 +83,9 @@ vol_qpcr <- bb_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV'), !str_detect(assa
 
 
 ```{r summarizing_plot}
+spike_qpcr <- vol_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV'), !str_detect(assay_variable, '11|9')) %>% select(-c(3,4,6,7,8))
 
-vol_qpcr_summary <- vol_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) # Summarize mean and SD for biological replicates
+vol_qpcr_summary <- spike_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) # Summarize mean and SD for biological replicates
 
 WWTP_order <- vol_qpcr_summary %>% filter(`Sample Name` == '608', str_detect(Target,'BCoV')) %>% arrange(`Copy #_mean`) %>% pull(WWTP) # order samples by 5/12 ascending order
 
@@ -95,7 +93,7 @@ vol_qpcr_summary$WWTP %<>%  fct_relevel(levels = WWTP_order) # order samples by 
 
 long_vol_qpcr_summary <- vol_qpcr_summary %>% gather(key = 'Measurement', value = 'Reading', -Target, -`Sample Name`, -`FACILITY NAME`, -WWTP) %>% separate(Measurement, into = c('Measurement','val'),"_") %>% spread(val,Reading) # Seperate mean and variance and group by variable of measurement
 
-long_vol_qpcr_raw <- vol_qpcr %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -WWTP, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
+long_vol_qpcr_raw <- spike_qpcr %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -WWTP, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
 
 # plot recovery and spiked in
 reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', x_var = WWTP, ylabel = 'Genome copies/l Wastewater') + geom_point(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black', shape = 21) + geom_line(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black')
@@ -114,6 +112,19 @@ plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, m
 ## Data output
 
 ```{r summarydatadisplay}
+presentable_vol_qpcr <- vol_qpcr %>% rename('Facility' = `FACILITY NAME`) %>% 
+  mutate_at('Sample Name', ~as.character(.)) %>% 
+  mutate_at('Facility', ~if_else(is.na(.), `Sample Name`, .)) %>% 
+  mutate_at('Facility', ~str_replace(., '609', 'Extraction blank')) %>% 
+  mutate_at('Facility', ~ str_c(., biological_replicates, sep = "-")) %>% 
+  filter(!str_detect(assay_variable, '11|9')) %>% 
+  arrange(Facility, biological_replicates) %>% mutate_cond(str_detect(Target, 'N'), `Recovery fraction` = NA) %>% 
+  select(Facility, WW_vol, Target, CT, `Copy #`, Recovered, `Recovery fraction`) %>% 
+  rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered)
+
+# write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=0', sheet = title_name) # save results to a google sheet
+
+
 summary_results %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
 kable(summary_results, caption = 'Summary of estimated copy #s')
 ```

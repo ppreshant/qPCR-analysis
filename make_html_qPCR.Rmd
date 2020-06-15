@@ -12,24 +12,81 @@ output:
 ```{r setup, include=FALSE}
 library(knitr)
 knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.width = 8, fig.height = 4)
+
+# Spike in and concentration details
+HA_concentration_factor <- 500 # concentration factor of wastewater -> RNA
+spike_virus_conc <- 5.19e3 # copies/ul viral suspension spiked in (Spike ID: S10)
+spike_virus_volume <- 50 # ul of viral suspenses spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
+
 ```
 
 ## Goal of the analysis
 
 Quantifying CoV2-N1,N2 (multiplexed) and BCoV spike in in 6/8 wastewater samples
 
-## Individual biological replicates
+## Plots
+
+### Individual biological replicates
 
 ```{r scripts, fig.width = 12}
-source('general_functions.R')
 source('analysis.R')
 ```
 
-## Summary plot
+### Summary plot
 
 ```{r summary}
+
+# plot copy # vs sample (assay_variable)
 plot_mean_sd_jitter() %>% format_logscale_y() %>% print()
 ```
+
+## Plots (WWTP labels)
+
+### Summary plot
+
+```{r biobot_to_WWTP}
+
+# Bring WWTP names from google sheet: "Biobot Sample IDs"
+biobot_lookup <- map_df(c('Week 9 (6/8)') , ~ read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=233791008', sheet = .x, range = 'G:I')) %>% rename('Biobot ID' = contains('Biobot', ignore.case = T), 'WWTP' = SYMBOL) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
+
+# polishing qPCR data - Make Biobot ID column clean
+qpcr_polished <- results_abs %>% unite('Biobot ID', c(`Sample Name`, assay_variable), sep = '', remove = F) %>% select(-`Well Position`,-biological_replicates) %>% mutate_at('assay_variable', as.character)
+
+# Join WWTP names to qPCR dataset
+bb_qpcr <- left_join(qpcr_polished, biobot_lookup, by = 'Biobot ID') %>% mutate_at('WWTP', ~if_else(str_detect(., '^X')|is.na(.), assay_variable, .)) %>% 
+  mutate_at('Tube ID', ~str_remove(., "\\.")) %>%  unite('Label_tube', c('Sample Name', 'Tube ID'), sep = "", remove = F) # make a unique column for matching volumes
+```
+
+```{r Recovery_calculations}
+
+# Get volumes data from google sheet : "Sample registry"
+volumes_data <- read_sheet('https://docs.google.com/spreadsheets/d/1mJcCt1wMiOuBic6sRlBZJf8KSNu2y-B5PjzCUu7jPM8/edit#gid=521099478', sheet = 'Concentrated samples', range = 'A:D') %>% 
+  rename('WW_vol' = `Total WW vol (ml)`, 'Label_tube' = `Label on tube`) %>% 
+  select(WW_vol, Label_tube) %>% 
+  fill(WW_vol) %>% distinct() %>% 
+  mutate_at('Label_tube', ~str_remove_all(., " "))
+  
+# join the results with the WWTP identifiers and names
+vol_qpcr <- bb_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV'), !str_detect(assay_variable, 'S11|S9')) %>% left_join(volumes_data, by = 'Label_tube') %>% 
+  # Calculations for spiked in and recovered copies of the virus
+  mutate(`Actual spike-in` = spike_virus_conc * spike_virus_volume / (WW_vol * 1e-3), Recovered = `Copy #` * 1e6/HA_concentration_factor, `Recovery fraction` = 100 * Recovered/`Actual spike-in`) %>% 
+  mutate_cond(str_detect(`Sample Name`, 'Vaccine'), `Actual spike-in` = spike_virus_conc * spike_virus_volume / (.050 * 1e-3), Recovered = `Copy #` * 1e6/1, `Recovery fraction` = 100 * Recovered/`Actual spike-in`)
+ 
+
+
+```
+
+
+```{r summarizing data}
+
+proc_summary <- proc_data  %>% group_by(Target, `Sample Name`, `Tube ID`, Symbol) %>% summarise_at(vars(2:6), funs(mean(.,na.rm = T), sd)) # Summarize mean and SD for biological replicates
+Symbol_order <- proc_summary %>% filter(`Sample Name` == '5/12') %>% arrange(`Copy #_mean`) %>% pull(Symbol) # order samples by 5/12 ascending order
+proc_summary$Symbol %<>%  fct_relevel(levels = Symbol_order) # order samples by 5/12 ascending order
+concise_summary <- proc_summary %>% gather(key = 'Measurement', value = 'Reading', -Target, -`Sample Name`, -`Tube ID`, -Symbol) %>% separate(Measurement, into = c('Measurement','val'),"_") %>% spread(val,Reading) # Seperate mean and variance and group by variable of measurement
+concise_raw <- proc_data %>% select(1:3,5:9,18,19) %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -`Tube ID`, -Symbol, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
+
+```
+
 
 
 ## Data output

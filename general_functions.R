@@ -48,6 +48,30 @@ read_plate_to_column <- function(data_tibble, val_name)
   # colnames(data_tibble) <- data_tibble[1,] # set column names as the first row
   data_tibble[,] %>% gather(key = 'col_num', value = !!val_name, -`<>`) %>% rename(row_num = `<>`) %>% unite('Well Position', c('row_num', 'col_num'), sep = '') %>% drop_na()}
 
+# mutates a subset of data and returns a new array (works for multiple conditions)
+mutate_when <- function(data, ...) 
+{ # Source: Stackoverflow - https://stackoverflow.com/a/34170176/9049673
+  
+  dots <- eval(substitute(alist(...)))
+  for (i in seq(1, length(dots), by = 2)) 
+  {
+    condition <- eval(dots[[i]], envir = data)
+    mutations <- eval(dots[[i + 1]], envir = data[condition, , drop = FALSE])
+    data[condition, names(mutations)] <- mutations
+  }
+  data
+}
+
+
+# mutates a subset of data and returns a new array (does multiple mutations on same condition)
+mutate_cond <- function(.data, condition, ..., envir = parent.frame()) 
+{ # Source: Stackoverflow -  https://stackoverflow.com/a/34096575/9049673
+  
+  condition <- eval(substitute(condition), .data, envir)
+  .data[condition, ] <- .data[condition, ] %>% mutate(...)
+  .data
+}
+
 # standard curve and regressions ----
 
 # Plot Standard curve

@@ -1,7 +1,7 @@
 ---
-title: "WW11_608 run1_6-14-20"
+title: "WW14_608 part2_N1N2"
 author: "Prashant Kalvapalle"
-date: "14 June 2020"
+date: "16 June 2020"
 output: 
   html_document:
     theme: flatly
@@ -105,7 +105,7 @@ reco_plot %>%  format_logscale_y() %>% print()
 
 ```{r percentreco}
 
-plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovery fraction', sample_var = '60', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+# plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovery fraction', sample_var = '60', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
 ```
 
 
@@ -124,12 +124,12 @@ presentable_vol_qpcr <- vol_qpcr %>% rename('Facility' = `FACILITY NAME`) %>%
   rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered)
 
 # presentable data for discussion with Baylor
-# write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=0', sheet = title_name) # save results to a google sheet
+write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=1992098439', sheet = title_name) # save results to a google sheet
 
 present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank"), str_detect(Target, "^N")) # select only N1,N2 - remove distracting data
 
 # presentable data for health department
-write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=0', sheet = title_name) # save results to a google sheet
+write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=2072146759', sheet = title_name) # save results to a google sheet
 
 
 summary_results %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)

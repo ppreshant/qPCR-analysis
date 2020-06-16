@@ -123,7 +123,13 @@ presentable_vol_qpcr <- vol_qpcr %>% rename('Facility' = `FACILITY NAME`) %>%
   select(Facility, WW_vol, Target, CT, `Copy #`, Recovered, `Recovery fraction`) %>% 
   rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered)
 
-# write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=0', sheet = title_name) # save results to a google sheet
+# presentable data for discussion with Baylor
+# write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=0', sheet = title_name) # save results to a google sheet
+
+present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank"), str_detect(Target, "^N")) # select only N1,N2 - remove distracting data
+
+# presentable data for health department
+write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=0', sheet = title_name) # save results to a google sheet
 
 
 summary_results %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)

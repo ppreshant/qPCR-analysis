@@ -19,9 +19,9 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 
 
 # Spike in and concentration details
-HA_concentration_factor <- 500 # concentration factor of wastewater -> RNA
+HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
 spike_virus_conc <- 5.19e3 # copies/ul viral suspension spiked in (Spike ID: S10)
-spike_virus_volume <- 50 # ul of viral suspenses spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
+spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
 read_these_sheets <- c('WW11_608 part1', 'WW12-608 part2a_BCoV', 'WW13_608 part2b_BCov', 'WW14_608_part2')
@@ -46,7 +46,7 @@ results_abs <- rawqpcr %>% filter(!str_detect(`Sample Name`, '/')) # remove Bayl
 
 
 # plot individual biological replicates
-# map2(list_rawqpcr, read_these_sheets, ~print(plot_biological_replicates(.x, title_text = .y)))
+map2(list_rawqpcr, read_these_sheets, ~(plot_biological_replicates(.x, title_text = .y)))
 
 ```
 
@@ -78,6 +78,11 @@ bb_qpcr <- left_join(qpcr_polished, biobot_lookup, by = 'Biobot ID') %>% mutate_
   mutate_at('Tube ID', ~str_remove(., "\\.")) %>%  unite('Label_tube', c('Sample Name', 'Tube ID'), sep = "", remove = F) # make a unique column for matching volumes
 
 summary_bb_qpcr <- bb_qpcr %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at('Copy #', funs(mean(.,na.rm = T), sd(., na.rm = T)))
+
+WWTP_order_1 <- summary_bb_qpcr %>% filter( str_detect(Target,'BCoV')) %>% arrange(`mean`) %>% pull(WWTP) # order samples by ascending order of BCoV
+
+summary_bb_qpcr$WWTP %<>%  fct_relevel(levels = WWTP_order_1) # order samples by 5/12 ascending order
+
 
 plot_mean_sd_jitter(summary_bb_qpcr, bb_qpcr, x_var = WWTP) %>% format_logscale_y() %>% print()
 ```
@@ -126,7 +131,7 @@ reco_plot %>%  format_logscale_y() %>% print()
 
 ```{r percentreco}
 
-plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, sample_var = '60.',  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
 ```
 
 
@@ -135,21 +140,21 @@ plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, m
 ```{r summarydatadisplay}
 presentable_vol_qpcr <- vol_qpcr %>% rename('Facility' = `FACILITY NAME`) %>% 
   mutate_at('Sample Name', ~as.character(.)) %>% 
-  mutate_at('Facility', ~if_else(. == assay_variable, str_c(`Sample Name`, '-', assay_variable, '.', biological_replicates), .)) %>% 
+  mutate_at('Facility', ~if_else(. == assay_variable, str_c(`Sample Name`, '/', assay_variable), .)) %>% 
   mutate_at('Facility', ~str_replace(., '609', 'Extraction blank')) %>% 
   arrange(Facility, biological_replicates) %>% 
   unite('Facility', c(Facility, biological_replicates), sep = "-", na.rm = T) %>% 
   filter(!str_detect(assay_variable, '11|9')) %>% 
-  mutate_cond(str_detect(Target, 'N'), `Recovery fraction` = NA) %>% 
-  select(Facility, WWTP, WW_vol, Target, CT, `Copy #`, Recovered, `Recovery fraction`) %>% 
-  rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered)
+  mutate_cond(str_detect(Target, 'N'), `Recovery fraction` = NA, `Actual spike-in` = NA) %>% 
+  select(Facility, WWTP, WW_vol, Target, CT, `Copy #`, Recovered, `Actual spike-in`, `Recovery fraction`) %>% 
+  rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered, 'Spiked-in Copies/l WW' = `Actual spike-in`)
 
 # presentable data for discussion with Baylor
 write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=2113120147', sheet = title_name)  # save results to a google sheet
   
 
 present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank"), str_detect(Target, "^N")) %>%  # select only N1,N2 - remove distracting data
-select(-`Recovery fraction`)
+select(-`Recovery fraction`, -`Spiked-in Copies/l WW`)
 # presentable data for health department
 write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=0', sheet = title_name) # save results to a google sheet
 

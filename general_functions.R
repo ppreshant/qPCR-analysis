@@ -135,7 +135,7 @@ plottm1 <- function(results_relevant)
 
 # Plotting mean, sd and individual replicates jitter
 plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = results_abs, long_format = F, measure_var = 'Copy #', sample_var = '.*', colour_var = Target, x_var = assay_variable, y_var = `Copy #`, facet_var = `Sample Name`, title_text = title_name, ylabel = 'Genome copies/ul RNA', xlabel = plot_assay_variable)
-{ # Convenient handle for repetitive plotting in the same format; Reads data only in long format
+{ # Convenient handle for repetitive plotting in the same format; Reads data only in long format or wide (specify in long_format)
   
   # filtering variables by user inputs
   if(long_format) # use long format if not plotting Copy #s - ex. Recovery, % recovery etc.
@@ -162,6 +162,16 @@ plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = resul
 
   plt1.formatted <- plt1 %>% format_classic() # clean formatting
   
+}
+
+# plotting individual replicates
+plot_biological_replicates <- function(results_abs, title_text = title_name, xlabel = plot_assay_variable)
+{ # Convenient handle for repetitive plotting 'Copy #' vs biological replicate
+  
+  plt <- results_abs %>% ggplot(aes(x = `Tube ID`, y = `Copy #`, color = Target)) + ylab('Copies/ul RNA extract') +    # Specify the plotting variables 
+    geom_point(size = 2) + facet_grid(~`Sample Name`, scales = 'free_x', space = 'free_x') + # plot points and facetting
+    ggtitle(title_text) + xlab(xlabel)
+  plt.formatted <- plt %>% format_classic(.) %>% format_logscale_y() # formatting plot, axes labels, title and logcale plotting
 }
 
 # plot formatting ---- 

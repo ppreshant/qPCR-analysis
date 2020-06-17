@@ -9,7 +9,7 @@ source('./general_functions.R') # Source the general_functions file before runni
   # BCoV-608_A.2; ignore-facet_(x axis variable).biological replicate (BCoV is ignored, only for pipetting reference, actual target is taken from the qPCR results)
 # If code fails, first thing: check the number of lines to skip before the data begins and tally with the code (including the headings)
 
-flnm <- 'WW14_608 part2_N1N2_Baylor HA BCoV'  # set the filename
+flnm <- 'WW14_608_part2'  # set the filename
 
 title_name <- flnm
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
@@ -54,8 +54,9 @@ sample_order = columnwise_index(fl) # this gives a vector to order the samples c
 
 # Load desired qPCR result sheet and columns
 bring_results <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, starts_with('Tm'),`Target Name`) %>% rename(Target = `Target Name`) %>%  .[sample_order,] %>%  # select only the results used for plotting, calculations etc. and arrange them according to sample order
- select(-`Sample Name`) %>% right_join(plate_template, by = 'Well Position') # Incorporate samples names from the google sheet by matching well position
- 
+ select(-`Sample Name`) %>% right_join(plate_template, by = 'Well Position') %>%  # Incorporate samples names from the google sheet by matching well position
+  filter(!is.na(Target))
+   
 # Remove unneccesary data
 rm(fl, plate_template_raw)  # remove old data for sparsity
 
@@ -68,7 +69,7 @@ rm(fl, plate_template_raw)  # remove old data for sparsity
 polished_results <- bring_results %>% separate(`Sample Name`,c(NA, 'Sample Name'),'-') %>% separate(`Sample Name`,c('Sample Name','Tube ID'),'_') %>% 
   mutate(`Tube ID` = if_else(`Sample Name` == 'NTC', '0', `Tube ID`)) %>% 
   separate(`Tube ID`, c('assay_variable', 'biological_replicates'), remove = F) %>%  # Separate out biological replicates 
-  unite('Tube ID', c(assay_variable, biological_replicates), sep = '.', remove = F) %>% # remaking Tube ID - removes spaces after 'dot'
+  unite('Tube ID', c(assay_variable, biological_replicates), sep = '.', remove = F, na.rm = T) %>% # remaking Tube ID - removes spaces after 'dot'
   arrange(assay_variable, biological_replicates) %>% mutate_if(is.character,as_factor) # Factorise the sample name and rearrange in column order of appearance on the plate (for plotting)
 
 # select samples to plot (or to exclude write a similar command)

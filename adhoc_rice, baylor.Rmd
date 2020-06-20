@@ -1,0 +1,101 @@
+---
+title: "Rice vs Baylor"
+author: "Prashant Kalvapalle"
+date: "19 June 2020"
+output: 
+  html_document:
+    theme: flatly
+    toc: TRUE
+    toc_float: TRUE
+---
+
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.width = 8, fig.height = 7)
+source('./general_functions.R') # Source the general_functions file
+
+```
+
+## Scatter plot
+
+
+
+```{r data_input}
+
+# Enter the file names and path
+flnames <- c( baylor = 'Baylor 608', rice = '200608_Rice_ww_data-1 updated')
+common_path <- 'C:/Users/new/Desktop'
+# completing file path
+flpaths <- flnames %>% map2(c('.xls', '.xlsx'), ~str_c(common_path, '/', .x, .y)) # this completes the file path
+
+
+qpcr_dat <- map(flpaths, function(x) read_excel(x) %>% mutate('Lab' = str_extract(x, 'Rice|Baylor')))
+
+# qpcr_dat$baylor %<>% rename('Copies/l WW' = matches('Quantity')) %>% mutate_at('Copies/l WW', ~ . * 1e5/560)
+dat1b <- qpcr_dat$baylor %>% mutate_at(vars(matches('Quantity')),~.* 1e5/560) %>% rename('Copies/l WW' = matches('Quantity'), 'Facility' = `Sample Name`, 'Target' = `Target Name`) %>% mutate_at('Copies/l WW', ~ replace_na(., 0))
+
+dat1r <- qpcr_dat$rice %>% mutate_at('Copies/l WW', ~ replace_na(., 0)) %>% separate(Facility, c('Facility', NA), sep = '-') %>% arrange(`Copies/l WW`) %>% mutate_at('Target', ~if_else(str_detect(., 'N1'), 'SARS CoV-2 N1', 'SARS CoV-2 N2'))
+
+dat1r %>% filter(str_detect(Target, 'N2')) %>% pull(Facility) %>%  fct_inorder() %>% levels() -> plot_order
+
+dat2 <- bind_rows(dat1r, dat1b) %>% mutate_at('Facility', ~fct_relevel(., plot_order) )
+```
+
+``` {r plotscatter}
+
+plt1 <- dat2 %>% ggplot(aes(y = Facility, x = `Copies/l WW`, colour = Lab)) + geom_point() + facet_grid(~ Target)
+plt1f <- plt1 %>% format_classic()
+print(plt1f)
+```
+
+### logscale
+
+``` {r plotscatter2}
+
+plt1f %>% format_logscale_x() %>% print()
+```
+
+
+## Raw data: Cleveland dotplot
+
+### linearscale
+
+
+```{r clevaland1}
+
+plt1c <- plt1f + geom_line(aes(group = Facility), colour = 'black', alpha = .5)
+print(plt1c)
+```
+
+### Logscale
+
+
+```{r clevaland2}
+
+plt1c %>% format_logscale_x() %>% print()
+```
+
+## Mean data: Cleveland dotplot
+
+### linearscale
+
+``` {r clevaland3}
+
+summ_dat2 <- dat2 %>% group_by(Target, Lab, Facility) %>% summarize_at('Copies/l WW', ~ mean(.))
+
+plt2 <- summ_dat2 %>% ggplot(aes(y = Facility, x = `Copies/l WW`, colour = Lab)) + geom_point() + facet_grid(~ Target) + 
+geom_line(aes(group = Facility), colour = 'black', alpha = .5)
+
+plt2f <- plt2 %>% format_classic()
+print(plt2f)
+
+```
+
+### Logscale
+
+
+```{r clevaland4}
+
+plt2f %>% format_logscale_x() %>% print()
+```

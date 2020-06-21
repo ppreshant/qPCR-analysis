@@ -1,7 +1,7 @@
 ---
-title: "WW14_608 part2_N1N2"
+title: "WW17_615 N1N2"
 author: "Prashant Kalvapalle"
-date: "16 June 2020"
+date: "21 June 2020"
 output: 
   html_document:
     theme: flatly
@@ -24,8 +24,8 @@ spike_virus_conc <- 5.19e3 # copies/ul viral suspension spiked in (Spike ID: S10
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('WW11_608 part1', 'WW12-608 part2a_BCoV', 'WW13_608 part2b_BCov', 'WW14_608_part2')
-title_name <- '6/8 Rice'
+read_these_sheets <- c('WW17-615_N1-N2')
+title_name <- '6/15 Rice'
 ```
 
 ## Goal of the analysis
@@ -131,7 +131,7 @@ reco_plot %>%  format_logscale_y() %>% print()
 
 ```{r percentreco}
 
-plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, sample_var = '60.',  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+# plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, sample_var = '60.',  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
 ```
 
 

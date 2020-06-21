@@ -75,13 +75,13 @@ mutate_cond <- function(.data, condition, ..., envir = parent.frame())
 # standard curve and regressions ----
 
 # Plot Standard curve
-plotstdcurve <- function(fl, plttitle, xlabel)
+plotstdcurve <- function(results_qpcr, plttitle, xlabel)
 {
-  plt <- fl$Results %>% filter(Task == 'STANDARD') %>% 
+  plt <- results_qpcr %>% 
 ggplot(.) + aes(x = log10(Quantity), y = CT, color = `Target`) + geom_point() +
 theme_classic() + scale_color_brewer(palette="Set1") + theme(plot.title = element_text(hjust = 0.5)) + 
 ggtitle(plttitle) + xlab(xlabel) + ylab(expression(C[q])) +
-stat_smooth(method ="lm", se = F) # plots linear regression line
+stat_smooth(data = filter(results_qpcr, Task == 'STANDARD'), method ="lm", se = F) # plots linear regression line
 }
 
 # getting regression line and R2 values to put into the standard curve plot 

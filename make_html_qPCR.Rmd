@@ -20,12 +20,15 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 
 # Spike in and concentration details
 HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
-spike_virus_conc <- 5.19e3 # copies/ul viral suspension spiked in (Spike ID: S10)
+spike_virus_conc <- 22123 # copies/ul viral suspension spiked in (Spike ID: S12)
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
 read_these_sheets <- c('WW17-615_N1-N2')
 title_name <- '6/15 Rice'
+
+# Biobot ID sheet
+bb_sheets <- c('Week 10 (6/15)')
 ```
 
 ## Goal of the analysis
@@ -65,7 +68,7 @@ map2(list_rawqpcr, read_these_sheets, ~(plot_biological_replicates(.x, title_tex
 ```{r biobot_to_WWTP}
 
 # Bring WWTP names from google sheet: "Biobot Sample IDs"
-biobot_lookup <- map_df(c('Week 9 (6/8)') , ~ read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=233791008', sheet = .x, range = 'G:I')) %>% rename('Biobot ID' = contains('Biobot', ignore.case = T), 'WWTP' = SYMBOL) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
+biobot_lookup <- map_df(bb_sheets , ~ read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=233791008', sheet = .x, range = 'H:J')) %>% rename('Biobot ID' = contains('Biobot', ignore.case = T), 'WWTP' = SYMBOL) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
 
 # polishing qPCR data - Make Biobot ID column clean
 qpcr_polished <- results_abs %>% unite('Biobot ID', c(`Sample Name`, assay_variable), sep = '', remove = F) %>%
@@ -131,7 +134,7 @@ reco_plot %>%  format_logscale_y() %>% print()
 
 ```{r percentreco}
 
-# plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, sample_var = '60.',  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T,  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
 ```
 
 

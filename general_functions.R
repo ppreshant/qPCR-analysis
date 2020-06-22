@@ -134,19 +134,19 @@ plottm1 <- function(results_relevant)
 
 
 # Plotting mean, sd and individual replicates jitter
-plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = results_abs, long_format = F, measure_var = 'Copy #', sample_var = '.*', colour_var = Target, x_var = assay_variable, y_var = `Copy #`, facet_var = `Sample Name`, title_text = title_name, ylabel = 'Genome copies/ul RNA', xlabel = plot_assay_variable)
+plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = results_abs, long_format = F, measure_var = 'Copy #', sample_var = '.*', exclude_sample = F, colour_var = Target, x_var = assay_variable, y_var = `Copy #`, facet_var = `Sample Name`, title_text = title_name, ylabel = 'Genome copies/ul RNA', xlabel = plot_assay_variable)
 { # Convenient handle for repetitive plotting in the same format; Reads data only in long format or wide (specify in long_format)
   
   # filtering variables by user inputs
   if(long_format) # use long format if not plotting Copy #s - ex. Recovery, % recovery etc.
   {
-    summ_relevant <- summary_data %>% filter(Measurement == measure_var, str_detect(`Sample Name`, sample_var))
-    raw_relevant <- raw_data %>% filter(Measurement == measure_var, str_detect(`Sample Name`, sample_var))
+    summ_relevant <- summary_data %>% filter(Measurement == measure_var, str_detect(`Sample Name`, sample_var, negate = exclude_sample))
+    raw_relevant <- raw_data %>% filter(Measurement == measure_var, str_detect(`Sample Name`, sample_var, negate = exclude_sample))
     y_var <- sym('val') # default y variable is val
   } else 
     {
-      summ_relevant <- summary_data %>% filter(str_detect(`Sample Name`, sample_var))
-      raw_relevant <- raw_data %>% filter(str_detect(`Sample Name`, sample_var))
+      summ_relevant <- summary_data %>% filter(str_detect(`Sample Name`, sample_var, negate = exclude_sample))
+      raw_relevant <- raw_data %>% filter(str_detect(`Sample Name`, sample_var, negate = exclude_sample))
     }
   
   plt1 <- summ_relevant %>% ggplot(aes(x = {{x_var}}, y = mean, colour = {{colour_var}})) +

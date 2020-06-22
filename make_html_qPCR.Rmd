@@ -29,6 +29,9 @@ title_name <- '6/15 Rice'
 
 # Biobot ID sheet
 bb_sheets <- c('Week 10 (6/15)')
+
+# Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
+extra_categories = 'TR'
 ```
 
 ## Goal of the analysis
@@ -87,7 +90,7 @@ WWTP_order_1 <- summary_bb_qpcr %>% filter( str_detect(Target,'BCoV')) %>% arran
 summary_bb_qpcr$WWTP %<>%  fct_relevel(levels = WWTP_order_1) # order samples by 5/12 ascending order
 
 
-plot_mean_sd_jitter(summary_bb_qpcr, bb_qpcr, x_var = WWTP) %>% format_logscale_y() %>% print()
+plot_mean_sd_jitter(summary_bb_qpcr, bb_qpcr, sample_var = extra_categories, exclude_sample = T, x_var = WWTP) %>% format_logscale_y() %>% print()
 ```
 
 ### Recovery
@@ -125,7 +128,7 @@ long_vol_qpcr_summary <- vol_qpcr_summary %>% gather(key = 'Measurement', value 
 long_vol_qpcr_raw <- spike_qpcr %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -WWTP, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
 
 # plot recovery and spiked in
-reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', x_var = WWTP, ylabel = 'Genome copies/l Wastewater') + geom_point(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black', shape = 21) + geom_line(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black')
+reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', sample_var = extra_categories, exclude_sample = T, x_var = WWTP, ylabel = 'Genome copies/l Wastewater') + geom_point(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black', shape = 21) + geom_line(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black')
 
 reco_plot %>%  format_logscale_y() %>% print()
 ```
@@ -134,8 +137,14 @@ reco_plot %>%  format_logscale_y() %>% print()
 
 ```{r percentreco}
 
-plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T,  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, sample_var = extra_categories, exclude_sample = T, long_format = T,  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
 ```
+
+## Special categories
+
+### Summary plot
+
+
 
 
 ## Data output

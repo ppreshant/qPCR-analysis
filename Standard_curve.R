@@ -4,14 +4,25 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # choose file name, in the same directory as Rproject
 flnm <- 'Std7_N genes_IDT_25-5-20'  # set the filename
+# flnm <- 'Std6_N genes_IDT_Dilute'
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
 target_variable <- 'Target Name' # this is the name entered in quantstudio vs 'Target' entered by loading excel template into quantstudio
 
 fl <- readqpcr(flpath) # read file
 
-if(target_variable == 'Target Name') fl$Results %<>% mutate('Target' = `Target Name`)
+# Loading another run ----
+
+fl2 <- 'Std6_N genes_IDT_Dilute' %>% str_c('excel files/', . ,'.xls') %>% readqpcr()
+res2 <- fl2$Results %>% filter(Quantity == 2)
+
 # optional filtering to remove low concentration points in standard curve
-# fl$Results <- fl$Results %>% filter(`Quantity` > 1e4) # filtering only standard curve within the linear range
+fl$Results <- fl$Results %>% bind_rows(res2) # Join values from another standard curve
+
+if(target_variable == 'Target Name') fl$Results %<>% mutate('Target' = `Target Name`)
+
+
+# Plot and analysis ----
+
 
 plt <- plotstdcurve(fl,'qPCR Standard curve 7: N genes_IDT', 'log(Copy #)') # plot standard curve
 
@@ -26,11 +37,11 @@ std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn
 std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes htem lists
 std_table$dat %<>% bind_rows()  
 
-std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - seq_along(std_table) # manual numbering for neat labelling with geom_text
+std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - seq_along(std_table$Target) # manual numbering for neat labelling with geom_text
 
 # Add labels to plot - linear regression equation
 plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward', force = 10)
-ggsave('qPCR analysis/Std7_N CoV2_IDT.png', width = 5, height = 4)
+ggsave('qPCR analysis/Std7+_N CoV2_IDT.png', width = 5, height = 4)
 
 # processing linear regression out
 efficiency_table <- tibble(Slope = std_table$params %>% pull(slope), Efficiency = 10^(-1/Slope), '% Efficiency' = (Efficiency -1)*100 , 'R-square' = std_table$params %>% pull(r_square) %>% round(2))

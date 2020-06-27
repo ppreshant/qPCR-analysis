@@ -1,7 +1,7 @@
 ---
-title: "WW17_615 N1N2"
+title: "WW21_601 redo + TR2"
 author: "Prashant Kalvapalle"
-date: "21 June 2020"
+date: "27 June 2020"
 output: 
   html_document:
     theme: flatly
@@ -19,19 +19,19 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 
 
 # Spike in and concentration details
-HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
-spike_virus_conc <- 22123 # copies/ul viral suspension spiked in (Spike ID: S12)
+HA_concentration_factor <- 500 # concentration factor of wastewater -> RNA
+spike_virus_conc <- 5495.44 # copies/ul viral suspension spiked in (Spike ID: S12)
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('WW17-615_N1-N2')
-title_name <- '6/15 Rice'
+read_these_sheets <- c('WW21_601 redo- TR2 622')
+title_name <- '601 extra Rice'
 
 # Biobot ID sheet
-bb_sheets <- c('Week 10 (6/15)')
+bb_sheets <- c('Week 8 (6/1)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
-extra_categories = 'TR'
+extra_categories = 'TR2'
 ```
 
 ## Goal of the analysis
@@ -100,7 +100,7 @@ open circles : Viral copies spiked in
 
 # Get volumes data from google sheet : "Sample registry"
 volumes_data <- read_sheet('https://docs.google.com/spreadsheets/d/1mJcCt1wMiOuBic6sRlBZJf8KSNu2y-B5PjzCUu7jPM8/edit#gid=521099478', sheet = 'Concentrated samples', range = 'A:D') %>% 
-  rename('WW_vol' = `Total WW vol (ml)`, 'Label_tube' = `Label on tube`) %>% 
+  rename('WW_vol' = `Total WW vol measured (ml)`, 'Label_tube' = `Label on tube`) %>% 
   select(WW_vol, Label_tube) %>% 
   fill(WW_vol) %>% distinct() %>% 
   mutate_at('Label_tube', ~str_remove_all(., " "))

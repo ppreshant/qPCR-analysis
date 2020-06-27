@@ -24,6 +24,7 @@ sample_order = columnwise_index(fl) # this gives a vector to order the samples c
 # Load desired qPCR result sheet and columns
 bring_results <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, starts_with('Tm'),`Target Name`) %>% rename(Target = `Target Name`) %>%  .[sample_order,] %>%  # select only the results used for plotting, calculations etc. and arrange them according to sample order
  select(-`Sample Name`) %>% right_join(plate_template, by = 'Well Position') %>%  # Incorporate samples names from the google sheet by matching well position
+  mutate_at('Target', ~str_replace(., 'BSRV', 'BRSV')) %>% 
   filter(!is.na(Target))
    
 # Remove unneccesary data

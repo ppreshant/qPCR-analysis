@@ -8,7 +8,7 @@
 # BCoV-608_A.2; ignore-facet_(x axis variable).biological replicate (BCoV is ignored, only for pipetting reference, actual target is taken from the qPCR results)
 # If code fails, first thing: check the number of lines to skip before the data begins and tally with the code (including the headings)
 
-flnm <- 'WW17-615_N1-N2'  # set the filename
+flnm <- 'WW21_601 redo- TR2 622'  # set the filename
 
 title_name <- flnm
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 

@@ -4,8 +4,10 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # User inputs ----
 # choose file name, in the same directory as Rproject
-flnm <- 'Std10_4x N1 N2'  # set the filename
+flnm <- 'WW20_622_N1-N2'  # set the filename
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
+
+title_name <- 'qPCR Standard curve 11: N1-N2 multiplex'
 
 # Data input ----
 
@@ -19,15 +21,15 @@ sample_order = columnwise_index(fl) # this gives a vector to order the samples c
 
 bring_results <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, starts_with('Tm'),`Target Name`, Task) %>% rename(Target = `Target Name`) %>%  .[sample_order,] %>%  # select only the results used for plotting, calculations etc. and arrange them according to sample order
   select(-`Sample Name`) %>% right_join(plate_template, by = 'Well Position') %>%  # Incorporate samples names from the google sheet by matching well position
-  separate(`Sample Name`, c(NA, 'Quantity'), sep = '-') %>% mutate_at('Quantity', ~ replace_na(as.numeric(.), 0)) %>% 
+  separate(`Sample Name`, c(NA, NA, 'Quantity'), sep = '-|_') %>% mutate_at('Quantity', ~ replace_na(as.numeric(.), 0)) %>% 
   filter(!is.na(Target))
 
 # optional filtering to remove low concentration points in standard curve
-bring_results %<>% filter(Quantity > 1| Quantity == 0) # filtering only standard curve within the linear range
+# bring_results %<>% filter(Quantity > 1| Quantity == 0) # filtering only standard curve within the linear range
 
 # plotting ----
 
-plt <- plotstdcurve(bring_results,'qPCR Standard curve 10: N1-N2 multiplex', 'log(Copy #)') # plot standard curve
+plt <- plotstdcurve(bring_results, title_name, 'log(Copy #)') # plot standard curve
 
 # # Extract the names of the targets in use
 # targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target Name`) %>% unique(.)  

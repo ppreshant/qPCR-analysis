@@ -1,7 +1,7 @@
 ---
-title: "WW21_601 redo + TR2"
+title: "WW20_622_N1-N2"
 author: "Prashant Kalvapalle"
-date: "27 June 2020"
+date: "28 June 2020"
 output: 
   html_document:
     theme: flatly
@@ -19,23 +19,24 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 
 
 # Spike in and concentration details
-HA_concentration_factor <- 500 # concentration factor of wastewater -> RNA
-spike_virus_conc <- 5495.44 # copies/ul viral suspension spiked in (Spike ID: S12)
+HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
+spike_virus_conc <- 35614.1 # copies/ul viral suspension spiked in (Spike ID: S12)
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('WW21_TR2 622') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
-title_name <- '622 TR2_a' # name of the filename for writing presentable data and plot title
+read_these_sheets <- c('WW20_622_N1-N2', 'WW22_622_BCoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+title_name <- '622 Rice' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
-bb_sheets <- c('Week 8 (6/1)')
+bb_sheets <- c('Week 11 (6/22)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
-extra_categories = 'TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
+extra_categories = 'Std' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
 
 # To rename samples with descriptive category/names (usually for extra TR experiments)
 # - For other samples: Make it empty an string (like this '' ) to avoid messing up names inadvertantly
-translate_id_manual <- c('WW/Field', 'Water/Field', 'WW/Lab',  'Water/Lab', 'Solids/Present', 'Solids/Removed', 'Bead-beating/Dilter', 'Bead-beating/No filter') %>% setNames(str_c('^', c('A','B','C','D','E','F','G','H'))) 
+# translate_id_manual <- c('WW/Field', 'Water/Field', 'WW/Lab',  'Water/Lab', 'Solids/Present', 'Solids/Removed', 'Bead-beating/Dilter', 'Bead-beating/No filter') %>% setNames(str_c('^', c('A','B','C','D','E','F','G','H')))
+translate_id_manual <- c('none' = 'none')
 ```
 
 ## Goal of the analysis
@@ -77,7 +78,7 @@ plot_mean_sd_jitter(summary_data = summary_results_abs, raw_data = results_abs, 
 ```{r biobot_to_WWTP}
 
 # Bring WWTP names from google sheet: "Biobot Sample IDs"
-biobot_lookup <- map_df(bb_sheets , ~ read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=233791008', sheet = .x, range = 'H:J')) %>% rename('Biobot ID' = contains('Biobot', ignore.case = T), 'WWTP' = SYMBOL) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
+biobot_lookup <- map_df(bb_sheets , ~ read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=233791008', sheet = .x, range = 'H:J')) %>% rename('Biobot ID' = contains('Biobot', ignore.case = T), 'WWTP' = contains('SYMBOL', ignore.case = T)) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
 
 # polishing qPCR data - Make Biobot ID column clean
 qpcr_polished <- results_abs %>% unite('Biobot ID', c(`Sample Name`, assay_variable), sep = '', remove = F) %>%
@@ -130,7 +131,7 @@ spike_qpcr <- vol_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV')) %>% select(-c
 
 vol_qpcr_summary <- spike_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) # Summarize mean and SD for biological replicates
 
-WWTP_order <- vol_qpcr_summary %>% filter(`Sample Name` == '608', str_detect(Target,'BCoV')) %>% arrange(`Copy #_mean`) %>% pull(WWTP) # order samples by 5/12 ascending order
+WWTP_order <- vol_qpcr_summary %>% filter(str_detect(Target,'BCoV')) %>% arrange(`Copy #_mean`) %>% pull(WWTP) # order samples by 5/12 ascending order
 
 vol_qpcr_summary$WWTP %<>%  fct_relevel(levels = WWTP_order) # order samples by 5/12 ascending order
 
@@ -148,7 +149,7 @@ reco_plot %>%  format_logscale_y() %>% print()
 
 ```{r percentreco}
 
-plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, sample_var = extra_categories, exclude_sample = T, long_format = T,  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, sample_var = str_c(extra_categories, '|Vaccine'), exclude_sample = T, long_format = T,  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
 ```
 
 ## Special categories

@@ -24,21 +24,25 @@ spike_virus_conc <- 5495.44 # copies/ul viral suspension spiked in (Spike ID: S1
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('WW21_601 redo- TR2 622')
-title_name <- '601 extra Rice'
+read_these_sheets <- c('WW21_TR2 622') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+title_name <- '622 TR2_a' # name of the filename for writing presentable data and plot title
 
-# Biobot ID sheet
+# Biobot ID sheet to draw sample names from
 bb_sheets <- c('Week 8 (6/1)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
-extra_categories = 'TR2'
+extra_categories = 'TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
+
+# To rename samples with descriptive category/names (usually for extra TR experiments)
+# - For other samples: Make it empty an string (like this '' ) to avoid messing up names inadvertantly
+translate_id_manual <- c('WW/Field', 'Water/Field', 'WW/Lab',  'Water/Lab', 'Solids/Present', 'Solids/Removed', 'Bead-beating/Dilter', 'Bead-beating/No filter') %>% setNames(str_c('^', c('A','B','C','D','E','F','G','H'))) 
 ```
 
 ## Goal of the analysis
 
 Quantifying CoV2-N1,N2 (multiplexed) and BCoV spike in in 6/8 wastewater samples
 
-## Plots
+## Plots with raw names
 
 ### Individual biological replicates
 
@@ -48,7 +52,7 @@ Quantifying CoV2-N1,N2 (multiplexed) and BCoV spike in in 6/8 wastewater samples
 list_rawqpcr <- map(read_these_sheets, ~ read_sheet('https://docs.google.com/spreadsheets/d/1ouk-kCJHERRhOMNP07lXfiC3aGB4wtWXpnYf5-b2CI4/edit#gid=0', sheet = ., range = 'A:H')) 
 
 rawqpcr <- bind_rows(list_rawqpcr)
-results_abs <- rawqpcr %>% filter(!str_detect(`Sample Name`, '/')) # remove Baylor samples (5/26 nad 6/2) - processed separately
+results_abs <- rawqpcr %>% filter(!str_detect(`Sample Name`, '/')) # remove Baylor samples (5/26 and 6/2) - processed separately
 
 
 # plot individual biological replicates
@@ -60,8 +64,10 @@ map2(list_rawqpcr, read_these_sheets, ~(plot_biological_replicates(.x, title_tex
 
 ```{r summary}
 
+summary_results_abs <- results_abs %>% group_by(Target, `Sample Name`, assay_variable) %>% summarise_at('Copy #', funs(mean(.,na.rm = T), sd(., na.rm = T)))
+
 # plot copy # vs sample (assay_variable)
-# plot_mean_sd_jitter() %>% format_logscale_y() %>% print()
+plot_mean_sd_jitter(summary_data = summary_results_abs, raw_data = results_abs, long_format = F) %>% format_logscale_y() %>% print()
 ```
 
 ## Plots (WWTP labels)
@@ -115,7 +121,12 @@ vol_qpcr <- bb_qpcr %>% left_join(volumes_data, by = 'Label_tube') %>%
 
 
 ```{r summarizing_plot}
-spike_qpcr <- vol_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV'), !str_detect(assay_variable, '11|9')) %>% select(-c(3,4,6,7,8))
+
+spike_qpcr <- vol_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV')) %>% select(-c(3,4,6,7,8)) %>% 
+  mutate_at(c('WWTP', 'FACILITY NAME'), ~str_replace_all(., translate_id_manual)) %>% 
+  separate(WWTP, c('WWTP', 'tmp')) %>% 
+  mutate_cond(str_detect(`Sample Name`, 'TR'), 'Sample Name' = WWTP, 'WWTP' = tmp) %>% 
+  select(-tmp)
 
 vol_qpcr_summary <- spike_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) # Summarize mean and SD for biological replicates
 

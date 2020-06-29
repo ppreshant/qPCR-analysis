@@ -1,5 +1,5 @@
 ---
-title: "Weekly_comparisons"
+title: "Weekly comparisons"
 author: "Prashant Kalvapalle"
 date: "29 June 2020"
 output: ioslides_presentation
@@ -21,7 +21,7 @@ title_name <- 'June Rice' # name of the filename for writing presentable data an
 extra_categories = 'Std|Vaccine|NTC|TR'
 ```
 
-## Density plot
+## Recovery | Density plot
 
 ```{r}
 # Acquire all the pieces of the data : read saved raw qPCR results from a google sheet
@@ -36,12 +36,22 @@ results_abs <- rawqpcr %>% filter(!str_detect(Facility, extra_categories)) %>%  
 results_abs %>% ggplot(aes(x = Week, y = `Recovery fraction`)) + geom_jitter(width = .1)
 ```
 
-## Dot plot
+## Recovery | Dot plot
 
 ```{r dots}
 
 nameless <- results_abs %>% select(Week, `Recovery fraction`) %>% drop_na() %>% group_by(Week) %>% arrange(`Recovery fraction`) %>%  mutate(id = row_number()) 
 
 nameless %>% ggplot(aes(x = id, y = `Recovery fraction`, colour = Week)) + geom_point() + geom_line()
+```
+
+## N comparisions | Scatter
+
+```{r}
+
+nameless <- results_abs %>% select(Week, `Recovery fraction`) %>% drop_na() %>% group_by(Week) %>% arrange(`Recovery fraction`) %>%  mutate(id = row_number()) 
+
+nameless %>% ggplot(aes(x = id, y = `Recovery fraction`, colour = Week)) + geom_point() + geom_line()
+
 ```
 

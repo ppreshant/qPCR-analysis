@@ -38,7 +38,7 @@ plt <- plotstdcurve(bring_results, title_name, 'log(Copy #)') # plot standard cu
 standard_curve_vars <- bring_results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT, Target) %>% group_by(Target) # select required columns and group
 
 # Apply linear regression and find the model fitting results (equation and slope, R2 values) for each target
-std_table <- standard_curve_vars %>% do(., equation = lm_eqn(.), params = lm_eqn(., trig = 'coeff'), dat = .[1,] ) # "do" applies functions to each group of the data
+std_table <- standard_curve_vars %>% do(., equation = lm_std_curve(.), params = lm_std_curve(., trig = 'coeff'), dat = .[1,] ) # "do" applies functions to each group of the data
 std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes htem lists
 std_table$dat %<>% bind_rows()  
 
@@ -46,9 +46,9 @@ std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - 2 * seq_along(std_t
 
 # Add labels to plot - linear regression equation
 plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = 0, force = 10)
-ggsave(str_c('qPCR analysis/', flnm, '_subset', '.png'), width = 5, height = 4)
+# ggsave(str_c('qPCR analysis/', flnm, '_subset', '.png'), width = 5, height = 4)
 
 # processing linear regression out
-efficiency_table <- tibble(Slope = std_table$params %>% pull(slope), Efficiency = 10^(-1/Slope), '% Efficiency' = (Efficiency -1)*100 , 'R-square' = std_table$params %>% pull(r_square) %>% round(2))
+efficiency_table <- tibble(Slope = std_table$params %>% pull(slope), y_intercept = std_table$params %>% pull(y_intercept) , Efficiency = 10^(-1/Slope), '% Efficiency' = (Efficiency -1)*100 , 'R-square' = std_table$params %>% pull(r_square) %>% round(2))
 rownames(efficiency_table) <- std_table$dat$`Target`
 View(efficiency_table)

@@ -160,7 +160,10 @@ plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, sample_var = str_c
 
 long_targets_vol <- vol_qpcr %>% select(c(2,5, 8:11)) %>% filter(!str_detect(`Sample Name`, str_c(extra_categories, '|NTC'))) %>% pivot_wider(names_from = 'Target', values_from = 'Copy #')
 
-long_targets_vol %>% ggplot(aes(x = N1_multiplex, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0) + geom_label(aes(x = 4, y = 4, label = 'y = x'))
+lin_reg_eqn <- long_targets_vol %>% lm(N2_multiplex ~ N1_multiplex, data = .) %>% lm_eqn(.)
+
+long_targets_vol %>% ggplot(aes(x = N1_multiplex, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0) + geom_label(aes(x = 4, y = 4, label = 'y = x')) + geom_smooth(method = 'lm') +
+  geom_text(y = 15, x = 3, label = lin_reg_eqn, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = 0, force = 10)
 
 ```
 
@@ -175,14 +178,14 @@ long_targets_vol_summary <- vol_qpcr %>%
   filter(!str_detect(`Sample Name`, str_c(extra_categories, '|NTC|Vaccine'))) %>% 
   pivot_wider(names_from = 'Target', values_from = 'Copy #')
 
-long_targets_vol_summary %>% ggplot(aes(x = N1_multiplex, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0, aes(colour = 1)) + geom_label(aes(x = 4, y = 4, label = 'y = x'))
+long_targets_vol_summary %>% ggplot(aes(x = N1_multiplex, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0, aes(colour = 1)) + geom_label(aes(x = 4, y = 4, label = 'y = x')) + geom_smooth(method = 'lm')
 
 ```
 
 ### BCoV vs N2 avg
 
 ```{r n2bcov}
-long_targets_vol_summary %>% ggplot(aes(x = BCoV_M, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0, aes(colour = 1)) + geom_label(aes(x = 4, y = 4, label = 'y = x'))
+long_targets_vol_summary %>% ggplot(aes(x = BCoV_M, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0, aes(colour = 1)) + geom_label(aes(x = 4, y = 4, label = 'y = x')) + geom_smooth(method = 'lm')
 
 ```
 

@@ -7,7 +7,7 @@ output: ioslides_presentation
 
 ```{r setup, include=FALSE}
 
-knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.width = 12, fig.height = 4)
+knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.width = 6, fig.height = 4)
 
 # Loading libraries, functions and user inputs
 source('./general_functions.R') # Source the general_functions file

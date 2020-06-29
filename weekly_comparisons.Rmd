@@ -1,0 +1,47 @@
+---
+title: "Weekly_comparisons"
+author: "Prashant Kalvapalle"
+date: "29 June 2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.width = 12, fig.height = 4)
+
+# Loading libraries, functions and user inputs
+source('./general_functions.R') # Source the general_functions file
+source('./inputs_for_analysis.R') # Source the file with user inputs
+
+# sheets to read from "qPCR data to present + recoveries"" google sheet
+read_these_sheets <- c('6/8 Rice', '6/15 Rice', '6/22 Rice') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+title_name <- 'June Rice' # name of the filename for writing presentable data and plot title
+
+# Extra categories to exclude from plotting (separate by | like this 'Vaccine|Troubleshooting')
+extra_categories = 'Std|Vaccine|NTC|TR'
+```
+
+## Density plot
+
+```{r}
+# Acquire all the pieces of the data : read saved raw qPCR results from a google sheet
+list_rawqpcr <- map(read_these_sheets, ~ read_sheet('https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=1363292517', sheet = .x, range = 'A:I') %>% mutate('Week' = str_extract(.x, '6/.* '))) 
+
+rawqpcr <- bind_rows(list_rawqpcr)
+results_abs <- rawqpcr %>% filter(!str_detect(Facility, extra_categories)) %>%  # remove unnecessary data
+  mutate_at('Week', ~ as_factor(.))
+
+# long_recovery <- results_abs %>% pivot_wider(names_from = 'Week', values_from = 'Recovery fraction') 
+
+results_abs %>% ggplot(aes(x = Week, y = `Recovery fraction`)) + geom_jitter(width = .1)
+```
+
+## Dot plot
+
+```{r dots}
+
+nameless <- results_abs %>% select(Week, `Recovery fraction`) %>% drop_na() %>% group_by(Week) %>% arrange(`Recovery fraction`) %>%  mutate(id = row_number()) 
+
+nameless %>% ggplot(aes(x = id, y = `Recovery fraction`, colour = Week)) + geom_point() + geom_line()
+```
+

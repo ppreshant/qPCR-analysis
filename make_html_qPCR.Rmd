@@ -24,7 +24,7 @@ spike_virus_conc <- 35614.1 # copies/ul viral suspension spiked in (Spike ID: S1
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('WW20_622_N1-N2', 'WW22_622_BCoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+read_these_sheets <- c('WW20_622_N1-N2', 'WW22_622_BCoV', 'WW23_622_BRSV_TR2') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
 title_name <- '622 Rice' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
@@ -106,8 +106,9 @@ open circles : Viral copies spiked in
 ```{r Recovery_calculations}
 
 # Get volumes data from google sheet : "Sample registry"
-volumes_data <- read_sheet('https://docs.google.com/spreadsheets/d/1mJcCt1wMiOuBic6sRlBZJf8KSNu2y-B5PjzCUu7jPM8/edit#gid=521099478', sheet = 'Concentrated samples', range = 'A:D') %>% 
+volumes_data <- read_sheet('https://docs.google.com/spreadsheets/d/1mJcCt1wMiOuBic6sRlBZJf8KSNu2y-B5PjzCUu7jPM8/edit#gid=521099478', sheet = 'Concentrated samples', range = 'A:F') %>% 
   rename('WW_vol' = `Total WW vol measured (ml)`, 'Label_tube' = `Label on tube`) %>% 
+  mutate('WW_vol' = coalesce(WW_vol, `Total WW volume calculated (ml)`) ) %>% 
   select(WW_vol, Label_tube) %>% 
   fill(WW_vol) %>% distinct() %>% 
   mutate_at('Label_tube', ~str_remove_all(., " "))

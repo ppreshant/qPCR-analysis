@@ -200,7 +200,6 @@ presentable_vol_qpcr <- vol_qpcr %>% rename('Facility' = `FACILITY NAME`) %>%
   mutate_at('Facility', ~str_replace(., '609', 'Extraction blank')) %>% 
   arrange(Facility, biological_replicates) %>% 
   unite('Facility', c(Facility, biological_replicates), sep = "-", na.rm = T) %>% 
-  filter(!str_detect(assay_variable, '11|9')) %>% 
   mutate_cond(str_detect(Target, 'N'), `Recovery fraction` = NA, `Actual spike-in` = NA) %>% 
   select(Facility, WWTP, WW_vol, Target, CT, `Copy #`, Recovered, `Actual spike-in`, `Recovery fraction`) %>% 
   rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered, 'Spiked-in Copies/l WW' = `Actual spike-in`)
@@ -209,7 +208,7 @@ presentable_vol_qpcr <- vol_qpcr %>% rename('Facility' = `FACILITY NAME`) %>%
 write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=2113120147', sheet = title_name)  # save results to a google sheet
   
 
-present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank"), str_detect(Target, "^N")) %>%  # select only N1,N2 - remove distracting data
+present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank|Std"), str_detect(Target, "^N")) %>%  # select only N1,N2 - remove distracting data
 select(-`Recovery fraction`, -`Spiked-in Copies/l WW`)
 # presentable data for health department
 write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=0', sheet = title_name) # save results to a google sheet

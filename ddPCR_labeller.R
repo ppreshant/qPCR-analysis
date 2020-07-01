@@ -5,7 +5,7 @@
 
 
 flnm <- 'dd.WW3_622_N1-N2'  # set the filename
-template_volume <- 10 # ul template volume per well of the ddPCR reaction
+template_volume <- 10.12 /22 * 20 # ul template volume per well of the ddPCR reaction
 
 # Biobot ID sheet to draw sample names from
 bb_sheets <- c('Week 11 (6/22)')
@@ -23,9 +23,12 @@ source('./general_functions.R') # Source the general_functions file
 plate_template_raw <- read_sheet('https://docs.google.com/spreadsheets/d/19oRiRcRVS23W3HqRKjhMutJKC2lFOpNK8aNUkC-No-s/edit#gid=478762118', sheet = 'Plate import setup', range = 'G1:S9')
 
 # Read in qPCR data and labels from plate template
-fl <- read_sheet('https://docs.google.com/spreadsheets/d/1I8E8hyF7rFIARTG3ns5khpywafKlkJ6W0qPBxpiUVug/edit#gid=0', sheet = flnm) # read excel file exported by Quantstudio
+fl <- read_sheet('https://docs.google.com/spreadsheets/d/1jdO_P9SZGezSTLiIARtSmA7qaUuX3wA-jCe7YiQ1sCI/edit#gid=0', sheet = flnm) # read excel file exported by Quantstudio
 plate_template <- read_plate_to_column(plate_template_raw, 'Sample Name') %>%  # convert plate template (sample names) into a single vector, columnwise
   rename('Well' = `Well Position`)
+
+# Polishing ----
+
 
 # Load desired qPCR result sheet and columns
 bring_results <- fl %>% # select only the results used for plotting, calculations etc. and arrange them according to sample order

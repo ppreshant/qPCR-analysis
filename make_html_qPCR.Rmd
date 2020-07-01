@@ -20,7 +20,7 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 
 # Spike in and concentration details
 HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
-spike_virus_conc <- 35614.1 # copies/ul viral suspension spiked in (Spike ID: S12)
+spike_virus_conc <- 35614.1 # copies/ul viral suspension spiked in (Spike ID: S13)
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file

@@ -18,7 +18,7 @@ read_these_sheets <- c('6/8 Rice', '6/15 Rice', '6/22 Rice') # sheet name(s) in 
 title_name <- 'June Rice' # name of the filename for writing presentable data and plot title
 
 # Extra categories to exclude from plotting (separate by | like this 'Vaccine|Troubleshooting')
-extra_categories = 'Std|Vaccine|NTC|TR'
+extra_categories = 'Std|Vaccine|NTC|TR|Blank'
 ```
 
 ## Recovery | Density plot

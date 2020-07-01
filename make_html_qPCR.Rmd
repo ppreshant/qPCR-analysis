@@ -71,7 +71,7 @@ summary_results_abs <- results_abs %>% group_by(Target, `Sample Name`, assay_var
 plot_mean_sd_jitter(summary_data = summary_results_abs, raw_data = results_abs, long_format = F) %>% format_logscale_y() %>% print()
 ```
 
-## Plots (WWTP labels)
+## Comprehensive plots (WWTP labels)
 
 ### Summary plot
 
@@ -190,6 +190,37 @@ long_targets_vol_summary %>% ggplot(aes(x = BCoV_M, y = N2_multiplex)) + geom_po
 
 ```
 
+## Streamlined plots
+
+### N1 N2 data
+
+```{r n1n2streamlined}
+
+bb_Ndata <- list(summary_bb_qpcr, bb_qpcr) %>% 
+  map(~ 
+        filter(., str_detect(Target, '^N')) %>% 
+        mutate_at('WWTP', ~as.character(.)) %>%
+        arrange(`FACILITY NAME`) 
+      ) %>%
+  setNames(c('summary', 'raw'))
+
+pltN <- plot_mean_sd_jitter(bb_Ndata$summary, bb_Ndata$raw, sample_var = str_c(extra_categories,'|NTC|Vaccine'), exclude_sample = T, x_var = as_factor(WWTP), facet_var = NULL) 
+
+pltN %>% print()
+pltN %>% format_logscale_y() %>% print()
+```
+
+
+
+### Recovery data
+
+```{r %Recoverystreamlined}
+
+recostr_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovery fraction', sample_var = str_c(extra_categories,'|NTC|Vaccine'), exclude_sample = T, x_var = as_factor(WWTP), facet_var = NULL, ylabel = 'Percentage recovery')
+
+recostr_plot %>% print()
+
+```
 
 ## Data output
 

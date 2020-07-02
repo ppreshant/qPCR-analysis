@@ -10,14 +10,14 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 
 # Data input ----
 
+templates_sheet <- 'https://docs.google.com/spreadsheets/d/19oRiRcRVS23W3HqRKjhMutJKC2lFOpNK8aNUkC-No-s/edit#gid=478762118'
 
 # Preperation steps
 flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
-plate_template_raw <- read_sheet('https://docs.google.com/spreadsheets/d/19oRiRcRVS23W3HqRKjhMutJKC2lFOpNK8aNUkC-No-s/edit#gid=478762118', sheet = 'Plate import setup', range = 'G1:S9')
 
 # Read in qPCR data and labels from plate template
 fl <- readqpcr(flpath) # read excel file exported by Quantstudio
-plate_template <- read_plate_to_column(plate_template_raw, 'Sample Name') # convert plate template (sample names) into a single vector, columnwise
+plate_template <- get_template_for(flnm, templates_sheet)
 
 sample_order = columnwise_index(fl) # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
 

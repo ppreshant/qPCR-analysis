@@ -72,6 +72,26 @@ mutate_cond <- function(.data, condition, ..., envir = parent.frame())
   .data
 }
 
+# Gets the 96 well layout with template names matching the experiment ID from filename in a google sheet
+get_template_for <- function(bait, sheet_url = templates_sheet)
+{ # Looking for WWx or Stdx - example WW21 or Std7 within the filename; Assumes plate spans from row B to N (1 row below the matching ID)
+ 
+   # Finding the plate to be read
+  plate_names_row <- read_sheet(sheet_url, sheet = 'Plate layouts', range = 'C:C', col_types = 'c')
+  m_row <- plate_names_row %>% unlist() %>% as.character() %>% 
+    # find the row with standard beginings matching the filename
+    str_detect(., bait %>% str_match('^(WW|Std|dd.WW)[:alnum:]*') %>% .[1] ) %>% 
+    which() + 1
+  range_to_get <- str_c('B', m_row + 1, ':N', m_row + 9)
+  
+  # read the template corresponding to the file name
+  plate_template_raw <- read_sheet(templates_sheet, sheet = 'Plate layouts', range = range_to_get)
+  
+  # Convert the 96 well into a single column, alongside the Well position
+  plate_template <- read_plate_to_column(plate_template_raw, 'Sample Name') # convert plate template (sample names) into a single vector, columnwise
+  
+}
+
 # standard curve and regressions ----
 
 # Plot Standard curve

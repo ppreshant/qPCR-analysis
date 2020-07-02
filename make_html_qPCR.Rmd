@@ -110,7 +110,7 @@ volumes_data <- read_sheet('https://docs.google.com/spreadsheets/d/1mJcCt1wMiOuB
   rename('WW_vol' = `Total WW vol measured (ml)`, 'Label_tube' = `Label on tube`) %>% 
   mutate('WW_vol' = coalesce(WW_vol, `Total WW volume calculated (ml)`) ) %>% 
   select(WW_vol, Label_tube) %>% 
-  fill(WW_vol) %>% distinct() %>% 
+  distinct() %>% 
   mutate_at('Label_tube', ~str_remove_all(., " "))
   
 # join the results with the WWTP identifiers and names

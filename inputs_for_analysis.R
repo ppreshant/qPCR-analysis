@@ -13,8 +13,8 @@ flnm <- 'WW23_622_BRSV_TR2'  # set the filename
 title_name <- flnm
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
   target = c('BRSV_N', 'BCoV_M', 'N1_CoV2', 'N2_CoV2', 'N1_multiplex',  'N2_multiplex'),
-  slope =  c(-3.61, -3.47, -2.98, -3.12, -2.95, -2.94),
-  intercept = c(38, 39, 39, 40, 32, 34) # values for various targets
+  slope =  c(-3.61,    -3.47,    -2.98,     -3.12,     -2.95,           -2.94),
+  intercept = c(38,     38,       39,        40,        32,              34) # values for various targets
 )
 template_volume <- 4 # ul template volume in qPCR reaction
 

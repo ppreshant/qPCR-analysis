@@ -33,7 +33,7 @@ title_name <- '622 Rice' # name of the filename for writing presentable data and
 bb_sheets <- c('Week 11 (6/22)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
-extra_categories = 'Std' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
+extra_categories = 'Std|TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
 
 # To rename samples with descriptive category/names (usually for extra TR experiments)
 # - For other samples: Make it empty an string (like this '' ) to avoid messing up names inadvertantly
@@ -150,7 +150,7 @@ long_vol_qpcr_summary <- vol_qpcr_summary %>% gather(key = 'Measurement', value 
 long_vol_qpcr_raw <- spike_qpcr %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -WWTP, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
 
 # plot recovery and spiked in
-reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', sample_var = extra_categories, exclude_sample = T, x_var = WWTP, ylabel = 'Genome copies/l Wastewater') + geom_point(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), colour = 'black', shape = 21) + geom_line(data = filter(long_vol_qpcr_summary, str_detect(Measurement,'Actual')), aes(group = Target))
+reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', sample_var = str_c(extra_categories, '|Vaccine'), exclude_sample = T, x_var = WWTP, ylabel = 'Genome copies/l Wastewater') 
 
 reco_plot %>%  format_logscale_y() %>% print()
 ```

@@ -186,6 +186,11 @@ plot_mean_sd_jitter <- function(summary_data = summary_results, raw_data = resul
     geom_jitter(data = raw_relevant, aes(y = {{y_var}}, alpha = map_chr({{y_var}}, ~. == 0), size = map_chr({{y_var}}, ~. == 0)), width = .2, show.legend = F ) +
     scale_alpha_manual(values = c(.3, 1)) + scale_size_manual(values = c(1, 2)) + # manual scale for emphasizing unamplified samples
     
+    # Plotting actual spike ins (only for Recovery plot)
+    { if(measure_var == 'Recovered') list(geom_point(data = filter(summary_data, str_detect(Measurement,'Actual'), str_detect(`Sample Name`, sample_var, negate = exclude_sample)), colour = 'black', shape = 21), 
+             geom_line(data = filter(summary_data, str_detect(Measurement,'Actual'), str_detect(`Sample Name`, sample_var, negate = exclude_sample)), aes(group = {{colour_var}})))
+    } +
+    
     # Facetting and labelling
     facet_grid(cols =  vars({{facet_var}}), scales = 'free_x', space = 'free_x') +
     ggtitle(title_text) + ylab(ylabel) + xlab(xlabel)

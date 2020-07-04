@@ -34,10 +34,10 @@ bring_results <- fl %>% # select only the results used for plotting, calculation
   select(-Sample) %>% 
   mutate_at('Well', ~ str_replace(., '0', '')) %>% rename('Well Position' = Well) %>% 
   right_join(plate_template, by = 'Well Position') %>%  # Incorporate samples names from the google sheet by matching well position
-  mutate_at('Target', ~str_replace(., 'BSRV', 'BRSV')) %>% 
+  mutate_at('Target', ~str_replace_all(., c('N1' = 'N1_multiplex' , 'N2' = 'N2_multiplex'))) %>% 
   filter(!is.na(Target)) %>% 
-  mutate('Copies/ul RNA' = CopiesPer20uLWell/ template_volume) %>% 
-  select(`Sample Name`, `Copies/ul RNA`, everything())
+  mutate('Copy #' = CopiesPer20uLWell/ template_volume) %>% 
+  select(`Sample Name`, `Copy #`, Target, everything())
 
 # Bring WWTP names from google sheet: "Biobot Sample IDs"
 biobot_lookup <- map_df(bb_sheets , ~read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=677034958', sheet = .x, range = 'H:J')) %>% rename('Biobot ID' = matches('Biobot|Comments', ignore.case = T), 'WWTP' = contains('SYMBOL', ignore.case = T)) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
@@ -61,21 +61,21 @@ polished_results <- bring_results %>% separate(`Sample Name`,c(NA, 'Sample Name'
 #   mutate_at('assay_variable', as.character) %>% 
 #   mutate_at('biological_replicates', ~str_replace_na(., ''))
 
-# Join WWTP names to qPCR dataset
-bb_qpcr <- left_join(polished_results, biobot_lookup, by = 'Biobot ID') %>% mutate_at(c('WWTP', 'FACILITY NAME'), ~if_else(str_detect(., '^X')|is.na(.), assay_variable, .)) %>% 
-  mutate_at('Tube ID', ~str_remove(., "\\.")) %>%  unite('Label_tube', c('Sample Name', 'Tube ID'), sep = "", remove = F) %>%  # make a unique column for matching volumes
-  rename('Facility' = `FACILITY NAME`) %>% 
-  mutate_at('Sample Name', ~as.character(.)) %>% 
-  mutate_at('Facility', ~if_else(. == assay_variable, str_c(`Sample Name`, '/', assay_variable), .)) %>% 
-
-  arrange(Facility, biological_replicates) %>% 
-  unite('Facility', c(Facility, biological_replicates), sep = "-", na.rm = T) %>% 
-  select( -Label_tube, - assay_variable, -`Tube ID`) %>%  
-  select(Facility, WWTP, Target, `Copies/ul RNA`, everything())
+# # Join WWTP names to qPCR dataset
+# bb_qpcr <- left_join(polished_results, biobot_lookup, by = 'Biobot ID') %>% mutate_at(c('WWTP', 'FACILITY NAME'), ~if_else(str_detect(., '^X')|is.na(.), assay_variable, .)) %>% 
+#   mutate_at('Tube ID', ~str_remove(., "\\.")) %>%  unite('Label_tube', c('Sample Name', 'Tube ID'), sep = "", remove = F) %>%  # make a unique column for matching volumes
+#   rename('Facility' = `FACILITY NAME`) %>% 
+#   mutate_at('Sample Name', ~as.character(.)) %>% 
+#   mutate_at('Facility', ~if_else(. == assay_variable, str_c(`Sample Name`, '/', assay_variable), .)) %>% 
+# 
+#   arrange(Facility, biological_replicates) %>% 
+#   unite('Facility', c(Facility, biological_replicates), sep = "-", na.rm = T) %>% 
+#   select( -Label_tube, - assay_variable, -`Tube ID`) %>%  
+#   select(Facility, WWTP, Target, `copy #`, everything())
 
 
 # Data output ----
 # this is usually commented out to prevent overwriting existing data; turn on only when needed for a single run
 
-write_sheet(bb_qpcr,'https://docs.google.com/spreadsheets/d/1I8E8hyF7rFIARTG3ns5khpywafKlkJ6W0qPBxpiUVug/edit#gid=0', sheet = flnm) # save results to a google sheet
+write_sheet(polished_results,'https://docs.google.com/spreadsheets/d/1ouk-kCJHERRhOMNP07lXfiC3aGB4wtWXpnYf5-b2CI4/edit#gid=0', sheet = flnm) # save results to a google sheet
 # ggsave('qPCR analysis/', WW1_Baylor-bovine_pilot.png', plot = plt.formatted, width = 8, height = 4)

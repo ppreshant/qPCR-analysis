@@ -4,11 +4,11 @@
 # User inputs ----
 
 
-flnm <- 'dd.WW3_622_N1-N2'  # set the filename
-template_volume <- 10.12 /22 * 20 # ul template volume per well of the ddPCR reaction
+flnm <- 'dd.WW4_629_N1-N2'  # set the filename
+template_volume <- 10 /22 * 20 # ul template volume per well of the ddPCR reaction
 
 # Biobot ID sheet to draw sample names from
-bb_sheets <- c('Week 11 (6/22)')
+bb_sheets <- c('Week 12 (6/29)')
 
 # Loading pre-reqisites ----
 
@@ -18,14 +18,13 @@ source('./general_functions.R') # Source the general_functions file
 
 # Data input ----
 
+templates_sheet <- 'https://docs.google.com/spreadsheets/d/19oRiRcRVS23W3HqRKjhMutJKC2lFOpNK8aNUkC-No-s/edit#gid=478762118'
 
 # Read the ddPCR master file
-plate_template_raw <- read_sheet('https://docs.google.com/spreadsheets/d/19oRiRcRVS23W3HqRKjhMutJKC2lFOpNK8aNUkC-No-s/edit#gid=478762118', sheet = 'Plate import setup', range = 'G1:S9')
 
 # Read in qPCR data and labels from plate template
 fl <- read_sheet('https://docs.google.com/spreadsheets/d/1jdO_P9SZGezSTLiIARtSmA7qaUuX3wA-jCe7YiQ1sCI/edit#gid=0', sheet = flnm) # read excel file exported by Quantstudio
-plate_template <- read_plate_to_column(plate_template_raw, 'Sample Name') %>%  # convert plate template (sample names) into a single vector, columnwise
-  rename('Well' = `Well Position`)
+plate_template <- get_template_for(flnm, templates_sheet)  # Get the plate template matching file name, convert to 1 column 
 
 # Polishing ----
 
@@ -33,15 +32,15 @@ plate_template <- read_plate_to_column(plate_template_raw, 'Sample Name') %>%  #
 # Load desired qPCR result sheet and columns
 bring_results <- fl %>% # select only the results used for plotting, calculations etc. and arrange them according to sample order
   select(-Sample) %>% 
-  mutate_at('Well', ~ str_replace(., '0', '')) %>% 
-  right_join(plate_template, by = 'Well') %>%  # Incorporate samples names from the google sheet by matching well position
+  mutate_at('Well', ~ str_replace(., '0', '')) %>% rename('Well Position' = Well) %>% 
+  right_join(plate_template, by = 'Well Position') %>%  # Incorporate samples names from the google sheet by matching well position
   mutate_at('Target', ~str_replace(., 'BSRV', 'BRSV')) %>% 
   filter(!is.na(Target)) %>% 
   mutate('Copies/ul RNA' = CopiesPer20uLWell/ template_volume) %>% 
   select(`Sample Name`, `Copies/ul RNA`, everything())
 
 # Bring WWTP names from google sheet: "Biobot Sample IDs"
-biobot_lookup <- map_df(bb_sheets , ~read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=677034958', sheet = .x, range = 'H:J')) %>% rename('Biobot ID' = contains('Biobot', ignore.case = T), 'WWTP' = contains('SYMBOL', ignore.case = T)) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
+biobot_lookup <- map_df(bb_sheets , ~read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=677034958', sheet = .x, range = 'H:J')) %>% rename('Biobot ID' = matches('Biobot|Comments', ignore.case = T), 'WWTP' = contains('SYMBOL', ignore.case = T)) %>% mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP))
 
 # polishing qPCR data - Make Biobot ID column clean
 # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 

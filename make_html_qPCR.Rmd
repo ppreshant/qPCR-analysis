@@ -26,11 +26,11 @@ all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc 
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('dd.WW4_629_N1-N2') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+read_these_sheets <- c('dd.WW4_629_N1-N2', 'dd.WW5_630_N1-N2') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
 title_name <- '629 part1' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
-bb_sheets <- c('Week 12 (6/29)')
+bb_sheets <- c('Week 11 (6/22)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
 extra_categories = 'Std|TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
@@ -133,7 +133,8 @@ vol_qpcr <- bb_qpcr %>% left_join(volumes_data, by = 'Label_tube') %>%
 ```{r summarizing_plot}
 
 # Picking out only spike-in quantification
-spike_qpcr <- vol_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV')) %>% select(-c(3,4,6,7,8))
+spike_qpcr <- vol_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV')) %>% 
+  select(c(CT, Target, `Sample Name`, `Copy #`:`Recovery fraction` ))
 
 if(!sum(translate_id_manual == 'none'))
 { spike_qpcr %<>% mutate_at(c('WWTP', 'FACILITY NAME'), ~str_replace_all(., translate_id_manual)) %>% 
@@ -142,27 +143,39 @@ if(!sum(translate_id_manual == 'none'))
   select(-tmp)
 }
 
-vol_qpcr_summary <- spike_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) # Summarize mean and SD for biological replicates
+# Below code and plots executed only if spike quantification exists in the data
+spike_qpcr %>% plyr::empty() %>% if(!.)
+{
+  # Summarize mean and SD for biological replicates
+  vol_qpcr_summary <- spike_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) 
+  
+  # order samples by ascending order of BCoV copies
+  WWTP_order <- vol_qpcr_summary %>% filter(str_detect(Target,'BCoV')) %>% arrange(`Copy #_mean`) %>% pull(WWTP) 
+  vol_qpcr_summary$WWTP %<>%  fct_relevel(levels = WWTP_order) # order samples by 5/12 ascending order
+  
+  # Convert data into long form
+  long_vol_qpcr_summary <- vol_qpcr_summary %>% gather(key = 'Measurement', value = 'Reading', -Target, -`Sample Name`, -`FACILITY NAME`, -WWTP) %>% separate(Measurement, into = c('Measurement','val'),"_") %>% spread(val,Reading) # Seperate mean and variance and group by variable of measurement
+  
+  long_vol_qpcr_raw <- spike_qpcr %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -WWTP, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
+  
+  # plot recovery and spiked in
+  reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', sample_var = str_c(extra_categories, '|Vaccine'), exclude_sample = T, x_var = WWTP, ylabel = 'Genome copies/l Wastewater') 
+  
+  reco_plot %>%  format_logscale_y() %>% print()
+}
 
-WWTP_order <- vol_qpcr_summary %>% filter(str_detect(Target,'BCoV')) %>% arrange(`Copy #_mean`) %>% pull(WWTP) # order samples by 5/12 ascending order
-
-vol_qpcr_summary$WWTP %<>%  fct_relevel(levels = WWTP_order) # order samples by 5/12 ascending order
-
-long_vol_qpcr_summary <- vol_qpcr_summary %>% gather(key = 'Measurement', value = 'Reading', -Target, -`Sample Name`, -`FACILITY NAME`, -WWTP) %>% separate(Measurement, into = c('Measurement','val'),"_") %>% spread(val,Reading) # Seperate mean and variance and group by variable of measurement
-
-long_vol_qpcr_raw <- spike_qpcr %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -WWTP, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
-
-# plot recovery and spiked in
-reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', sample_var = str_c(extra_categories, '|Vaccine'), exclude_sample = T, x_var = WWTP, ylabel = 'Genome copies/l Wastewater') 
-
-reco_plot %>%  format_logscale_y() %>% print()
 ```
 
 ### % recovery
 
 ```{r percentreco}
 
-plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, sample_var = str_c(extra_categories, '|Vaccine'), exclude_sample = T, long_format = T,  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+# Below code and plots executed only if spike quantification exists in the data
+spike_qpcr %>% plyr::empty() %>% if(!.)
+{
+  plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, sample_var = str_c(extra_categories, '|Vaccine'), exclude_sample = T, long_format = T,  measure_var = 'Recovery fraction', x_var = WWTP, ylabel = 'Fraction of spike-in recovered') %>% print()
+}
+  
 ```
 
 ## Scatter plots
@@ -171,7 +184,10 @@ plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, sample_var = str_c
 
 ```{r n1n2}
 
-long_targets_vol <- vol_qpcr %>% select(c(2,5, 8:11)) %>% filter(!str_detect(`Sample Name`, str_c(extra_categories, '|NTC'))) %>% pivot_wider(names_from = 'Target', values_from = 'Copy #')
+long_targets_vol <- vol_qpcr %>% 
+  select(c(Target, `Sample Name`, biological_replicates:WWTP )) %>% 
+  filter(!str_detect(`Sample Name`, str_c(extra_categories, '|NTC'))) %>% 
+  pivot_wider(names_from = 'Target', values_from = 'Copy #')
 
 lin_reg_eqn <- long_targets_vol %>% lm(N2_multiplex ~ N1_multiplex, data = .) %>% lm_eqn(.)
 
@@ -234,37 +250,46 @@ recostr_plot %>% print()
 
 ```
 
-<!-- ## Data output -->
+## Data output
 
-<!-- ```{r summarydatadisplay} -->
-<!-- presentable_vol_qpcr <- vol_qpcr %>% rename('Facility' = `FACILITY NAME`) %>%  -->
-<!--   mutate_at('Sample Name', ~as.character(.)) %>%  -->
-<!--   mutate_at('Facility', ~if_else(. == assay_variable, str_c(`Sample Name`, '/', assay_variable), .)) %>%  -->
-<!--   mutate_at('Facility', ~str_replace(., '609', 'Extraction blank')) %>%  -->
-<!--   arrange(Facility, biological_replicates) %>%  -->
-<!--   unite('Facility', c(Facility, biological_replicates), sep = "-", na.rm = T) %>%  -->
-<!--   mutate_cond(str_detect(Target, 'N'), `Recovery fraction` = NA, `Actual spike-in` = NA) %>%  -->
-<!--   select(Facility, WWTP, WW_vol, Target, CT, `Copy #`, Recovered, `Actual spike-in`, `Recovery fraction`) %>%  -->
-<!--   rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered, 'Spiked-in Copies/l WW' = `Actual spike-in`) %>%  -->
-<!--   mutate_at('Target', ~str_replace_all(., c('.*N1.*' = 'SARS CoV-2 N1', '.*N2.*' = 'SARS CoV-2 N2'))) -->
+```{r summarydatadisplay}
+presentable_vol_qpcr <- vol_qpcr %>% 
+  
+  # renaming variables
+  rename('Facility' = `FACILITY NAME`, 'Original Sample Volume' = WW_vol, Ct = CT, 'Target Name' = Target) %>%
+  rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered, 'Spiked-in Copies/l WW' = `Actual spike-in`) %>%
+  
+  # Adding new variables, modifying existing variables
+  mutate(Date = 'NA', Lab = 'R', 'Volume Filtered' = 50, Bottle = NA) %>% 
+  mutate_at('Sample Name', ~as.character(.)) %>%
+  mutate_at('Facility', ~if_else(. == assay_variable, str_c(`Sample Name`, '/', assay_variable), .)) %>%
+  
+  # Arrange rows by WWTP facility 
+  arrange(Facility, biological_replicates) %>%
+  # unite('Facility', c(Facility, biological_replicates), sep = "-", na.rm = T) %>%
+  mutate_cond(str_detect(`Target Name`, 'N'), `Recovery fraction` = NA, `Spiked-in Copies/l WW` = NA) %>%
+  
+  # Selecting column order
+  select(Facility, WWTP, Date, Lab, `Target Name`, `Original Sample Volume`, `Volume Filtered`, Ct, `Copies/ul RNA`, `Copies/l WW`, `Spiked-in Copies/l WW`, `Recovery fraction`) %>%
+  mutate_at('Target Name', ~str_replace_all(., c('.*N1.*' = 'SARS CoV-2 N1', '.*N2.*' = 'SARS CoV-2 N2')))
 
-<!-- # presentable data for discussion with Baylor -->
-<!-- write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=2113120147', sheet = title_name)  # save results to a google sheet -->
+# presentable data for discussion with Baylor
+write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=2113120147', sheet = title_name)  # save results to a google sheet
 
 
-<!-- present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank|Std"), str_detect(Target, "^SARS")) %>%  # select only N1,N2 - remove distracting data -->
-<!-- select(-`Recovery fraction`, -`Spiked-in Copies/l WW`) -->
+present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank|Std"), str_detect(Target, "^SARS")) %>%  # select only N1,N2 - remove distracting data
+select(-`Recovery fraction`, -`Spiked-in Copies/l WW`)
 
-<!-- # presentable data for health department -->
-<!-- write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=0', sheet = title_name) # save results to a google sheet -->
+# presentable data for health department
+write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=0', sheet = title_name) # save results to a google sheet
 
 
-<!-- # summary_results %<>% mutate_if(is.numeric, format, digits = 3, scientific = T) -->
-<!-- # kable(summary_results, caption = 'Summary of estimated copy #s') -->
-<!-- ``` -->
+# summary_results %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
+# kable(summary_results, caption = 'Summary of estimated copy #s')
+```
 
-<!-- ### Individual replicates -->
-<!-- ```{r datadisplay} -->
-<!-- results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T) -->
-<!-- kable(results_abs, caption = 'Raw data and estimated copy #s') -->
-<!-- ``` -->
+### Individual replicates
+```{r datadisplay}
+results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
+kable(results_abs, caption = 'Raw data and estimated copy #s')
+```

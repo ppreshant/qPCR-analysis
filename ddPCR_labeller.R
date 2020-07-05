@@ -4,7 +4,7 @@
 # User inputs ----
 
 
-flnm <- 'dd.WW4_629_N1-N2'  # set the filename
+flnm <- 'dd.WW5_630_N1-N2'  # set the filename
 template_volume <- 10 /22 * 20 # ul template volume per well of the ddPCR reaction
 
 # Biobot ID sheet to draw sample names from

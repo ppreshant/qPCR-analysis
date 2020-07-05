@@ -30,7 +30,7 @@ read_these_sheets <- c('dd.WW4_629_N1-N2', 'dd.WW5_630_N1-N2') # sheet name(s) i
 title_name <- '629 part1' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
-bb_sheets <- c('Week 11 (6/22)')
+bb_sheets <- c('Week 12 (6/29)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
 extra_categories = 'Std|TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
@@ -132,6 +132,9 @@ vol_qpcr <- bb_qpcr %>% left_join(volumes_data, by = 'Label_tube') %>%
 
 ```{r summarizing_plot}
 
+# Adding a dummy CT column (if only ddPCR data is being loaded; which lacks the CT column) - for compatibility with qPCR code
+if(vol_qpcr %>% {colnames(.) == 'CT'} %>% sum(.) %>% !.) vol_qpcr$CT = NA
+
 # Picking out only spike-in quantification
 spike_qpcr <- vol_qpcr %>% filter(str_detect(Target, 'BCoV|BRSV')) %>% 
   select(c(CT, Target, `Sample Name`, `Copy #`:`Recovery fraction` ))
@@ -214,7 +217,10 @@ long_targets_vol_summary %>% ggplot(aes(x = N1_multiplex, y = N2_multiplex)) + g
 ### BCoV vs N2 avg
 
 ```{r n2bcov}
-long_targets_vol_summary %>% ggplot(aes(x = BCoV_M, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0, aes(colour = 1)) + geom_label(aes(x = 4, y = 4, label = 'y = x')) + geom_smooth(method = 'lm')
+long_targets_vol_summary %>% {colnames(.) == 'BCoV_M'} %>% sum(.) %>% if(.)
+{
+  long_targets_vol_summary %>% ggplot(aes(x = BCoV_M, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0, aes(colour = 1)) + geom_label(aes(x = 4, y = 4, label = 'y = x')) + geom_smooth(method = 'lm')
+}
 
 ```
 
@@ -244,9 +250,12 @@ pltN %>% format_logscale_y() %>% print()
 
 ```{r %Recoverystreamlined}
 
-recostr_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovery fraction', sample_var = str_c(extra_categories,'|NTC|Vaccine'), exclude_sample = T, x_var = as_factor(WWTP), facet_var = NULL, ylabel = 'Percentage recovery')
-
-recostr_plot %>% print()
+spike_qpcr %>% plyr::empty() %>% if(!.)
+{
+  recostr_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovery fraction', sample_var = str_c(extra_categories,'|NTC|Vaccine'), exclude_sample = T, x_var = as_factor(WWTP), facet_var = NULL, ylabel = 'Percentage recovery')
+  
+  recostr_plot %>% print()
+}
 
 ```
 
@@ -270,14 +279,14 @@ presentable_vol_qpcr <- vol_qpcr %>%
   mutate_cond(str_detect(`Target Name`, 'N'), `Recovery fraction` = NA, `Spiked-in Copies/l WW` = NA) %>%
   
   # Selecting column order
-  select(Facility, WWTP, Date, Lab, `Target Name`, `Original Sample Volume`, `Volume Filtered`, Ct, `Copies/ul RNA`, `Copies/l WW`, `Spiked-in Copies/l WW`, `Recovery fraction`) %>%
+  select(Facility, WWTP, Date, Lab, `Target Name`, `Original Sample Volume`, `Volume Filtered`, Ct, `Copies/ul RNA`, `Copies/l WW`, Bottle, `Spiked-in Copies/l WW`, `Recovery fraction`) %>%
   mutate_at('Target Name', ~str_replace_all(., c('.*N1.*' = 'SARS CoV-2 N1', '.*N2.*' = 'SARS CoV-2 N2')))
 
 # presentable data for discussion with Baylor
 write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=2113120147', sheet = title_name)  # save results to a google sheet
 
 
-present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank|Std"), str_detect(Target, "^SARS")) %>%  # select only N1,N2 - remove distracting data
+present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank|Std"), str_detect(`Target Name`, "^SARS")) %>%  # select only N1,N2 - remove distracting data
 select(-`Recovery fraction`, -`Spiked-in Copies/l WW`)
 
 # presentable data for health department

@@ -27,7 +27,7 @@ spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 
 
 # sheets to read from qPCR data dump excel file
 read_these_sheets <- c('dd.WW4_629_N1-N2', 'dd.WW5_630_N1-N2', 'WW25_629_BCoV', 'WW26_629 part2_BCoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
-title_name <- '629 Rice (tst reco)' # name of the filename for writing presentable data and plot title
+title_name <- '629 Rice' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
 bb_sheets <- c('Week 12 (6/29)')
@@ -247,7 +247,7 @@ pltN %>% format_logscale_y() %>% print()
 
 ### Recovery data
 
-```{r %Recoverystreamlined}
+```{r percentRecoverystreamlined}
 
 spike_qpcr %>% plyr::empty() %>% if(!.)
 {

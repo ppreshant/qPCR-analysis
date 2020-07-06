@@ -22,12 +22,12 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
 
 # copies/ul viral suspension spiked in (Spike ID: S13)
-all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(35614.1, 56996.1))
+all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(3806.7, 56996.1))
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('dd.WW4_629_N1-N2', 'dd.WW5_630_N1-N2') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
-title_name <- '629 part1' # name of the filename for writing presentable data and plot title
+read_these_sheets <- c('dd.WW4_629_N1-N2', 'dd.WW5_630_N1-N2', 'WW25_629_BCoV', 'WW26_629 part2_BCoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+title_name <- '629 Rice (tst reco)' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
 bb_sheets <- c('Week 12 (6/29)')
@@ -147,8 +147,7 @@ if(!sum(translate_id_manual == 'none'))
 }
 
 # Below code and plots executed only if spike quantification exists in the data
-spike_qpcr %>% plyr::empty() %>% if(!.)
-{
+spike_qpcr %>% plyr::empty() %>% if(!.) {
   # Summarize mean and SD for biological replicates
   vol_qpcr_summary <- spike_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) 
   

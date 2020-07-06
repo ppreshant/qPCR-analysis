@@ -147,7 +147,7 @@ if(!sum(translate_id_manual == 'none'))
 }
 
 # Below code and plots executed only if spike quantification exists in the data
-spike_qpcr %>% plyr::empty() %>% if(!.) {
+if(spike_qpcr %>% plyr::empty() %>% !.) {
   # Summarize mean and SD for biological replicates
   vol_qpcr_summary <- spike_qpcr %>% select(-WW_vol) %>% group_by(Target, `Sample Name`, `FACILITY NAME`, WWTP) %>% summarise_at(vars(2,3:5), funs(mean(.,na.rm = T), sd(.,na.rm = T))) 
   

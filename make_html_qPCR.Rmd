@@ -30,7 +30,7 @@ read_these_sheets <- c('WW27_Test_pMMoV') # sheet name(s) in the raw data file (
 title_name <- 'test pMMoV' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
-bb_sheets <- c('Week 12 (6/29)')
+bb_sheets <- c('Week 10 (6/15)', 'Week 11 (6/22)', 'Week 12 (6/29)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
 extra_categories = 'Std|TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
@@ -80,10 +80,12 @@ plot_mean_sd_jitter(summary_data = summary_results_abs, raw_data = results_abs, 
 ```{r biobot_to_WWTP}
 
 # Bring WWTP names from google sheet: "Biobot Sample IDs"
-biobot_lookup <- map_df(bb_sheets , ~ read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=233791008', sheet = .x)) %>% 
-  rename('Biobot ID' = matches('Biobot|Comments', ignore.case = T), 'WWTP' = contains('SYMBOL', ignore.case = T)) %>% 
+biobot_lookup <- map_df(bb_sheets , 
+                        ~ read_sheet('https://docs.google.com/spreadsheets/d/1ghb_GjTS4yMFbzb65NskAlm-2Gb5M4SNYi4FHE4YVyI/edit#gid=233791008', sheet = .x) %>% 
+  rename('Biobot ID' = matches('Biobot|Comments', ignore.case = T), 'WWTP' = contains('SYMBOL', ignore.case = T), 'FACILITY NAME' = matches('FACILITY', ignore.case = T)) %>% 
   mutate('Biobot ID' = str_remove(`Biobot ID`,'\\.'), WWTP = as.character(WWTP)) %>% 
   select(`Biobot ID`, `FACILITY NAME`, WWTP)
+)
 
 # polishing qPCR data - Make Biobot ID column clean
 qpcr_polished <- results_abs %>% unite('Biobot ID', c(`Sample Name`, assay_variable), sep = '', remove = F) %>%
@@ -104,11 +106,6 @@ summary_bb_qpcr$WWTP %<>%  fct_relevel(levels = WWTP_order_1) # order samples by
 
 plot_mean_sd_jitter(summary_bb_qpcr, bb_qpcr, sample_var = extra_categories, exclude_sample = T, x_var = WWTP) %>% format_logscale_y() %>% print()
 
-
-
-# Extra processing (for WW27 only)
-pull_wwtp_tube <- function(x) pull(WWTP) %>% setNames(x$`Tube ID`)
-trname <- bb_qpcr %>% filter(`Sample Name` == '629') %>% pull_wwtp_tube(.)
 ```
 
 ### Recovery

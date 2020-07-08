@@ -26,8 +26,8 @@ all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc 
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('dd.WW4_629_N1-N2', 'dd.WW5_630_N1-N2', 'WW25_629_BCoV', 'WW26_629 part2_BCoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
-title_name <- '629 Rice' # name of the filename for writing presentable data and plot title
+read_these_sheets <- c('WW27_Test_pMMoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+title_name <- 'test pMMoV' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
 bb_sheets <- c('Week 12 (6/29)')
@@ -103,6 +103,12 @@ summary_bb_qpcr$WWTP %<>%  fct_relevel(levels = WWTP_order_1) # order samples by
 
 
 plot_mean_sd_jitter(summary_bb_qpcr, bb_qpcr, sample_var = extra_categories, exclude_sample = T, x_var = WWTP) %>% format_logscale_y() %>% print()
+
+
+
+# Extra processing (for WW27 only)
+pull_wwtp_tube <- function(x) pull(WWTP) %>% setNames(x$`Tube ID`)
+trname <- bb_qpcr %>% filter(`Sample Name` == '629') %>% pull_wwtp_tube(.)
 ```
 
 ### Recovery

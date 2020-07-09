@@ -271,9 +271,11 @@ presentable_vol_qpcr <- vol_qpcr %>%
   rename('Copies/ul RNA' = `Copy #`, 'Copies/l WW' = Recovered, 'Spiked-in Copies/l WW' = `Actual spike-in`) %>%
   
   # Adding new variables, modifying existing variables
-  mutate(Date = 'NA', Lab = 'R', 'Volume Filtered' = 50, Bottle = NA) %>% 
+  mutate(Date = 'Manual entry', Lab = 'R', 'Volume Filtered' = 50, Bottle = NA) %>% 
   mutate_at('Sample Name', ~as.character(.)) %>%
   mutate_at('Facility', ~if_else(. == assay_variable, str_c(`Sample Name`, '/', assay_variable), .)) %>%
+  mutate(Tube_ID = if_else(biological_replicates == ''|is.na(biological_replicates), str_c(`Sample Name`, ' ', assay_variable), str_c(`Sample Name`, ' ', assay_variable, '', biological_replicates)) ) %>% 
+  mutate(WWTP_ID = if_else(biological_replicates == ''|is.na(biological_replicates), WWTP , str_c(WWTP, '-', biological_replicates))) %>% 
   
   # Arrange rows by WWTP facility 
   arrange(Facility, biological_replicates) %>%
@@ -284,16 +286,19 @@ presentable_vol_qpcr <- vol_qpcr %>%
   select(Facility, WWTP, Date, Lab, `Target Name`, `Original Sample Volume`, `Volume Filtered`, Ct, `Copies/ul RNA`, `Copies/l WW`, Bottle, `Spiked-in Copies/l WW`, `Recovery fraction`) %>%
   mutate_at('Target Name', ~str_replace_all(., c('.*N1.*' = 'SARS CoV-2 N1', '.*N2.*' = 'SARS CoV-2 N2')))
 
+
 # presentable data for discussion with Baylor
 write_sheet(presentable_vol_qpcr,'https://docs.google.com/spreadsheets/d/1ltvW7xZf2aUPoBchD4NFGuV0gGWPkdsOW3a0Hxalm-Y/edit#gid=2113120147', sheet = title_name)  # save results to a google sheet
 
 
-present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank|Std"), str_detect(`Target Name`, "^SARS")) %>%  # select only N1,N2 - remove distracting data
-select(-`Recovery fraction`, -`Spiked-in Copies/l WW`)
-
 # presentable data for health department
-write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=0', sheet = title_name) # save results to a google sheet
+present_N_data <- presentable_vol_qpcr %>% filter(!str_detect(Facility, "Vaccine|NTC|Blank|Std"), str_detect(`Target Name`, "^SARS")) %>%  # select only N1,N2 - remove distracting data
+select(-`Recovery fraction`, -`Spiked-in Copies/l WW`, -matches('_ID'))
 
+# Write data if not empty
+if(present_N_data %>% is_empty() %>% !.){
+  write_sheet(present_N_data,'https://docs.google.com/spreadsheets/d/1dBESjgWSFsOBodFFpYNhWIOAQ2a3wvoLkrn12V_rFck/edit#gid=0', sheet = title_name) # save results to a google sheet
+}
 
 # summary_results %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
 # kable(summary_results, caption = 'Summary of estimated copy #s')

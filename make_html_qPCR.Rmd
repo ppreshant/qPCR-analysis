@@ -27,7 +27,7 @@ spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 
 
 # sheets to read from qPCR data dump excel file
 read_these_sheets <- c('WW27_Test_pMMoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
-title_name <- 'test pMMoV' # name of the filename for writing presentable data and plot title
+title_name <- 'WW27_Test pMMoV' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
 bb_sheets <- c('Week 10 (6/15)', 'Week 11 (6/22)', 'Week 12 (6/29)')
@@ -275,7 +275,7 @@ presentable_vol_qpcr <- vol_qpcr %>%
   mutate_at('Sample Name', ~as.character(.)) %>%
   mutate_at('Facility', ~if_else(. == assay_variable, str_c(`Sample Name`, '/', assay_variable), .)) %>%
   mutate(Tube_ID = if_else(biological_replicates == ''|is.na(biological_replicates), str_c(`Sample Name`, ' ', assay_variable), str_c(`Sample Name`, ' ', assay_variable, '', biological_replicates)) ) %>% 
-  mutate(WWTP_ID = if_else(biological_replicates == ''|is.na(biological_replicates), WWTP , str_c(WWTP, '-', biological_replicates))) %>% 
+  mutate(WWTP_ID = if_else(biological_replicates == ''|is.na(biological_replicates), str_c(`Sample Name`, '.', WWTP) , str_c(`Sample Name`, '.', WWTP, '-', biological_replicates))) %>% 
   
   # Arrange rows by WWTP facility 
   arrange(Facility, biological_replicates) %>%
@@ -283,7 +283,7 @@ presentable_vol_qpcr <- vol_qpcr %>%
   mutate_cond(str_detect(`Target Name`, 'N'), `Recovery fraction` = NA, `Spiked-in Copies/l WW` = NA) %>%
   
   # Selecting column order
-  select(Facility, WWTP, Date, Lab, `Target Name`, `Original Sample Volume`, `Volume Filtered`, Ct, `Copies/ul RNA`, `Copies/l WW`, Bottle, `Spiked-in Copies/l WW`, `Recovery fraction`) %>%
+  select(Facility, WWTP, Date, Lab, `Target Name`, `Original Sample Volume`, `Volume Filtered`, Ct, `Copies/ul RNA`, `Copies/l WW`, Bottle, `Spiked-in Copies/l WW`, `Recovery fraction`, WWTP_ID, Tube_ID) %>%
   mutate_at('Target Name', ~str_replace_all(., c('.*N1.*' = 'SARS CoV-2 N1', '.*N2.*' = 'SARS CoV-2 N2')))
 
 

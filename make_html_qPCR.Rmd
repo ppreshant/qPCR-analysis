@@ -21,16 +21,16 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 # Spike in and concentration details
 HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
 
-# copies/ul viral suspension spiked in (Spike ID: S13)
-all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(3806.7, 56996.1))
+# copies/ul viral suspension spiked in (Spike ID: S15)
+all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(12318.9, NA))
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('WW27_Test_pMMoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
-title_name <- 'WW27_Test pMMoV' # name of the filename for writing presentable data and plot title
+read_these_sheets <- c('dd.WW4_629_N1-N2', 'dd.WW5_630_N1-N2', 'WW25_629_BCoV', 'WW26_629 part2_BCoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+title_name <- '629 Rice' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
-bb_sheets <- c('Week 10 (6/15)', 'Week 11 (6/22)', 'Week 12 (6/29)')
+bb_sheets <- c('Week 12 (6/29)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
 extra_categories = 'Std|TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
@@ -164,7 +164,7 @@ if(spike_qpcr %>% plyr::empty() %>% !.) {
   long_vol_qpcr_raw <- spike_qpcr %>% gather(key = 'Measurement', value = 'val', -Target, -`Sample Name`, -WWTP, -`FACILITY NAME`) # Seperate mean and variance and group by variable of measurement
   
   # plot recovery and spiked in
-  reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', sample_var = str_c(extra_categories, '|Vaccine'), exclude_sample = T, x_var = WWTP, ylabel = 'Genome copies/l Wastewater') 
+  reco_plot <- plot_mean_sd_jitter(long_vol_qpcr_summary, long_vol_qpcr_raw, long_format = T, measure_var = 'Recovered', sample_var = str_c(extra_categories), exclude_sample = T, x_var = WWTP, ylabel = 'Genome copies/l Wastewater') 
   
   reco_plot %>%  format_logscale_y() %>% print()
 }
@@ -190,15 +190,11 @@ spike_qpcr %>% plyr::empty() %>% if(!.)
 ```{r n1n2}
 
 long_targets_vol <- vol_qpcr %>% 
-  select(c(Target, `Sample Name`, biological_replicates:WWTP )) %>% 
+  select(c(Target, `Sample Name`, biological_replicates:WWTP , -CT)) %>% 
   filter(!str_detect(`Sample Name`, str_c(extra_categories, '|NTC'))) %>% 
   pivot_wider(names_from = 'Target', values_from = 'Copy #')
 
-lin_reg_eqn <- long_targets_vol %>% lm(N2_multiplex ~ N1_multiplex, data = .) %>% lm_eqn(.)
-
-long_targets_vol %>% ggplot(aes(x = N1_multiplex, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0) + geom_label(aes(x = 4, y = 4, label = 'y = x')) + geom_smooth(method = 'lm') +
-  geom_text(y = 15, x = 3, label = lin_reg_eqn, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = 0, force = 10)
-
+plot_scatter(long_targets_vol) %>% print()
 ```
 
 ### N1 vs N2 avg
@@ -212,8 +208,7 @@ long_targets_vol_summary <- vol_qpcr %>%
   filter(!str_detect(`Sample Name`, str_c(extra_categories, '|NTC|Vaccine'))) %>% 
   pivot_wider(names_from = 'Target', values_from = 'Copy #')
 
-long_targets_vol_summary %>% ggplot(aes(x = N1_multiplex, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0, aes(colour = 1)) + geom_label(aes(x = 4, y = 4, label = 'y = x')) + geom_smooth(method = 'lm')
-
+plot_scatter(long_targets_vol_summary) %>% print()
 ```
 
 ### BCoV vs N2 avg
@@ -221,7 +216,7 @@ long_targets_vol_summary %>% ggplot(aes(x = N1_multiplex, y = N2_multiplex)) + g
 ```{r n2bcov}
 long_targets_vol_summary %>% {colnames(.) == 'BCoV_M'} %>% sum(.) %>% if(.)
 {
-  long_targets_vol_summary %>% ggplot(aes(x = BCoV_M, y = N2_multiplex)) + geom_point() + geom_abline(slope = 1, intercept = 0, aes(colour = 1)) + geom_label(aes(x = 4, y = 4, label = 'y = x')) + geom_smooth(method = 'lm')
+ plot_scatter(long_targets_vol_summary, x_var = BCoV_M) %>% print()
 }
 
 ```

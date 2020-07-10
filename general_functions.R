@@ -210,7 +210,7 @@ plot_biological_replicates <- function(results_abs, title_text = title_name, xla
 }
 
 # Scatter plot with a linear regression fit and equation
-plot_scatter <- function(plot_data = results_abs, long_format = F, measure_var = 'Copy #', sample_var = '.*', exclude_sample = F, colour_var = NULL, x_var = N1_multiplex, y_var = N2_multiplex, title_text = title_name, ylabel = 'Genome copies/ul RNA', xlabel = 'X')
+plot_scatter <- function(plot_data = results_abs, long_format = F, measure_var = 'Copy #', sample_var = '.*', exclude_sample = F, colour_var = NULL, x_var = N1_multiplex, y_var = N2_multiplex, title_text = title_name)
 { # Convenient handle for repetitive plotting in the same format; Reads data only in long format or wide (specify in long_format)
   
   # filtering variables by user inputs
@@ -220,19 +220,29 @@ plot_scatter <- function(plot_data = results_abs, long_format = F, measure_var =
     y_var <- sym('val') # default y variable is val
   } else 
   {
-    plot_relevant <- plot_data %>% filter(str_detect(`Sample Name`, sample_var, negate = exclude_sample))
+    plot_relevant <- plot_data %>% filter(str_detect(`Sample Name`, sample_var, negate = exclude_sample)) %>% ungroup()
     
   }
   
+  # Making linear regression formula (source: https://stackoverflow.com/a/50054285/9049673)
+  fmla <- as.formula(paste(substitute(y_var), "~", substitute(x_var)))
+  
+  # Max and ranges for plotting
+  strx <- paste(substitute(x_var)); stry <- paste(substitute(y_var))
+  xyeq <- plot_relevant %>%  summarise_all(~ max(., na.rm = T)) %>% select(all_of(c(strx, stry))) %>% min() %>% {.*0.9}
+    
   # linear regression equation
-  lin_reg_eqn <- plot_relevant %>% lm({{y_var}} ~ {{x_var}}, data = .) %>% lm_eqn(.)
+  lin_reg_eqn <- plot_relevant %>% lm(fmla, data = .) %>% lm_eqn(.)
   
   plt1 <- plot_relevant %>% ggplot(aes(x = {{x_var}}, y =  {{y_var}}, colour = {{colour_var}})) +
-    geom_point(size = 2) + geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = .1) +
+    geom_point(size = 2) +
     
     # linear regression
-    goem_smooth(method = 'lm') + 
-    geom_text(data = . %>% summarise_all(~ max(., na.rm = T)), label = lin_reg_eqn, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = -5, force = 10)
+    geom_smooth(method = 'lm') + 
+    geom_text(data = . %>% summarise_all(~ max(., na.rm = T)), label = lin_reg_eqn, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = -5) +
+    
+    # Dummy y = x line
+    geom_abline(slope = 1, intercept = 0, alpha = .4) + annotate(geom = 'text', x = xyeq, y = xyeq, label = 'y = x', alpha = .3)
 }
 
 # plot formatting ---- 

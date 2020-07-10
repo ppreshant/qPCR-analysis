@@ -21,16 +21,16 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 # Spike in and concentration details
 HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
 
-# copies/ul viral suspension spiked in (Spike ID: S15)
-all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(12318.9, NA))
+# copies/ul viral suspension spiked in (Spike ID: S13)
+all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(18341.6, 56996.1))
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('dd.WW4_629_N1-N2', 'dd.WW5_630_N1-N2', 'WW25_629_BCoV', 'WW26_629 part2_BCoV') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
-title_name <- '629 Rice' # name of the filename for writing presentable data and plot title
+read_these_sheets <- c('dd.WW3_622_N1-N2', 'WW22_622_BCoV', 'WW23_622_BRSV_TR2') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
+title_name <- '622 Rice' # name of the filename for writing presentable data and plot title
 
 # Biobot ID sheet to draw sample names from
-bb_sheets <- c('Week 12 (6/29)')
+bb_sheets <- c('Week 11 (6/22)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
 extra_categories = 'Std|TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)
@@ -275,7 +275,7 @@ presentable_vol_qpcr <- vol_qpcr %>%
   # Arrange rows by WWTP facility 
   arrange(Facility, biological_replicates) %>%
   # unite('Facility', c(Facility, biological_replicates), sep = "-", na.rm = T) %>%
-  mutate_cond(str_detect(`Target Name`, 'N'), `Recovery fraction` = NA, `Spiked-in Copies/l WW` = NA) %>%
+  mutate_cond(str_detect(`Target Name`, '^N'), `Recovery fraction` = NA, `Spiked-in Copies/l WW` = NA) %>%
   
   # Selecting column order
   select(Facility, WWTP, Date, Lab, `Target Name`, `Original Sample Volume`, `Volume Filtered`, Ct, `Copies/ul RNA`, `Copies/l WW`, Bottle, `Spiked-in Copies/l WW`, `Recovery fraction`, WWTP_ID, Tube_ID) %>%
@@ -299,8 +299,8 @@ if(present_N_data %>% is_empty() %>% !.){
 # kable(summary_results, caption = 'Summary of estimated copy #s')
 ```
 
-### Individual replicates
-```{r datadisplay}
-results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
-kable(results_abs, caption = 'Raw data and estimated copy #s')
-```
+<!-- ### Individual replicates -->
+<!-- ```{r datadisplay} -->
+<!-- results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T) -->
+<!-- kable(results_abs, caption = 'Raw data and estimated copy #s') -->
+<!-- ``` -->

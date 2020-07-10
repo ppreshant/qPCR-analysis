@@ -1,5 +1,5 @@
 ---
-title: "629_Rice"
+title: "622 Rice (ddPCR)"
 author: "Prashant Kalvapalle"
 date: "5 July 2020"
 output: 

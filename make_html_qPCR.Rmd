@@ -1,5 +1,5 @@
 ---
-title: "622 Rice (ddPCR)"
+title: "615 Rice"
 author: "Prashant Kalvapalle"
 date: "5 July 2020"
 output: 
@@ -22,15 +22,15 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
 
 # copies/ul viral suspension spiked in (Spike ID: S13)
-all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(18341.6, 56996.1))
+all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(6787.9, NA))
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('dd.WW3_622_N1-N2', 'WW22_622_BCoV', 'WW23_622_BRSV_TR2') # sheet name(s) in the raw data file (qPCR data dump) - Separate by comma (,)
-title_name <- '622 Rice' # name of the filename for writing presentable data and plot title
+read_these_sheets <- c('WW17-615_N1-N2', 'WW19_615_BCov')
+title_name <- '615 Rice'
 
-# Biobot ID sheet to draw sample names from
-bb_sheets <- c('Week 11 (6/22)')
+# Biobot ID sheet
+bb_sheets <- c('Week 10 (6/15)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
 extra_categories = 'Std|TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)

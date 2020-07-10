@@ -1,7 +1,7 @@
 ---
-title: "615 Rice"
+title: "608 Rice"
 author: "Prashant Kalvapalle"
-date: "5 July 2020"
+date: "10 July 2020"
 output: 
   html_document:
     theme: flatly
@@ -21,16 +21,16 @@ source('./inputs_for_analysis.R') # Source the file with user inputs
 # Spike in and concentration details
 HA_concentration_factor <- 1000 # concentration factor of wastewater -> RNA
 
-# copies/ul viral suspension spiked in (Spike ID: S13)
-all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(6787.9, NA))
+# copies/ul viral suspension spiked in (Spike ID: S10)
+all_spike_virus_conc <- tibble(Target = c('BCoV_M', 'BRSV_N'), spike_virus_conc = c(2830.2, NA))
 spike_virus_volume <- 50 # ul of viral suspension spiked in x ml WW; (x ~ 350 - 450 and varies for each sample)
 
 # sheets to read from qPCR data dump excel file
-read_these_sheets <- c('WW17-615_N1-N2', 'WW19_615_BCov')
-title_name <- '615 Rice'
+read_these_sheets <- c('WW11_608 part1', 'WW12-608 part2a_BCoV', 'WW13_608 part2b_BCov', 'WW14_608_part2')
+title_name <- '608 Rice'
 
 # Biobot ID sheet
-bb_sheets <- c('Week 10 (6/15)')
+bb_sheets <- c('Week 9 (6/8)')
 
 # Extra categories for plotting separately (separate by | like this 'Vaccine|Troubleshooting')
 extra_categories = 'Std|TR2' # for excluding this category from a plot, make the switch (exclude_sample = TRUE)

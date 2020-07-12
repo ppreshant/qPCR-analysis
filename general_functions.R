@@ -80,7 +80,7 @@ get_template_for <- function(bait, sheet_url = templates_sheet)
   plate_names_row <- read_sheet(sheet_url, sheet = 'Plate layouts', range = 'C:C', col_types = 'c')
   m_row <- plate_names_row %>% unlist() %>% as.character() %>% 
     # find the row with standard beginings matching the filename
-    str_detect(., bait %>% str_match('^(WW|Std|dd.WW)[:alnum:]*') %>% .[1] ) %>% 
+    str_detect(., str_c('^', bait %>% str_match('^(WW|Std|dd.WW)[:alnum:]*') %>% .[1]) ) %>% 
     which() + 1
   range_to_get <- str_c('B', m_row + 1, ':N', m_row + 9)
   
@@ -124,7 +124,7 @@ lm_eqn <- function(m, trig = 0){
                         b = format(unname(coef(m)[2]), digits = 3), 
                         r2 = format(summary(m)$r.squared, digits = 3)))
   # if(trig == 'coeff') c(round(coef(m)[2], 2), round(summary(m)$r.squared, 2))
-  if(trig == 'coeff') tibble(slope = round(coef(m)[2], 2), y_intercept = round(coef(m)[1], 2), r_square = round(summary(m)$r.squared, 2))
+  if(trig == 'coeff') tibble(slope = round(coef(m)[2], 2), y_intercept = round(coef(m)[1], 2), r_square = round(summary(m)$r.squared, 3))
   else as.character(as.expression(eq)); 
 }
 

@@ -56,7 +56,7 @@ results_abs <- results_relevant %>% group_by(Target) %>% do(., absolute_backcalc
 
 # Finding mean and standard deviation within replicates (both technical and biological)
 
-summary_results <- results_abs %>%  group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
+summary_results <- results_abs %>%  group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), rlang::list2(mean, sd), na.rm = T) # find mean and SD of individual copy #s for each replicate
 results_abs$`Copy #` %<>% replace_na(0) # make unamplified values 0 for plotting
 
 plt <- results_abs %>% ggplot(aes(x = `Tube ID`, y = `Copy #`, color = Target)) + ylab('Copies/ul RNA extract') +    # Specify the plotting variables 

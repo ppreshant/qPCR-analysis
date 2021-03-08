@@ -8,7 +8,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
 flnm <- 'excel files/S024 24-11-19.xls'  
-title_name <-'qPCR on cell lysates'
+title_name <-'S024: Lysate qPCR'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -203,3 +203,10 @@ print(plttm)
 #   theme_classic() + scale_color_brewer(palette="Set1") +
 #   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +
 #   ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~Target, scales = 'free_x')
+
+
+# Plotting into html -----------------------------------------------------------------------
+
+
+# calling r markdown file
+rmarkdown::render('make_html_plots.rmd', output_file = str_c('./qPCR analysis/', title_name, '.html'))

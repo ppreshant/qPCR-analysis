@@ -1,8 +1,15 @@
 ---
-title: "S06b_Lysate qPCR"
 author: "Prashant Kalvapalle"
-date: "21 Aug 2019"
-output: html_document
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output: 
+  html_document:
+    theme: flatly
+    toc: TRUE
+    toc_float: TRUE
+---
+
+---
+title: `r title_name`
 ---
 
 ```{r setup, include=FALSE}
@@ -14,11 +21,15 @@ knitr::opts_chunk$set(echo = F, fig.width = 4, fig.height = 5)
 
 We want to test by qPCR if AHL is flipping any constructs. Using this file to normalize copy #s to that of the Backbone
 
-## Running source codes
+## Plots
 
-```{r cars}
-source('general_functions.R')
-source('analysis.R')
+``` {r plotting}
+plt
+
+plt.formatted
+
+plttm
+
 ```
 
 ## Data output

@@ -7,7 +7,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'excel files/S024 24-11-19.xls'  
+flnm <- 'E04_q1 : 16s ram test-1'  
 title_name <-'raw_S024_Lysate qPCR'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
@@ -61,7 +61,10 @@ plottm1 <- function(results_relevant)
 # Input the data ----
 
 # reading in file and polishing
-fl <- readqpcr(flnm) # read excel file exported by Quantstudio
+fl <- readqpcr(str_c('excel files/',flnm, '.xls')) # read excel file exported by Quantstudio
+
+plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) # read samplenames from googlesheets
+
 
 sample_order = columnwise_index(fl) # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
 results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) %>%  .[sample_order,] # select only the results used for plotting, calculations etc. and arrange them according to sample order

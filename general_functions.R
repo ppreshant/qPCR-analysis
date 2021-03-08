@@ -3,12 +3,18 @@
 # read in excel file (.xls) of qPCR exported from Quantstudio 3 
   # Make sure to include raw data as well
 
+# Preliminaries ---- 
+
 # calling libraries ; make sure they are installed (install.packages)
 library(readxl); library(magrittr); library(tidyverse); library(ggrepel); 
+library(googlesheets4); library(rlang); library(lubridate); library(plotly) 
+
+# General variables
+sheeturls <- list(plate_layouts_PK = 'https://docs.google.com/spreadsheets/d/1RffyflHCQ_GzlRHbeH3bAkiYo4zNlnFWx4FXo7xkUt8/edit#gid=0')
 
 # reading files and manipulating columns ----
 
-# read in the excel file (from row 36 onwards)
+# read all the sheets in the qPCR output excel file (from row 36 onwards)
 readqpcr <- function(flnm)
 {
   fl <- flnm %>%  
@@ -20,6 +26,31 @@ readqpcr <- function(flnm)
   class(fl$Results$CT) <- 'numeric'
   fl
 }
+
+
+# Gets the 96 well layout with template names matching the experiment ID from filename in a google sheet
+get_template_for <- function(bait, sheet_url = sheeturls$templates)
+{ # Looking for WWx or Stdx - example WW21 or Std7 within the filename; Assumes plate spans from row B to N (1 row below the matching ID)
+  
+  # Finding the plate to be read
+  plate_names_row <- read_sheet(sheet_url, sheet = 'Plate layouts', range = 'C:C', col_types = 'c')
+  m_row <- plate_names_row %>% unlist() %>% as.character() %>% 
+    # find the row with standard beginings matching the filename
+    str_detect(., str_c('^', bait %>% str_match('^(WW|Std|dd.WW)[:alnum:]*') %>% .[1]) ) %>% 
+    which() + 1
+  range_to_get <- str_c('B', m_row + 1, ':N', m_row + 9)
+  
+  # Eror message and terminate if plate ID is not unique
+  if(length(m_row) > 1) stop( str_c('Plate ID of :', bait, 'repeats in', paste0(m_row, collapse = ' & '), 'row numbers. Please fix and re-run the script', sep = ' '))
+  
+  # read the template corresponding to the file name
+  plate_template_raw <- read_sheet(sheet_url, sheet = 'Plate layouts', range = range_to_get)
+  
+  # Convert the 96 well into a single column, alongside the Well position
+  plate_template <- read_plate_to_column(plate_template_raw, 'Sample_name') # convert plate template (Sample_names) into a single vector, columnwise
+  
+}
+
 
 columnwise_index <- function(fl)
 { # this orders the samples columnwise in the PCR plate or strip : order will give indices for A1,B1,C1 ... A2,B2,C2... (wherever samples exist)
@@ -109,3 +140,21 @@ lm_eqn <- function(df, trig = 0){
   }
   
   # use as ggplot(df,aes(x,y)) + geom_point() + scale_y_log10(labels = fancy_scientific)
+  
+  
+# dummy data  ---- 
+# or test data for testing simple functions 
+
+# dummy test tibble
+a <- tibble(a1 = 1:6, a2 = 6:1, a3 = rep(c('a', 'b'),3), a4 = a2 ^2)
+
+# expression to test on plotting
+y_namr_test <- list( 'a2' = expression(paste('this is a ', mu, 'L')),
+                     'a4' = expression(paste('super large ', sigma, 'L')))
+
+# test ggplot
+a_plt <- ggplot(a, aes(a1, a2, colour = a3)) + 
+  geom_point() + 
+  geom_line() + 
+  ylab(y_namr_test[['a4']])
+

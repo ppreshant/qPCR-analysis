@@ -8,7 +8,7 @@ source('./general_functions.R') # Source the general_functions file before runni
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
 flnm <- 'excel files/S024 24-11-19.xls'  
-title_name <-'S024: Lysate qPCR'
+title_name <-'raw_S024_Lysate qPCR'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
@@ -21,12 +21,13 @@ errorbar_width = 0.1; # width of errorbars - emperically change
 # Assay mode features (choose if you want absolute quantification)
 plot_assay_variable <- 'Sample' # printed on the x axis of the graph
 plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours
-plot_mode <-  'absolute_quantification'  # Options : ('absolute_quantification' or ''); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
+plot_mode <-  'raw_quantification'  # Options : ('absolute_quantification' or 'raw_quantification'); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
   target = c('Flipped', 'Unflipped', 'Backbone'),
   slope =  c(-3.36, -3.23, -3.55),
   intercept = c(42, 38, 42) # values for primer pairs: Flipped:q4-5. Unflipped:q9-10, Backbone:q12-13
 )
+
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode
 plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
@@ -140,7 +141,7 @@ if (experiment_mode == 'assay')
     
     if(plot_mean_and_sd == 'yes') {
       y_variable = quo(mean)
-      results_abs %<>% group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), funs(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
+      results_abs %<>% group_by(`Sample Name`, Target, assay_variable) %>% summarise_at(vars(`Copy #`), lst(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
       } 
     else {y_variable = quo(`Copy #`)}
     

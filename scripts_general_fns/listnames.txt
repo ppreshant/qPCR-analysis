@@ -1,0 +1,12 @@
+0-old_general_functions.R
+10-process_qpcr.R
+1-reading_files_funs.R
+2-tibble_columns_funs.R
+3-obsolete_arcane_funs.R
+4-qPCR_specific_funs.R
+5-mathematical_fitting_funs.R
+6-formatting_plot_funs.R
+7-COVID specific_writing_funs.R
+8-plot_mean_sd_jitter.R
+9-plot_scatter.R
+listnames.txt

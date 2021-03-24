@@ -3,13 +3,13 @@
 
 # The last part of the script contains important codes from the console that were used for specific situations : These will be commented
 
-source('./general_functions.R') # Source the general_functions file before running this
+source('./0-general_functions_main.R') # Source the general_functions file before running this
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'E04_q1 : 16s ram test-1'  
-title_name <-'raw_S024_Lysate qPCR'
-experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
+flnm <- 'q04-E06-16sRAM RNA test-2'  
+title_name <-'RNA extract RAM-2_q04-E06 qPCR'
+experiment_mode <- 'new_style' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
 plot_select_template <- '' # Options ('' or 'something') ; filters a particular template name to plot 
@@ -33,30 +33,6 @@ plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars i
 plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; exclude categories for plotting; ex: Controls etc.: filters based on `Sample Name`: works only in assay mode
 plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; exclude assay_variables for plotting; ex: no template control etc.: filters based on assay_variable: works only in assay mode
 
-# plotting functions for Melting temperature ----
-
-# plots all the Tm's if samples have multiple peaks in the melting curve
-plotalltms <- function(results_relevant)
-{ 
-  # Gather the Tm's into another data frame and merge into 1 column
-  tmfl <- results_relevant %>% select(`Sample Name`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-`Sample Name`, -`Primer pair`)
-  
-  # plot the Tm ; Graph will now show
-  plttm2 <- tmfl %>% ggplot(.) + aes(x = `Sample Name`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`, scales = 'free_x', space = 'free_x')
-}
-
-# plot the first Tm only ; Graph will now show
-plottm1 <- function(results_relevant)
-{ 
-  plttm <- results_relevant %>% ggplot(.) + aes(x = `Sample Name`, y = Tm1) + geom_point(color = 'red', size = 2) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting curves')) + facet_grid(~`Primer pair`, scales = 'free_x', space = 'free_x')
-}
-
 
 # Input the data ----
 
@@ -65,16 +41,59 @@ fl <- readqpcr(str_c('excel files/',flnm, '.xls')) # read excel file exported by
 
 plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) # read samplenames from googlesheets
 
+# this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
+sample_order = columnwise_index(fl) 
 
-sample_order = columnwise_index(fl) # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
-results_relevant <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`,`Target`) %>%  .[sample_order,] # select only the results used for plotting, calculations etc. and arrange them according to sample order
+results_relevant <- fl$Results %>% 
+  select(`Well Position`, CT, `Ct Mean`, starts_with('Tm'),`Target Name`) %>%  # select only the results used for plotting, calculations etc.
+  .[sample_order,] %>%  # and arrange them according to sample order
+  left_join(plate_template)
+
+
+# Plots with new formatting ----
+if(experiment_mode == 'new_style')
+{
+  polished_results <- results_relevant %>% 
+    separate(`Sample_name_bulk`,c('Target Name', 'Sample_name'),'-') %>% 
+    separate(`Sample_name`,c('Sample_name','Tube ID'),'_') %>% 
+    
+    mutate(`Tube ID` = if_else(`Sample_name` == 'NTC', '0', `Tube ID`)) %>% 
+    separate(`Tube ID`, c('assay_variable', 'biological_replicates'), remove = F) %>%  # Separate out biological replicates 
+    unite('Tube ID', c(assay_variable, biological_replicates), sep = '.', remove = F, na.rm = T) %>% # remaking Tube ID - removes spaces after 'dot'
+    # unite('Biobot ID', c(`Sample_name`, assay_variable), sep = '', remove = F) %>%
+    
+    mutate_at('assay_variable', as.character) %>% 
+    mutate_at('biological_replicates', ~str_replace_na(., '')) %>% 
+    
+    # approx copy #
+    mutate('Copies_proportional' = 10 ^ (40-CT))
+  
+  
+  # plot
+  
+  plt <- {ggplot(polished_results, aes(assay_variable, Copies_proportional, colour = Sample_name)) +
+    geom_point() +
+    facet_grid(~ `Target Name`, scales = 'free_x', space = 'free_x') + 
+    ggtitle(title_name, subtitle = 'Copies proportional (a.u)') + ylab('')} %>% 
+    print()
+  
+  plt.formatted <- {ggplot(polished_results, aes(assay_variable, 40-CT, colour = Sample_name)) +
+      geom_point() +
+      facet_grid(~ `Target Name`, scales = 'free_x', space = 'free_x') + 
+      ggtitle(title_name, subtitle = '40 - Cq') + ylab('')} %>% 
+    print()
+  
+}
+
+
 
 # Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)----
 
 if (experiment_mode == 'small_scale')
 {
   # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
-  results_relevant %<>%  separate(.,`Sample Name`,c('Sample Name','Primer pair'),' ')
+  results_relevant %<>%  
+    separate(.,`Sample_name`,c('Sample Name','Primer pair'),' ')
   
   # Factorise the sample name in the order for plotting
   results_relevant %<>% mutate_if(is.character,as_factor) 

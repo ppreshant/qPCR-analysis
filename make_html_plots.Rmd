@@ -14,7 +14,7 @@ title: `r title_name`
 
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = F, fig.width = 4, fig.height = 5)
+knitr::opts_chunk$set(echo = F, fig.width = 10, fig.height = 5)
 ```
 
 ## Goal of the analysis
@@ -28,15 +28,17 @@ plt
 
 plt.formatted
 
-plttm
+# plttm
+
+plotly::ggplotly(plt)
 
 ```
 
 ## Data output
 
 ```{r datadisplay}
-results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
-kable(results_abs, caption = 'Summary of estimated copy #s')
+# results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
+# kable(results_abs, caption = 'Summary of estimated copy #s')
 ```
 
 <!-- ## Transforming data and normalization -->

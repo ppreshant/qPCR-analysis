@@ -4,10 +4,16 @@
 # read in the excel file (from row 36 onwards)
 readqpcr <- function(flnm)
 {
+  # bring the first sheet to count the number of rows to skip
+  to.skip <- flnm %>%  
+    read_excel(., sheet = 'Sample Setup', col_names = FALSE) %>%  # read the first sheet
+    pull(1) %>% # select first column only
+    {which(. == 'Well') - 1} # check where "Well" appears, and subtract 1
+  
   fl <- flnm %>%  
     excel_sheets() %>% 
     set_names(.,.) %>% 
-    map(read_excel, path = flnm, skip = 41) # change skip # if channels are not calibrated
+    map(read_excel, path = flnm, skip = to.skip) # change skip # if channels are not calibrated
   
   # put an error here if column names are not read properly (maybe look for well position and one other column..)
   

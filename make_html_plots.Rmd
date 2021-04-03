@@ -14,7 +14,7 @@ title: `r title_name`
 
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = F, fig.width = 10, fig.height = 5)
+knitr::opts_chunk$set(echo = F) #, fig.width = 10, fig.height = 5)
 ```
 
 ## Goal of the analysis

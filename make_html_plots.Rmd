@@ -24,13 +24,13 @@ We want to test by qPCR if AHL is flipping any constructs. Using this file to no
 ## Plots
 
 ``` {r plotting}
-plt
+plt.cq
 
-plt.formatted
+plt.copies
 
-# plttm
+plttm
 
-plotly::ggplotly(plt)
+plotly::ggplotly(plt.cq)
 
 ```
 

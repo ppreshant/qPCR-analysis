@@ -6,6 +6,7 @@
 *.edt
 *.html
 /excel files
+/archive
 /qPCR analysis/.Rproj*
 /qPCR analysis/Extra*
 *.png

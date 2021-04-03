@@ -34,6 +34,11 @@ plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; 
 plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; exclude assay_variables for plotting; ex: no template control etc.: filters based on assay_variable: works only in assay mode
 
 
+# Subtitle labeller
+yaxis_translation <- c('40 - CT' = '40 - Cq',
+                       'Copies_proportional' = 'Copies proportional (a.u)',
+                       'Tm1' = 'Melting temperature - peak 1')
+
 # Input the data ----
 
 # reading in file and polishing
@@ -45,7 +50,7 @@ plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) # read samp
 sample_order = columnwise_index(fl) 
 
 Cq_data <- fl$Results %>% 
-  select(`Well Position`, CT, `Ct Mean`, starts_with('Tm'),Target_name) %>%  # select only the results used for plotting, calculations etc.
+  select(`Well Position`, CT, starts_with('Tm')) %>%  # select only the results used for plotting, calculations etc.
   .[sample_order,] %>%  # and arrange them according to sample order
   left_join(plate_template)
 
@@ -69,96 +74,89 @@ if(experiment_mode == 'assay')
     mutate_at('biological_replicates', ~str_replace_na(., '')) %>% # if no replicates are provided, puts a blank string ('')
     
     # approx copy #
-    mutate('Copies_proportional' = 2 ^ (40-CT)) %>%  # copy number is proportional to e^-Cq (e = efficiency ~ close to 2)
-    
-    # Remove unnecessary columns
-    select(-`Ct Mean`)
+    mutate('Copies_proportional' = 2 ^ (40-CT)) # copy number is proportional to e^-Cq (e = efficiency ~ close to 2)
     
   
   # Cq plot ----
   
-  plt.copies <- {ggplot(polished_cq.dat, aes(assay_variable, Copies_proportional, colour = Sample_name)) +
-    geom_point() +
-    facet_grid(~ Target_name, scales = 'free_x', space = 'free_x') + 
-    ggtitle(title_name, subtitle = 'Copies proportional (a.u)') + ylab('')} %>% 
-    print()
+  # plot ~ copies (relative quantification)
+  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional)
   
-  plt.cq <- {ggplot(polished_cq.dat, aes(assay_variable, 40-CT, colour = Sample_name)) +
-      geom_point() +
-      facet_grid(~ Target_name, scales = 'free_x', space = 'free_x') + 
-      ggtitle(title_name, subtitle = '40 - Cq') + ylab('')} %>% 
-    print()
+  # plot 40 - Cq
+  plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT)
   
+  # Tm plots ----
   
-  # Tm plot ----
+  plt.tm1 <- plot_facetted_assay(.yvar_plot = Tm1)
   
   # Gather 4 peaks of melting temperatures into long format
   Tm_data <- polished_cq.dat %>% 
-    select(Sample_name, assay_variable, biological_replicates, starts_with('Tm')) %>%  # select identifiers and Tms
+    select(Sample_name, assay_variable, biological_replicates, Target_name,
+           starts_with('Tm')) %>%  # select identifiers and Tms
     pivot_longer(cols = starts_with('Tm'), names_to = 'Peak number', values_to = 'Tm') # get all Tms into 1 column
     
-  # plot the Tm ; Graph will now show
-  plttm <- Tm_data %>% ggplot(.) + aes(x = assay_variable, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
+  # plot mutliple Tms ; Graph will now show
+  plt.alltm <- plot_facetted_assay(.data = Tm_data, .yvar_plot = Tm) + 
+    facet_grid(`Peak number` ~ Target_name,  # redo facets
+               scales = 'free_x', space = 'free_x')
+  
+  plt.alltm_2 <- Tm_data %>% ggplot(.) + aes(x = assay_variable, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
     ggtitle(paste(title_name,': Melting')) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x')
   
-  # Cq_data %<>% filter(!str_detect(Sample_name, plot_exclude_category)) # exclude unwanted samples categories (sample_name) 
-  # Cq_data %<>% filter(!str_detect(assay_variable, plot_exclude_assay_variable)) # excluding unwanted samples from assay_variable
-  
-  
   
   # Absolute quantification ----
   
-  if(plot_mode == 'absolute_quantification')
-  { # Computing copy number from standard curve linear fit information
-    
-    results_abs <- Cq_data %>% 
-      group_by(Target) %>% 
-      do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
-    
-    if(plot_mean_and_sd == 'yes') {
-      y_variable = quo(mean)
-      results_abs %<>% group_by(Sample_name, Target, assay_variable) %>% summarise_at(vars(`Copy #`), lst(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
-    } 
-    else {y_variable = quo(`Copy #`)}
-    
-    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
-    
-    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width))} # plot errorbars if mean and SD are desired
-    
-  } 
-  
-  else plt <- Cq_data %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
-  
-  # plot the CT mean and formatting plots
-  plt <- plt + geom_point(size = 2) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x') # plot points and facetting
-  plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
-  
-  print(plt.formatted)
-  
-  # normalizing copy #s to backbone ----  
-  if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
-  { # computing ratio of copy #s of targets : flipped and unflipped to the backbone
-    
-    sel <- results_abs %>% select(Sample_name,assay_variable,`Primer pair`,Target,`Copy #`) # select relevant columns (other numeric columns will throw errors)
-    
-    sel_b <- sel %>% filter(Target == 'Backbone') # filter out each Target
-    sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped');
-    
-    sel_f %<>% mutate("Normalized copy #" = sel_f$`Copy #`/sel_b$`Copy #`); # make ratios to the backbone 
-    sel_u %<>% mutate("Normalized copy #" = sel_u$`Copy #`/sel_b$`Copy #`);
-    
-    results_ratio <- bind_rows(sel_f, sel_u) # bind results into 1 tibble (for easy plotting)
-    
-    # plotting the normalized copy #'s
-    plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting
-      geom_point(size = 2) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x') # plot points and facetting
-    
-    plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
-    
-    print(plt_norm)
-  }
+  # if(plot_mode == 'absolute_quantification')
+  # { # Computing copy number from standard curve linear fit information
+  #   
+  #   results_abs <- Cq_data %>% 
+  #     group_by(Target) %>% 
+  #     do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
+  #   
+  #   if(plot_mean_and_sd == 'yes') {
+  #     y_variable = quo(mean)
+  #     results_abs %<>% group_by(Sample_name, Target, assay_variable) %>% summarise_at(vars(`Copy #`), lst(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
+  #   } 
+  #   else {y_variable = quo(`Copy #`)}
+  #   
+  #   plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
+  #   
+  #   if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width))} # plot errorbars if mean and SD are desired
+  #   
+  # } 
+  # 
+  # else plt <- Cq_data %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
+  # 
+  # # plot the CT mean and formatting plots
+  # plt <- plt + geom_point(size = 2) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x') # plot points and facetting
+  # plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
+  # 
+  # print(plt.formatted)
+  # 
+  # # normalizing copy #s to backbone ----  
+  # if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
+  # { # computing ratio of copy #s of targets : flipped and unflipped to the backbone
+  #   
+  #   sel <- results_abs %>% select(Sample_name,assay_variable,`Primer pair`,Target,`Copy #`) # select relevant columns (other numeric columns will throw errors)
+  #   
+  #   sel_b <- sel %>% filter(Target == 'Backbone') # filter out each Target
+  #   sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped');
+  #   
+  #   sel_f %<>% mutate("Normalized copy #" = sel_f$`Copy #`/sel_b$`Copy #`); # make ratios to the backbone 
+  #   sel_u %<>% mutate("Normalized copy #" = sel_u$`Copy #`/sel_b$`Copy #`);
+  #   
+  #   results_ratio <- bind_rows(sel_f, sel_u) # bind results into 1 tibble (for easy plotting)
+  #   
+  #   # plotting the normalized copy #'s
+  #   plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting
+  #     geom_point(size = 2) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x') # plot points and facetting
+  #   
+  #   plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
+  #   
+  #   print(plt_norm)
+  # }
 }
 
 
@@ -273,8 +271,6 @@ if (experiment_mode == 'old_assay')
     print(plt_norm)
   }
 }
-
-print(plttm)
 
 # ggsave('qPCR analysis/S017.png')
 # write.xlsx(results_abs, 'excel files/Test.xls', sheetName = 'analysis', append = TRUE, borders = 'surrounding') # saving data table of inferred copy #s to an excel sheet

@@ -28,10 +28,15 @@ plt.cq
 
 plt.copies
 
-plttm
+plt.tm1
+
+plt.alltm
+
+plt.alltm_2
 
 plotly::ggplotly(plt.cq)
 
+plotly::ggplotly(plt.tm1)
 ```
 
 ## Data output

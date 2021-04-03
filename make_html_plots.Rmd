@@ -21,22 +21,42 @@ knitr::opts_chunk$set(echo = F, fig.width = 10, fig.height = 5)
 
 We want to test by qPCR if AHL is flipping any constructs. Using this file to normalize copy #s to that of the Backbone
 
-## Plots
+## Cq Plots
 
-``` {r plotting}
+``` {r cq_plt}
 plt.cq
+
+plotly::ggplotly(plt.cq)
+
+```
+
+## Copies plot
+``` {r copies1}
 
 plt.copies
 
+```
+
+## Melting temp
+
+### Tm1
+
+Largest melting temperature peak
+```{r tm1}
 plt.tm1
 
+plotly::ggplotly(plt.tm1)
+
+```
+
+### All Tm peaks
+
+All peaks of melting temperature
+```{r alltm}
 plt.alltm
 
 plt.alltm_2
 
-plotly::ggplotly(plt.cq)
-
-plotly::ggplotly(plt.tm1)
 ```
 
 ## Data output

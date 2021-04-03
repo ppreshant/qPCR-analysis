@@ -1,5 +1,5 @@
 # qPCR processing: Calculate copy number from Cq and attach sample labels from template table 
-
+# From COVID project
 
 process_qpcr <- function(flnm = flnm.here, std_override = NULL, baylor_wells = 'none')
   # enter the file name, standard curve mentioned within filename is used unless override is provided

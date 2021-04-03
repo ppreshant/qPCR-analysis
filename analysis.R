@@ -7,8 +7,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'q04-E06-16sRAM RNA test-2'  
-title_name <-'RNA extract RAM-2_q04-E06 qPCR'
+flnm <- 'q05_E07_RAM 3_4-1-21'  
+title_name <-'RNA extract RAM with controls-3_q05-E07 qPCR'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
   # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template

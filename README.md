@@ -14,7 +14,7 @@ The output image looks like this
 - primerpairname becomes facets or panels; 
 - template on the x axis and 
 - overall name as colour
-![image](https://user-images.githubusercontent.com/14856479/113488826-1859d100-9486-11eb-8384-1ad17afea737.png)
+<img src = 'https://user-images.githubusercontent.com/14856479/113488826-1859d100-9486-11eb-8384-1ad17afea737.png' width = "600">
 
 
 

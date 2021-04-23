@@ -2,6 +2,13 @@
 # Prashant; 23/April/21
 # Adapted from COVID qPCR/WW_master branch
 
+
+# Trigger into this function
+  # if it is a standard curve holding file (Stdx), call standard curve processor
+  # if(str_detect(flname, 'Std[:digit:]*')) process_standard_curve(flname)
+
+
+
 process_standard_curve <- function(flnm)
 { # note: Quantity of copies/well must be written in the template sheet for the standards
   

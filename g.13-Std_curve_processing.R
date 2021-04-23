@@ -9,58 +9,48 @@
 
 
 
-process_standard_curve <- function(flnm)
+process_standard_curve <- function(flnm, .dat_pol)
 { # note: Quantity of copies/well must be written in the template sheet for the standards
   
   # Preliminary naming ----
   
-  # file path and google sheet urls
-  flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
-  
   # Extract a short name for the standard curve from the file name provide. short name has Stdxx_Target_WWxx
-  fl_namer <- c('Std[:alnum:]*', 'BCoV|N1|N2|BRSV|pMMoV', 'WW[:alnum:]*') %>% 
+  fl_namer <- c('Std[:alnum:]*', '^q[:alnum:]*') %>% 
     map_chr(~str_match(flnm, .)) %>% 
     str_c(collapse = '_')
   
   if(is.na(fl_namer)) 
   {
-    stop(str_c('Filename:', flnm,  ' - input to the standard curve function, is either missing the standard curve ID (ex: Std25), the WW ID (Ex: WW61) or the Target name (Ex: BCoV) \n
-         Check README for proper naming convention: https://github.com/ppreshant/WW-CoV2-project/'))
+    stop(str_c('Filename:', flnm,  ' - input to the standard curve function, is either missing the standard curve ID (ex: Std25), the run ID (Ex: q06) \n
+         Example plate name : q07_16sRAM RNAtest-5_Std7'))
   }
   
-  title_name <- str_c('Standard curve: ', fl_namer ,' - Fastvirus 4x') # title name for plots
+  title_name <- str_c('Standard curve: ', fl_namer) # title name for plots
   
   
   # Data input ----
   
-  fl <- readqpcr(flpath) # read file
-  
-  # Bring sample names from template google sheet
-  plate_template <- get_template_for(flnm, sheeturls$templates)
-  
-  # this gives a vector to order the samples columnwise in the PCR plate or strip 
-  # (by default : data is shown row-wise) => This command will enable plotting column wise order
-  sample_order = columnwise_index(fl) 
-  
-  bring_results <- fl$Results %>% select(`Well Position`, `Sample Name`, CT, starts_with('Tm'),`Target Name`, Task) %>% rename(Target = `Target Name`) %>%  .[sample_order,] %>%  
+  std_results <- .dat_pol %>% 
     
-    # select only the results used for plotting, calculations etc. and arrange them according to sample order
-    select(-`Sample Name`) %>% right_join(plate_template, by = 'Well Position') %>%  # Incorporate samples names from the google sheet by matching well position
-    separate(Sample_name, c(NA, 'Category', 'Quantity'), sep = '-|_') %>% mutate_at('Quantity', ~ replace_na(as.numeric(.), 0)) %>% 
-    filter(!is.na(Target))
+    filter(str_detect(Sample_name, 'Std') | 
+             str_detect(assay_variable, 'NTC')) %>% # only retain standards or NTCs
+    mutate(Quantity = replace_na(as.numeric(assay_variable), 0))
+  
+    # separate(Sample_name, c(NA, 'Category', 'Quantity'), sep = '-|_') %>% mutate_at('Quantity', ~ replace_na(as.numeric(.), 0)) %>% 
+    # filter(!is.na(Target))
   
   # optional filtering to remove low concentration points in standard curve
-  bring_results %<>% filter(Quantity > 1| Quantity == 0) # filtering only standard curve within the linear range
+  std_results %<>% filter(Quantity > 1| Quantity == 0) # filtering only standard curve within the linear range
   
   # plotting ----
   
-  plt <- bring_results %>% filter(str_detect(Category, 'NTC|Std')) %>%  plotstdcurve(title_name, 'log(Copy #)') # plot standard curve
+  plt <- std_results %>% filter(str_detect(Category, 'NTC|Std')) %>%  plotstdcurve(title_name, 'log(Copy #)') # plot standard curve
   
   # # Extract the names of the targets in use
   # targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target Name`) %>% unique(.)  
   
   # Isolating standard curve variables (Quantity,CT) of the different targets into groups
-  standard_curve_vars <- bring_results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT, Target) %>% group_by(Target) # select required columns and group
+  standard_curve_vars <- std_results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT, Target) %>% group_by(Target) # select required columns and group
   
   # Apply linear regression and find the model fitting results (equation and slope, R2 values) for each target
   std_table <- standard_curve_vars %>% do(., equation = lm_std_curve(.), params = lm_std_curve(., trig = 'coeff'), dat = .[1,] ) # "do" applies functions to each group of the data

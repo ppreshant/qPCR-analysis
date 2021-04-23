@@ -7,13 +7,13 @@
 plot_facetted_assay <- function(.data = polished_cq.dat,  # data.frame or tibble
                                 # required variable .yvar_plot
                                 .yvar_plot, .xvar_plot = assay_variable, # variables within the dataframe (not string, use raw name)
-                                .colourvar_plot = Sample_name,
+                                .colourvar_plot = Sample_category,
                                 .facetvar_plot = Target_name, # facets align along the x axis, cannot be NULL as of now
                                 .subtitle.plot = NULL) # 'y axis label' supplied as a string to .subtitle.plot
 {
   
   # check missing variables
-  if(is.null(enquo(.yvar_plot))) stop('Missing y axis variable for plot in plot_facetted_assay call')  
+  if(is.null(enquo(.yvar_plot))) stop('Missing y axis variable for plot in plot_facetted_assay() call')  
   
   # Get plot subtitle
   if(is.null(.subtitle.plot)) .subtitle.plot <- yaxis_translation[deparse(enexpr(.yvar_plot))]
@@ -23,6 +23,6 @@ plot_facetted_assay <- function(.data = polished_cq.dat,  # data.frame or tibble
       geom_point() +
       facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x') + 
       ggtitle(title_name, subtitle = .subtitle.plot) + 
-      {if(!is.null(.subtitle.plot)) ylab('')} }  %>%  # remove y axis label if a subtitle is provided which is more readable
+      {if(!is.na(.subtitle.plot)) ylab('')} }  %>%  # remove y axis label if a subtitle is provided which is more readable
     print()
 }

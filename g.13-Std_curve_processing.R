@@ -32,11 +32,11 @@ process_standard_curve <- function(flnm, .dat_pol)
   
   std_results <- .dat_pol %>% 
     
-    filter(str_detect(Sample_name, 'Std') | 
+    filter(str_detect(Sample_category, 'Std') | 
              str_detect(assay_variable, 'NTC')) %>% # only retain standards or NTCs
     mutate(Quantity = replace_na(as.numeric(assay_variable), 0))
   
-    # separate(Sample_name, c(NA, 'Category', 'Quantity'), sep = '-|_') %>% mutate_at('Quantity', ~ replace_na(as.numeric(.), 0)) %>% 
+    # separate(Sample_category, c(NA, 'Category', 'Quantity'), sep = '-|_') %>% mutate_at('Quantity', ~ replace_na(as.numeric(.), 0)) %>% 
     # filter(!is.na(Target))
   
   # optional filtering to remove low concentration points in standard curve

@@ -10,16 +10,14 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 flnm <- 'q05_E07_RAM 3_4-1-21'  
 title_name <-'RNA extract RAM with controls-3_q05-E07 qPCR'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
-  # 'assay' =  Plots for Assays (facetted by Sample category = control vs experiment ; naming: 'Sample Name'_variable primer pair)
-  # 'small_scale' = plots for troubleshooting expts : faceted by primer pair and sample name = template
+  # 'assay' =  Plots for Assays (facetted by Target_name, colour by Sample_category = control vs experiment ; 
+      # naming: primerpairname-overall name_templatename.biologicalreplicatenumber)
+
 plot_select_template <- '' # Options ('' or 'something') ; filters a particular template name to plot 
 errorbar_width = 0.1; # width of errorbars - emperically change
 
-# small_scale mode features
-# none so far
-
 # Assay mode features (choose if you want absolute quantification)
-plot_assay_variable <- 'Sample' # printed on the x axis of the graph
+plot_assay_variable <- 'Template name' # printed on the x axis of the graph
 plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours
 plot_mode <-  'raw_quantification'  # Options : ('absolute_quantification' or 'raw_quantification'); absolute_quantification will calculate copy #'s based on intercept and slope from standard curve - manually entered below ; else, Cq values are plotted
 std_par <- tibble(                       # Input the slope and intercept from standard curve of various primer pairs/targets here - Target should match Target field (provided in excel sheet - Sample input reference.csv) 
@@ -30,14 +28,15 @@ std_par <- tibble(                       # Input the slope and intercept from st
 
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point: Only in absolute_quantification mode
-plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; exclude categories for plotting; ex: Controls etc.: filters based on Sample_name: works only in assay mode
+plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; exclude categories for plotting; ex: Controls etc.: filters based on Sample_category: works only in assay mode
 plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; exclude assay_variables for plotting; ex: no template control etc.: filters based on assay_variable: works only in assay mode
 
 
 # Subtitle labeller
 yaxis_translation <- c('40 - CT' = '40 - Cq',
                        'Copies_proportional' = 'Copies proportional (a.u)',
-                       'Tm1' = 'Melting temperature - peak 1')
+                       'Tm1' = 'Melting temperature - peak 1',
+                       'Tm' = 'Melting temperature')
 
 # Input the data ----
 
@@ -62,16 +61,16 @@ if(experiment_mode == 'assay')
   # Parsing names ---- 
   
   polished_cq.dat <- Cq_data %>% 
-    separate(`Sample_name_bulk`,c('Target_name', 'Sample_name'),'-') %>% 
-    separate(`Sample_name`,c('Sample_name','Tube ID'),'_') %>%  # Split the components of the sample name bulk by delimiters ('-', '_', '.')
-    separate(`Tube ID`, c('assay_variable', 'biological_replicates'), remove = F) %>%  # Separate out biological replicates 
     
-    # mutate(`Tube ID` = if_else(`Sample_name` == 'NTC', '0', `Tube ID`)) %>%  # don't know why NTC is being converted to '0'
-    # unite('Tube ID', c(assay_variable, biological_replicates), sep = '.', remove = F, na.rm = T) %>% # Why?: remaking Tube ID - removes spaces after 'dot'
+    separate(`Sample_name_bulk`, # Split the components of the sample name bulk by delimiters ('-', '_', '.')
+             c('Target_name', 
+               'Sample_category',
+               'assay_variable',
+               'biological_replicates'),
+             sep = '-|_|\\.') %>% 
     
-    
-    mutate_at('assay_variable', as.character) %>% # useful when plasmid numbers are provided
-    mutate_at('biological_replicates', ~str_replace_na(., '')) %>% # if no replicates are provided, puts a blank string ('')
+    mutate(across('assay_variable', as.character)) %>% # useful when plasmid numbers are provided
+    mutate(across('biological_replicates', ~str_replace_na(., '')) ) %>% # if no replicates are provided, puts a blank string ('')
     
     # approx copy #
     mutate('Copies_proportional' = 2 ^ (40-CT)) # copy number is proportional to e^-Cq (e = efficiency ~ close to 2)
@@ -80,44 +79,51 @@ if(experiment_mode == 'assay')
   # Cq plot ----
   
   # plot ~ copies (relative quantification)
-  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional)
+  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional) + 
+    xlab(plot_assay_variable)
   
   # plot 40 - Cq
-  plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT)
+  plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT) +
+    xlab(plot_assay_variable)
   
   # Tm plots ----
   
-  plt.tm1 <- plot_facetted_assay(.yvar_plot = Tm1)
+  plt.tm1 <- plot_facetted_assay(.yvar_plot = Tm1)+
+    xlab(plot_assay_variable)
   
   # Gather 4 peaks of melting temperatures into long format
   Tm_data <- polished_cq.dat %>% 
-    select(Sample_name, assay_variable, biological_replicates, Target_name,
+    select(Sample_category, assay_variable, biological_replicates, Target_name,
            starts_with('Tm')) %>%  # select identifiers and Tms
     pivot_longer(cols = starts_with('Tm'), names_to = 'Peak number', values_to = 'Tm') # get all Tms into 1 column
     
   # plot mutliple Tms ; Graph will now show
   plt.alltm <- plot_facetted_assay(.data = Tm_data, .yvar_plot = Tm) + 
     facet_grid(`Peak number` ~ Target_name,  # redo facets
-               scales = 'free_x', space = 'free_x')
+               scales = 'free_x', space = 'free_x')+
+    xlab(plot_assay_variable)
   
   plt.alltm_2 <- Tm_data %>% ggplot(.) + aes(x = assay_variable, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
     theme_classic() + scale_color_brewer(palette="Set1") + 
     theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting')) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x')
+    ggtitle(paste(title_name,': Melting')) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') +
+    xlab(plot_assay_variable)
   
   
   # Absolute quantification ----
   
-  # if(plot_mode == 'absolute_quantification')
-  # { # Computing copy number from standard curve linear fit information
-  #   
+  if(plot_mode == 'absolute_quantification')
+  { # Computing copy number from standard curve linear fit information
+
+    
+    
   #   results_abs <- Cq_data %>% 
   #     group_by(Target) %>% 
   #     do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
   #   
   #   if(plot_mean_and_sd == 'yes') {
   #     y_variable = quo(mean)
-  #     results_abs %<>% group_by(Sample_name, Target, assay_variable) %>% summarise_at(vars(`Copy #`), lst(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
+  #     results_abs %<>% group_by(Sample_category, Target, assay_variable) %>% summarise_at(vars(`Copy #`), lst(mean(.,na.rm = T), sd)) # find mean and SD of individual copy #s for each replicate
   #   } 
   #   else {y_variable = quo(`Copy #`)}
   #   
@@ -125,12 +131,13 @@ if(experiment_mode == 'assay')
   #   
   #   if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width))} # plot errorbars if mean and SD are desired
   #   
-  # } 
+  }
+  
   # 
   # else plt <- Cq_data %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
   # 
   # # plot the CT mean and formatting plots
-  # plt <- plt + geom_point(size = 2) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x') # plot points and facetting
+  # plt <- plt + geom_point(size = 2) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') # plot points and facetting
   # plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
   # 
   # print(plt.formatted)
@@ -139,7 +146,7 @@ if(experiment_mode == 'assay')
   # if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
   # { # computing ratio of copy #s of targets : flipped and unflipped to the backbone
   #   
-  #   sel <- results_abs %>% select(Sample_name,assay_variable,`Primer pair`,Target,`Copy #`) # select relevant columns (other numeric columns will throw errors)
+  #   sel <- results_abs %>% select(Sample_category,assay_variable,`Primer pair`,Target,`Copy #`) # select relevant columns (other numeric columns will throw errors)
   #   
   #   sel_b <- sel %>% filter(Target == 'Backbone') # filter out each Target
   #   sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped');
@@ -151,41 +158,12 @@ if(experiment_mode == 'assay')
   #   
   #   # plotting the normalized copy #'s
   #   plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting
-  #     geom_point(size = 2) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x') # plot points and facetting
+  #     geom_point(size = 2) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') # plot points and facetting
   #   
   #   plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
   #   
   #   print(plt_norm)
   # }
-}
-
-
-# ** Small scale mode ----
-
-# Plots for small scale assays: Meant for troublshooting data (facetted by primer names; naming: 'Sample Name' primer-pair)
-
-if (experiment_mode == 'small_scale')
-{
-  # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
-  polished_cq.dat <- Cq_data %>% 
-    separate(.,`Sample_name`,c('Sample Name','Primer pair'),' ') %>%  # # Split the components of the sample name bulk by delimiters (' ')
-  
-    mutate_if(is.character,as_factor) %>%  # Factorise the sample name .. (in the order for plotting)
-  
-  # select samples to plot (or to exclude write a similar command)
-    filter(str_detect(Sample_name, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
-  
-  # plot the Tm ; Graph will now show
-  plttm <- plotalltms(Cq_data) # plots tms of multiple peaks in melting curve
-  
-  # plot the CT mean along with replicates
-  plt <- Cq_data %>% ggplot(.) + aes(x = Sample_name, y = CT) + geom_point(color = 'red', size = 2, show.legend = T) +
-    geom_boxplot(aes(x = Sample_name, y = `Ct Mean`), show.legend = T) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(title_name) + ylab(expression(C[q])) + facet_grid(~Target, scales = 'free_x', space = 'free_x') 
-  
-  print(plt)
 }
 
 

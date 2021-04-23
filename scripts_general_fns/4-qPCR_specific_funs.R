@@ -43,6 +43,7 @@ optional1 <- function()
 
 
 # plotting functions for Melting temperature
+# Obsolete: Were used in small_scale mode and old_assay mode
 
 # plots all the Tm's if samples have multiple peaks in the melting curve
 plotalltms <- function(results_relevant)

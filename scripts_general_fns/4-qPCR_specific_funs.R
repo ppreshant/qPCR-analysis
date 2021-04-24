@@ -10,24 +10,27 @@ primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped',
 
 
 # function to back-calculate CT using standard curve parameters
-absolute_backcalc <- function(df, std_par)
+absolute_backcalc <- function(.df, .target_current, std_par)
 {
-  target_current <- df$Target %>% unique()
-  std_current <- std_par %>% filter(str_detect(target_current, Target))
+  # .target_current <- df$Target_name %>% unique()
+  std_current <- std_par %>% filter(str_detect(Target_name, .target_current))
   
-  df %>% mutate(`Copy #` = 10^( (CT - std_current$y_intercept)/std_current$Slope) )
+  if(!plyr::empty(std_current)) {
+    mutate(.df, `Copies.per.ul.template` = 10^( (CT - std_current$y_intercept)/std_current$Slope) ) %>% 
+      group_by(Sample_category, assay_variable) %>% 
+      mutate(mean_Copies.per.ul.template = mean(Copies.per.ul.template))
+  } else .df
 }
-
 
 
 # Plot Standard curve
 plotstdcurve <- function(results_qpcr, plttitle, xlabel)
 {
   plt <- results_qpcr %>% 
-    ggplot(.) + aes(x = log10(Quantity), y = CT, color = `Target`) + geom_point() +
+    ggplot(.) + aes(x = log10(Quantity), y = CT, color = `Target_name`) + geom_point() +
     theme_classic() + scale_color_brewer(palette="Set1") + theme(plot.title = element_text(hjust = 0.5)) + 
-    ggtitle(plttitle) + xlab(xlabel) + ylab(expression(C[q])) +
-    stat_smooth(data = filter(results_qpcr, Task == 'STANDARD'), method ="lm", se = F) # plots linear regression line
+    ggtitle(plttitle, subtitle = expression(C[q])) + xlab(xlabel) + ylab('') +
+    stat_smooth(data = filter(results_qpcr, str_detect(Sample_category, 'Std')), method ="lm", se = F) # plots linear regression line
 }
 
 

@@ -9,6 +9,7 @@ plot_facetted_assay <- function(.data = polished_cq.dat,  # data.frame or tibble
                                 .yvar_plot, .xvar_plot = assay_variable, # variables within the dataframe (not string, use raw name)
                                 .colourvar_plot = Sample_category,
                                 .facetvar_plot = Target_name, # facets align along the x axis, cannot be NULL as of now
+                                .xaxis.label.custom = plot_assay_variable,
                                 .subtitle.plot = NULL) # 'y axis label' supplied as a string to .subtitle.plot
 {
   
@@ -21,8 +22,9 @@ plot_facetted_assay <- function(.data = polished_cq.dat,  # data.frame or tibble
   # plotting
   {ggplot(.data, aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}})) +
       geom_point() +
-      facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x') + 
-      ggtitle(title_name, subtitle = .subtitle.plot) + 
+      facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x') +  # facets
+      ggtitle(title_name, subtitle = .subtitle.plot) + # custom title and y label as subtitle
+      xlab(.xaxis.label.custom) + # custom label for X axis
       {if(!is.na(.subtitle.plot)) ylab('')} }  %>%  # remove y axis label if a subtitle is provided which is more readable
     print()
 }

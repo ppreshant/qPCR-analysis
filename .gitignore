@@ -9,6 +9,7 @@
 /archive
 /qPCR analysis/.Rproj*
 /qPCR analysis/Extra*
+/qPCR analysis/Standards/
 *.png
 *.jp*
 /LinRegPCR

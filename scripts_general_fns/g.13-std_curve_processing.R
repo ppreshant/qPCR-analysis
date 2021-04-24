@@ -14,7 +14,7 @@ process_standard_curve <- function(flnm, .dat_pol)
   
   # Preliminary naming ----
   
-  # Extract a short name for the standard curve from the file name provide. short name has Stdxx_Target_WWxx
+  # Extract a short name for the standard curve from the file name provide. short name has Stdxx_WWxx
   fl_namer <- c('Std[:alnum:]*', '^q[:alnum:]*') %>% 
     map_chr(~str_match(flnm, .)) %>% 
     str_c(collapse = '_')
@@ -34,30 +34,41 @@ process_standard_curve <- function(flnm, .dat_pol)
     
     filter(str_detect(Sample_category, 'Std') | 
              str_detect(assay_variable, 'NTC')) %>% # only retain standards or NTCs
-    mutate(Quantity = replace_na(as.numeric(assay_variable), 0))
-  
-    # separate(Sample_category, c(NA, 'Category', 'Quantity'), sep = '-|_') %>% mutate_at('Quantity', ~ replace_na(as.numeric(.), 0)) %>% 
-    # filter(!is.na(Target))
-  
-  # optional filtering to remove low concentration points in standard curve
-  std_results %<>% filter(Quantity > 1| Quantity == 0) # filtering only standard curve within the linear range
+    mutate(Quantity = str_replace(assay_variable, 'NTC', '0') %>% as.numeric) %>%  # replacing NTC with 0 and make numeric
+    
+    filter(Target_name %in% # only retain the targets which have standards
+             (filter(., 
+                     str_detect(Sample_category, 'Std')) %>% # pulls only the targets which have standards
+                pull(Target_name)) 
+           ) %>% 
+    # optional filtering to remove low concentration points in standard curve
+    filter(Quantity > 1| Quantity == 0) # filtering only standard curve within the linear range
   
   # plotting ----
   
-  plt <- std_results %>% filter(str_detect(Category, 'NTC|Std')) %>%  plotstdcurve(title_name, 'log(Copy #)') # plot standard curve
+  plt <- std_results %>%
+    plotstdcurve(title_name, 'log(Copies/ul template)') # plot standard curve
   
   # # Extract the names of the targets in use
-  # targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target Name`) %>% unique(.)  
+  # targets_used <- fl$Results %>% filter(Task == 'STANDARD') %>% pull(`Target_name`) %>% unique(.)  
   
   # Isolating standard curve variables (Quantity,CT) of the different targets into groups
-  standard_curve_vars <- std_results %>% filter(Task == 'STANDARD')  %>% select(Quantity, CT, Target) %>% group_by(Target) # select required columns and group
+  standard_curve_vars <- std_results %>% 
+    filter(str_detect(Sample_category, 'Std') ) %>% # Only standards, NTCs are removed : old: Task == 'STANDARD' 
+    select(Quantity, CT, Target_name) %>% 
+    group_by(Target_name) # select required columns and group
   
   # Apply linear regression and find the model fitting results (equation and slope, R2 values) for each target
-  std_table <- standard_curve_vars %>% do(., equation = lm_std_curve(.), params = lm_std_curve(., trig = 'coeff'), dat = .[1,] ) # "do" applies functions to each group of the data
+  std_table <- standard_curve_vars %>% 
+    do(., equation = lm_std_curve(.), 
+       params = lm_std_curve(., trig = 'coeff'), 
+       dat = .[1,] ) # "do" applies functions to each group of the data
+  
+  # unnest might work here?
   std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes htem lists
   std_table$dat %<>% bind_rows()  
   
-  std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - 2 * seq_along(std_table$Target) + 2 # manual numbering for neat labelling with geom_text
+  std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - 2 * seq_along(std_table$Target_name) + 2 # manual numbering for neat labelling with geom_text
   
   # Add labels to plot - linear regression equation
   plt.with.eqn <- plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = 0, force = 10)
@@ -70,7 +81,7 @@ process_standard_curve <- function(flnm, .dat_pol)
    Do you wish to continue with saving the standard curve parameters? Select NO if you wish to change something and re-run the script", sep=" "))
   
   if (proceed_with_standards == 2){
-    stop("Cancel selected, script aborted.")
+    stop("Cancel selected, script aborted. Standards not saved.")
   }
   
   
@@ -80,17 +91,26 @@ process_standard_curve <- function(flnm, .dat_pol)
   # Data output ----
   
   
-  # processing linear regression out
+  # processing linear regression output
   efficiency_table <- tibble(Slope = std_table$params %>% 
                                pull(slope), y_intercept = std_table$params %>% 
                                pull(y_intercept) , Efficiency = 10^(-1/Slope), '% Efficiency' = (Efficiency -1)*100 , 'R-square' = std_table$params %>% 
                                pull(r_square) %>% round(3)
   ) %>% 
-    mutate(Target = std_table$dat$`Target`) %>% 
-    select(Target, everything()) %>% 
-    mutate(ID = fl_namer, .before = 1)
+    mutate(Target_name = std_table$dat$`Target_name`) %>% 
+    select(Target_name, everything()) %>% # bring Target_name to the first column position 
+    mutate(ID = fl_namer, .before = 1) # add the run ID
+  
+  # formatting std curve points for writing (archive for meta-analysis of freeze thaw effects)
+  clean_std_data <- std_results %>% # reorder columns 
+    select(Target_name, CT, Quantity, biological_replicates, Sample_category, everything()) %>% 
+    mutate(ID = fl_namer, .before = 1) # add the run ID
   
   # Writing data
-  sheet_append(sheeturls$data_dump, efficiency_table, sheet = 'Standard curves') # Add parameters to standard curves in data dump google sheet
+  sheet_append(sheeturls$plate_layouts_PK, efficiency_table, sheet = 'qPCR Std curves') # Add parameters to standard curves into google sheet
   
+  write_csv(clean_std_data, 'qPCR analysis/Standards/all_std_data_points.csv',append = TRUE) # Writing full std data for archive
+  
+  # return the table with std curve parameters
+  return(efficiency_table)
 }

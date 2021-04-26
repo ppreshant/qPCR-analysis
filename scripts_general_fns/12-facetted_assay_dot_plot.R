@@ -6,7 +6,7 @@
 
 plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tibble
                                 # required variable .yvar_plot
-                                .yvar_plot, .xvar_plot = assay_variable, # variables within the dataframe (not string, use raw name)
+                                .yvar_plot, .xvar_plot = assay_var.label, # variables within the dataframe (not string, use raw name)
                                 .colourvar_plot = Sample_category,
                                 .facetvar_plot = Target_name, # facets align along the x axis, cannot be NULL as of now
                                 .xaxis.label.custom = plot_assay_variable,

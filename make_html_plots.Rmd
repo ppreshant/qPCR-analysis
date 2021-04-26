@@ -71,8 +71,14 @@ plt.alltm_2
 ## Data output
 
 ```{r datadisplay}
-# results_abs %<>% mutate_if(is.numeric, format, digits = 3, scientific = T)
-# kable(results_abs, caption = 'Summary of estimated copy #s')
+absolute_dat %>% 
+  
+  # Select only mean copies
+  select(Target_name, assay_var.label, mean_Copies.per.ul.template, Sample_category) %>% 
+    distinct() %>% # Remove replicates
+  mutate(across(assay_var.label, ~ str_replace(., '\n', ' '))) %>% # replace new lines with space
+  mutate_if(is.numeric, format, digits = 3, scientific = T) %>% # format scientific with 2 decimal plates
+kable(., caption = 'Mean data') # format table for clean output
 ```
 
 <!-- ## Transforming data and normalization -->

@@ -4,7 +4,7 @@
 # Will start with certain specific features. 
 # More hard-coded variabels can be user-input as use cases arrive
 
-plot_facetted_assay <- function(.data = polished_cq.dat,  # data.frame or tibble
+plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tibble
                                 # required variable .yvar_plot
                                 .yvar_plot, .xvar_plot = assay_variable, # variables within the dataframe (not string, use raw name)
                                 .colourvar_plot = Sample_category,

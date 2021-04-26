@@ -28,12 +28,19 @@ plt.cq
 
 plotly::ggplotly(plt.cq)
 
+if(exists('plt.cq_w.std')) plt.cq_w.std
+
 ```
 
 ## Copies plot
 ``` {r copies1}
 
 plt.copies
+
+
+if(exists('plt.copies_w.mean')) plt.copies_w.mean
+
+if(exists('plt.copies_w.mean')) format_logscale_y(plt.copies_w.mean) %>% print
 
 ```
 
@@ -46,6 +53,8 @@ Largest melting temperature peak
 plt.tm1
 
 plotly::ggplotly(plt.tm1)
+
+if(exists('plt.tm1_w.std')) plt.tm1_w.std
 
 ```
 

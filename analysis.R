@@ -7,8 +7,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 
 # User inputs: choose file name, title for plots and experiment mode (file name starts in the same directory as Rproject) ----
 
-flnm <- 'q06_16sRAM RNA4_Std1'  
-title_name <-'RAM4_q06 qPCR'
+flnm <- 'q07_RAM 5_Std7_22-4-21'  
+title_name <-'RAM5_q07 qPCR'
 experiment_mode <- 'assay' # options ('small_scale' ; 'assay') ; future implementation: 'custom'. Explanation below
   # 'assay' =  Plots for Assays (facetted by Target_name, colour by Sample_category = control vs experiment ; 
       # naming: primerpairname-overall name_templatename.biologicalreplicatenumber)
@@ -19,12 +19,14 @@ errorbar_width = 0.1; # width of errorbars - emperically change
 
 # Assay mode features (choose if you want absolute quantification)
 plot_assay_variable <- 'Template name' # printed on the x axis of the graph
-plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours
 plot_mode <-  'absolute_quantification'  
 # Options : ('absolute_quantification' or 'raw_quantification'); 
 # absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve - calculated or gathered from old std curves 
 # raw_quantification = Cq values are plotted
 
+
+# old or obsolete options
+plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours
 std_par <- tibble(                       
   # Input the slope and y_intercept from standard curve of various primer pairs/targets here 
   # Target should match Target field (provided in excel sheet - Sample input reference.csv) 
@@ -84,12 +86,16 @@ if(experiment_mode == 'assay')
     
     # approx copy #
     mutate('Copies_proportional' = 2 ^ (40-CT)) # copy number is proportional to e^-Cq (e = efficiency ~ close to 2)
-    
+   
+  # Remove Standards to avoid cluttering plots
+  forplotting_cq.dat <- polished_cq.dat %>% 
+    filter(Sample_category != 'Std') # remove standards from the plotted data
   
   # Cq plot ----
   
   # plot ~ copies (relative quantification)
-  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional)
+  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional) 
+  # This is a standby plot in the absence of absolute copy number calculation
   
   # plot 40 - Cq
   plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT)
@@ -99,7 +105,7 @@ if(experiment_mode == 'assay')
   plt.tm1 <- plot_facetted_assay(.yvar_plot = Tm1)
   
   # Gather 4 peaks of melting temperatures into long format
-  Tm_data <- polished_cq.dat %>% 
+  Tm_data <- forplotting_cq.dat %>% 
     select(Sample_category, assay_variable, biological_replicates, Target_name,
            starts_with('Tm')) %>%  # select identifiers and Tms
     pivot_longer(cols = starts_with('Tm'), names_to = 'Peak number', values_to = 'Tm') # get all Tms into 1 column
@@ -125,7 +131,18 @@ if(experiment_mode == 'assay')
     std_par <- NULL # initialize a dummy std_par
     
     # if it is a standard curve holding file (Stdx), call standard curve processor
-    if(str_detect(flnm, 'Std[:digit:]*')) std_par <- process_standard_curve(flnm, polished_cq.dat)
+    if(str_detect(flnm, 'Std[:digit:]*')) 
+    {std_par <- process_standard_curve(flnm, polished_cq.dat) # process the standards within the file
+      
+      # plot a cq graph with standards included
+      plt.cq_w.std <- plot_facetted_assay(.data =  polished_cq.dat, .yvar_plot = 40-CT) + # plot 40 - Cq
+        theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
+      
+      # Plot Tm1 graph with standards included
+      plt.tm1_w.std <- plot_facetted_assay(.data = polished_cq.dat, .yvar_plot = Tm1) + 
+        theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
+    }
+    
     
     # if it needs an old standard curve (Stdoldx), bring from google sheet
     if(str_detect(flnm, 'Stdold[:digit:]*')) 
@@ -143,7 +160,7 @@ if(experiment_mode == 'assay')
                                     '\n Run with plot_mode <-  raw_quantification if you dont want Std curve information '))
     
     # Use the std curve parameters to back-calculate the absolute copies
-    absolute_dat <- polished_cq.dat %>%
+    absolute_dat <- forplotting_cq.dat %>%
       group_by(Target_name) %>%
       nest() %>% # create a new column with data frames for each target
       summarize(w.copy.data = map2(data, Target_name,  # calculate copy number for each dataset

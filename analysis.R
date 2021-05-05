@@ -195,6 +195,8 @@ if(experiment_mode == 'assay')
     
     # Use the std curve parameters to back-calculate the absolute copies
     absolute_dat <- forplotting_cq.dat %>%
+      select(-Copies_proportional) %>% # remove the dummy copies data
+      
       group_by(Target_name) %>%
       nest() %>% # create a new column with data frames for each target
       summarize(w.copy.data = map2(data, Target_name,  # calculate copy number for each dataset
@@ -342,6 +344,12 @@ if (experiment_mode == 'old_assay')
 #   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +
 #   ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~Target, scales = 'free_x')
 
+
+# Save data output -- optional
+
+# write_csv(absolute_dat, 
+#           str_c('qPCR analysis/Archive/Data output/copies-', flnm, '.csv', sep = ''),
+#           na = '')
 
 # Plotting into html -----------------------------------------------------------------------
 

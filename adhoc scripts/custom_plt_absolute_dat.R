@@ -1,7 +1,7 @@
 # Ad-hoc script for polishing names and sub-selecting samples for presentation plots
 # Prashant
 # Date: 5/5/21
-# made relevant graph for Joff's army grant (high level overview)
+# made relevant graph for Joff's army grant (high level overview) : q07 data
 
 # Run analysis.R first to get data in ready format
 # forplotting_cq.dat // or absolute_dat

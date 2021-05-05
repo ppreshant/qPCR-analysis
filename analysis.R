@@ -29,7 +29,8 @@ lst_assay.vars_translation <- list('gfp' = '89',
 
 tbl_assay.vars_translation <- lst_assay.vars_translation %>% # convert the list into tibble
   map2_dfr(., names(.), ~ tibble('assay_variable' = .x, 'assay_var.identifier' = .y))
-
+# Add another column in this tibble for specific conversion of 295, etc. into descriptive names?
+# make a lookup named vector; use str_replace() to make this new column
 
 plot_assay_variable <- 'Template name' # printed on the x axis of the graph
 

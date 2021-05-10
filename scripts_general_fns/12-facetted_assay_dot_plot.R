@@ -10,7 +10,9 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
                                 .colourvar_plot = Sample_category,
                                 .facetvar_plot = Target_name, # facets align along the x axis, cannot be NULL as of now
                                 .xaxis.label.custom = plot_assay_variable,
-                                .subtitle.plot = NULL) # 'y axis label' supplied as a string to .subtitle.plot
+                                .subtitle.plot = NULL, # 'y axis label' supplied as a string to .subtitle.plot
+                                points_plt.style = 'point') # jitter for scattered effect, else lined up points
+  
 {
   
   # check missing variables
@@ -21,7 +23,8 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
   
   # plotting
   {ggplot(.data, aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}})) +
-      geom_jitter(height = 0) +
+      {if(points_plt.style == 'jitter') {geom_jitter(height = 0)
+        } else geom_point() } +
       facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x') +  # facets
       ggtitle(title_name, subtitle = .subtitle.plot) + # custom title and y label as subtitle
       xlab(.xaxis.label.custom) + # custom label for X axis

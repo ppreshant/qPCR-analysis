@@ -211,7 +211,8 @@ if(experiment_mode == 'assay')
     # plot absolute copies per ul template
     plt.copies <- plot_facetted_assay(.data = absolute_dat, .yvar_plot = Copies.per.ul.template)
     
-    plt.copies_w.mean <- plt.copies + geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
+    plt.copies_w.mean <- plot_facetted_assay(.data = absolute_dat, .yvar_plot = Copies.per.ul.template, points_plt.style = 'jitter') + 
+      geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
       
   }
   

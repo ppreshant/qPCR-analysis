@@ -71,7 +71,9 @@ plt.alltm_2
 ## Data output
 
 ```{r datadisplay}
-absolute_dat %>% 
+
+if(exists('absolute_dat')) # Prints output only if absolute_dat exists
+  {absolute_dat %>% 
   
   # Select only mean copies
   select(Target_name, assay_var.label, mean_Copies.per.ul.template, Sample_category) %>% 
@@ -79,6 +81,8 @@ absolute_dat %>%
   mutate(across(assay_var.label, ~ str_replace(., '\n', ' '))) %>% # replace new lines with space
   mutate_if(is.numeric, format, digits = 3, scientific = T) %>% # format scientific with 2 decimal plates
 kable(., caption = 'Mean data') # format table for clean output
+}
+
 ```
 
 <!-- ## Transforming data and normalization -->

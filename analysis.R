@@ -8,10 +8,11 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q07_RAM 5_Std7_22-4-21'  
-title_name <-'RAM5_q07 qPCR'
+flnm <- 'q08_RAM 6 lysate_10-5-21'  
+title_name <-'RAM6_q08 Lysate qPCR'
 
 skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
+default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
 # This pro-active user setting prevents duplicates being processed into the sheet
 
 # Labelling translators ----
@@ -25,7 +26,8 @@ yaxis_translation <- c('40 - CT' = '40 - Cq',
 
 # Label x axis (assay_variable) in easy to interpret form 
 lst_assay.vars_translation <- list('gfp' = '89',
-                                'Ribo' = c('295', '297', '298', '299', '300')) # new_name -> c('assay_variables' ..)
+                                'Ribo' = c('295', '297', '298', '299', '300', '186'),
+                                'empty' = '103') # new_name -> c('assay_variables' ..)
 
 tbl_assay.vars_translation <- lst_assay.vars_translation %>% # convert the list into tibble
   map2_dfr(., names(.), ~ tibble('assay_variable' = .x, 'assay_var.identifier' = .y))
@@ -155,6 +157,7 @@ if(experiment_mode == 'assay')
     { # if Std curve already exists in sheet, read from google sheet
       
       std_to_retrieve <- str_extract(flnm, 'Std[:alnum:]*') # Find the Std id to retrieve
+      std_to_retrieve <- if(is.na(std_to_retrieve)) default_std.to.retrieve # Resort to default if file holds no Std
       
       std_par <- read_sheet(sheeturls$plate_layouts_PK, sheet = 'qPCR Std curves', range = 'A:G', col_types = 'ccnnnnn') %>% 
       filter(str_detect(ID, std_to_retrieve ))

@@ -8,8 +8,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q08_RAM 6 lysate_10-5-21'  
-title_name <-'RAM6_q08 Lysate qPCR'
+flnm <- 'q09b_RAM_pBBR1-U64_2-7-21'  
+title_name <-'q09b pBBR1 qPCR'
 
 skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
 default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this

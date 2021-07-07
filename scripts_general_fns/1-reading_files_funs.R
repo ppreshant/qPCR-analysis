@@ -31,7 +31,7 @@ get_template_for <- function(bait, sheet_url = sheeturls$plate_layouts_PK)
   plate_names_row <- read_sheet(sheet_url, sheet = 'qPCR plate layouts', range = 'C:C', col_types = 'c')
   m_row <- plate_names_row %>% unlist() %>% as.character() %>% 
     # find the row with standard beginnings matching the filename
-    str_detect(., str_c('^', bait %>% str_match('^(q)[:digit:]*[:alpha:]*') %>% .[1]) ) %>% # select the q0xxa_... part of the name
+    str_detect(., str_c('^', bait %>% str_match('^(q)[:digit:]*') %>% .[1]) ) %>% # select the q0xy digits part of the file
     # str_detect(., bait) %>% 
     which() + 1
   range_to_get <- str_c('B', m_row + 1, ':N', m_row + 9)

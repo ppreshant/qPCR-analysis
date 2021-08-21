@@ -15,10 +15,11 @@ absolute_backcalc <- function(.df, .target_current, std_par)
   # .target_current <- df$Target_name %>% unique()
   std_current <- std_par %>% filter(str_detect(Target_name, .target_current))
   
-  if(!plyr::empty(std_current)) {
+  if(!plyr::empty(std_current)) { # if data for the current target exists
+    # Back-calculate the unknown Copies from the CT using the linear standard curve
     mutate(.df, `Copies.per.ul.template` = 10^( (CT - std_current$y_intercept)/std_current$Slope) ) %>% 
-      group_by(Sample_category, assay_variable) %>% 
-      mutate(mean_Copies.per.ul.template = mean(Copies.per.ul.template))
+      group_by(Sample_category, assay_variable) %>%  # grouping by everything except replicates
+      mutate(mean_Copies.per.ul.template = mean(Copies.per.ul.template)) # find mean of the replicates
   } else .df
 }
 

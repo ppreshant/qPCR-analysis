@@ -8,8 +8,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q09b_RAM_pBBR1-U64_2-7-21'  
-title_name <-'q09b pBBR1 qPCR'
+flnm <- 'q12_328-330-RNAsimple_19-8-21'  
+title_name <-'q12_with P1 loop, new kit'
 
 skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
 default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
@@ -26,8 +26,9 @@ yaxis_translation <- c('40 - CT' = '40 - Cq',
 
 # Label x axis (assay_variable) in easy to interpret form 
 lst_assay.vars_translation <- list('gfp' = '89',
-                                'Ribo' = c('295', '297', '298', '299', '300', '186'),
-                                'empty' = '103') # new_name -> c('assay_variables' ..)
+                                'Ribo' = c('328', '295', '297', '298', '299', '300', '186'),
+                                'Ribo-P1' = '330',
+                                'empty' = c('314', '103') ) # informative_name -> c('assay_variables' ..)
 
 tbl_assay.vars_translation <- lst_assay.vars_translation %>% # convert the list into tibble
   map2_dfr(., names(.), ~ tibble('assay_variable' = .x, 'assay_var.identifier' = .y))
@@ -203,8 +204,8 @@ if(experiment_mode == 'assay')
       
       group_by(Target_name) %>%
       nest() %>% # create a new column with data frames for each target
-      summarize(w.copy.data = map2(data, Target_name,  # calculate copy number for each dataset
-                                    ~ absolute_backcalc(.x, .y, std_par) )
+      summarize(w.copy.data = map2(data, Target_name,  # calculate copy number for each dataset, and the mean for replicates
+                                    ~ absolute_backcalc(.x, .y, std_par) ) 
       ) %>% 
       unnest(cols = c(w.copy.data)) 
     

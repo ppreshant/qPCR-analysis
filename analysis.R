@@ -81,7 +81,8 @@ Cq_data <- fl$Results %>%
   select(`Well Position`, CT, starts_with('Tm')) %>%  # select only the results used for plotting, calculations etc.
   .[sample_order,] %>%  # and arrange them according to sample order
   left_join(plate_template)
-
+# Needs adaptation for multiplexing data: Check if "Chemistry" is "TAQMAN" and 
+# retain the "Target Name" from fl$Results, change it to Target_name after polished_Cq.dat step with another if()
 
 # ** Assay mode ----
 if(experiment_mode == 'assay')

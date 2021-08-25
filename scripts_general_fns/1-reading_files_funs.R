@@ -5,8 +5,11 @@
 readqpcr <- function(flnm)
 {
   # bring the first sheet to count the number of rows to skip
-  to.skip <- flnm %>%  
-    read_excel(., sheet = 'Sample Setup', col_names = FALSE) %>%  # read the first sheet
+  setup_sheet <- flnm %>%  
+    read_excel(., sheet = 'Sample Setup', col_names = FALSE) %>% # read the first sheet
+    select(1:3) # retain only the first 3 columns
+    
+  to.skip  <- setup_sheet %>% 
     pull(1) %>% # select first column only
     {which(. == 'Well') - 1} # check where "Well" appears, and subtract 1
   
@@ -15,8 +18,11 @@ readqpcr <- function(flnm)
     set_names(.,.) %>% 
     map(read_excel, path = flnm, skip = to.skip) # change skip # if channels are not calibrated
   
-  # put an error here if column names are not read properly (maybe look for well position and one other column..)
+  # future: put an error here if column names are not read properly (maybe look for well position and one other column..)
   
+  # Check if probes are being used - look for TAQMAN chemistry => multiplexing
+  fl['chemistry_type'] <- setup_sheet %>% filter(str_detect(`...1`, 'Chemistry')) %>% pull(2)
+
   # convert CT values into numeric 
   class(fl$Results$CT) <- 'numeric'
   fl

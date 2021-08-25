@@ -50,9 +50,13 @@ if(exists('plt.copies_w.mean')) format_logscale_y(plt.copies_w.mean) %>% print
 
 Largest melting temperature peak
 ```{r tm1}
-plt.tm1
 
-plotly::ggplotly(plt.tm1)
+if(exists('plt.tm1'))
+{
+  plt.tm1
+  
+  plotly::ggplotly(plt.tm1)
+}
 
 if(exists('plt.tm1_w.std')) plt.tm1_w.std
 
@@ -62,9 +66,9 @@ if(exists('plt.tm1_w.std')) plt.tm1_w.std
 
 All peaks of melting temperature
 ```{r alltm}
-plt.alltm
+if(exists('plt.alltm')) plt.alltm
 
-plt.alltm_2
+if(exists('plt.alltm_2')) plt.alltm_2
 
 ```
 

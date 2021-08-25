@@ -8,8 +8,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q12_328-330-RNAsimple_19-8-21'  
-title_name <-'q12_with P1 loop, new kit'
+flnm <- 'q11_fGFP-triplex test_8-14-21'  
+title_name <-'q11_triplex test-memory'
 
 skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
 default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
@@ -45,7 +45,7 @@ experiment_mode <- 'assay' # options ('old_assay' ; 'assay') ; future implementa
 # naming: primerpairname-overall name_templatename.biologicalreplicatenumber)
 
 # Assay mode features
-plot_mode <-  'absolute_quantification'  
+plot_mode <-  'raw_quantification'  
 # Options : ('absolute_quantification' or 'raw_quantification'); 
 # absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve - calculated or gathered from old std curves 
 # raw_quantification = Cq values are plotted
@@ -77,12 +77,15 @@ plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) # read samp
 # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
 sample_order = columnwise_index(fl) 
 
+
 Cq_data <- fl$Results %>% 
-  select(`Well Position`, CT, starts_with('Tm')) %>%  # select only the results used for plotting, calculations etc.
+  select(`Well Position`, CT, starts_with('Tm'), `Target Name`) %>%  # select only the results used for plotting, calculations etc.
   .[sample_order,] %>%  # and arrange them according to sample order
-  left_join(plate_template)
-# Needs adaptation for multiplexing data: Check if "Chemistry" is "TAQMAN" and 
-# retain the "Target Name" from fl$Results, change it to Target_name after polished_Cq.dat step with another if()
+  left_join(plate_template) %>% # join the samples names from the spreadsheet
+  
+  # useful for multiplexing
+  rename('quantstudio_target_name' = 'Target Name') # Target Name from the Quantstudio
+
 
 # ** Assay mode ----
 if(experiment_mode == 'assay')
@@ -99,11 +102,17 @@ if(experiment_mode == 'assay')
                'biological_replicates'),
              sep = '-|_|\\.') %>% 
     
+    
     mutate(across('assay_variable', as.character)) %>% # useful when plasmid numbers are provided
     mutate(across('biological_replicates', ~str_replace_na(., '')) ) %>% # if no replicates are provided, puts a blank string ('')
     
-    filter(!is.na(Target_name)) %>% # remove all samples that don't have a target name
+    filter(!is.na(Target_name)) %>% # remove all samples that don't have a target name - implies plate layout was empty
     # This is intended to remove samples whose labels have been removed to prevent analysis
+    
+    
+    # for TAQMAN (assumed multiplexing)     # replace Target_name from layout with quantstudio
+    {if(fl["chemistry_type"] == 'TAQMAN') mutate(., Target_name = quantstudio_target_name) else .} %>% 
+    select(-quantstudio_target_name) %>% 
     
     # approx copy #
     mutate('Copies_proportional' = 2 ^ (40-CT)) # copy number is proportional to e^-Cq (e = efficiency ~ close to 2)
@@ -127,26 +136,29 @@ if(experiment_mode == 'assay')
   
   # Tm plots ----
   
-  plt.tm1 <- plot_facetted_assay(.yvar_plot = Tm1)
-  
-  # Gather 4 peaks of melting temperatures into long format
-  Tm_data <- forplotting_cq.dat %>% 
-    select(Sample_category, assay_variable, biological_replicates, Target_name, assay_var.label,
-           starts_with('Tm')) %>%  # select identifiers and Tms
-    pivot_longer(cols = starts_with('Tm'), names_to = 'Peak number', values_to = 'Tm') # get all Tms into 1 column
+  # only plots if it is SYBR_GREEN chemistry ; not TAQMAN
+  if(fl["chemistry_type"] != 'TAQMAN') 
+  {
+    plt.tm1 <- plot_facetted_assay(.yvar_plot = Tm1)
     
-  # plot mutliple Tms ; Graph will now show
-  plt.alltm <- plot_facetted_assay(.data = Tm_data, .yvar_plot = Tm) + 
-    facet_grid(`Peak number` ~ Target_name,  # redo facets
-               scales = 'free_x', space = 'free_x') +
-    xlab(plot_assay_variable)
-  
-  plt.alltm_2 <- Tm_data %>% ggplot(.) + aes(x = assay_variable, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting')) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') +
-    xlab(plot_assay_variable)
-  
+    # Gather 4 peaks of melting temperatures into long format
+    Tm_data <- forplotting_cq.dat %>% 
+      select(Sample_category, assay_variable, biological_replicates, Target_name, assay_var.label,
+             starts_with('Tm')) %>%  # select identifiers and Tms
+      pivot_longer(cols = starts_with('Tm'), names_to = 'Peak number', values_to = 'Tm') # get all Tms into 1 column
+    
+    # plot mutliple Tms ; Graph will now show
+    plt.alltm <- plot_facetted_assay(.data = Tm_data, .yvar_plot = Tm) + 
+      facet_grid(`Peak number` ~ Target_name,  # redo facets
+                 scales = 'free_x', space = 'free_x') +
+      xlab(plot_assay_variable)
+    
+    plt.alltm_2 <- Tm_data %>% ggplot(.) + aes(x = assay_variable, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
+      theme_classic() + scale_color_brewer(palette="Set1") + 
+      theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
+      ggtitle(paste(title_name,': Melting')) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') +
+      xlab(plot_assay_variable)
+  }
   
   # Absolute quantification ----
   

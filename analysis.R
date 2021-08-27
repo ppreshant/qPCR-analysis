@@ -8,8 +8,13 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q11_fGFP-triplex test_8-14-21'  
-title_name <-'q11_triplex test-memory'
+flnm <- 'q13_fGFP-lysate triplex test_8-25-21'  
+title_name <-'q13_Lysate triplex test fGFP'
+
+# options
+plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
+# absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve - calculated or gathered from old std curves 
+# raw_quantification = Cq values are plotted
 
 skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
 default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
@@ -45,10 +50,6 @@ experiment_mode <- 'assay' # options ('old_assay' ; 'assay') ; future implementa
 # naming: primerpairname-overall name_templatename.biologicalreplicatenumber)
 
 # Assay mode features
-plot_mode <-  'raw_quantification'  
-# Options : ('absolute_quantification' or 'raw_quantification'); 
-# absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve - calculated or gathered from old std curves 
-# raw_quantification = Cq values are plotted
 
 errorbar_width = 0.1; # width of errorbars - emperically change
 plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours

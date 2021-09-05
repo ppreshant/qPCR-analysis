@@ -373,7 +373,7 @@ if (experiment_mode == 'old_assay')
 )   else forplotting_cq.dat} %>% 
   
   write_csv(.,
-            str_c('excel files/processed_data/processed-', flnm, '.csv', sep = ''),
+            str_c('excel files/processed_data/', flnm, '-processed.csv', sep = ''),
             na = '')
 
 # Plotting into html -----------------------------------------------------------------------

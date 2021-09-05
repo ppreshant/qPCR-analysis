@@ -8,8 +8,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q13_fGFP-lysate triplex test_8-25-21'  
-title_name <-'q13_Lysate triplex test fGFP'
+flnm <- 'q14_dnase removal test_328 330_27-8-21'  
+title_name <-'q14_DNAse removal test'
 
 # options
 plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
@@ -124,7 +124,9 @@ if(experiment_mode == 'assay')
     left_join(tbl_assay.vars_translation, by = 'assay_variable') %>%  # attach the assay_var translator
     mutate(assay_var.label = if_else(is.na(assay_var.identifier), # make compound label with translation and original 
                                      assay_variable, # clean up label when no identifier is present 
-                                     str_c(assay_var.identifier, assay_variable, sep = '\n')) ) # make compound label
+                                     str_c(assay_var.identifier, assay_variable, sep = '\n')) ) %>% # make compound label
+    
+    select(Target_name, Sample_category, assay_var.label, CT, everything())
   
   # Cq plot ----
   
@@ -365,11 +367,14 @@ if (experiment_mode == 'old_assay')
 #   ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~Target, scales = 'free_x')
 
 
-# Save data output -- optional
+# Save data output ----
 
-# write_csv(absolute_dat, 
-#           str_c('qPCR analysis/Archive/Data output/copies-', flnm, '.csv', sep = ''),
-#           na = '')
+{if(plot_mode == 'absolute_quantification') ( absolute_dat 
+)   else forplotting_cq.dat} %>% 
+  
+  write_csv(.,
+            str_c('excel files/processed_data/processed-', flnm, '.csv', sep = ''),
+            na = '')
 
 # Plotting into html -----------------------------------------------------------------------
 

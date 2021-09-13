@@ -23,9 +23,12 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
   
   # plotting
   {ggplot(.data, aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}})) +
-      {if(points_plt.style == 'jitter') {geom_jitter(height = 0)
+      
+      {if(points_plt.style == 'jitter') {geom_jitter(height = 0) # plot points in 'jitter' or normal fashion
         } else geom_point() } +
+      
       facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x') +  # facets
+      
       ggtitle(title_name, subtitle = .subtitle.plot) + # custom title and y label as subtitle
       xlab(.xaxis.label.custom) + # custom label for X axis
       {if(!is.na(.subtitle.plot)) ylab('')} }  %>%  # remove y axis label if a subtitle is provided which is more readable

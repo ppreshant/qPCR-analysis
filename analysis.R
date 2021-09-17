@@ -30,7 +30,7 @@ yaxis_translation <- c('40 - CT' = '40 - Cq',
                        'Copies.per.ul.template' = 'Copies per uL template')
 
 # Label x axis (assay_variable) in easy to interpret form 
-lst_assay.vars_translation <- list('gfp' = '89',
+lst_assay.vars_translation <- list('gfp' = c('89', '315'),
                                 'Ribo' = c('328', '295', '297', '298', '299', '300', '186'),
                                 'Ribo-P1' = '330',
                                 'empty' = c('314', '103') ) # informative_name -> c('assay_variables' ..)

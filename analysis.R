@@ -174,7 +174,7 @@ if(experiment_mode == 'assay')
     { # if Std curve already exists in sheet, read from google sheet
       
       std_to_retrieve <- str_extract(flnm, 'Std[:alnum:]*') # Find the Std id to retrieve
-      std_to_retrieve <- if(is.na(std_to_retrieve)) default_std.to.retrieve # Resort to default if file holds no Std
+      std_to_retrieve <- if(is.na(std_to_retrieve)) default_std.to.retrieve else std_to_retrieve # Resort to default if file holds no Std
       
       std_par <- read_sheet(sheeturls$plate_layouts_PK, sheet = 'qPCR Std curves', range = 'A:G', col_types = 'ccnnnnn') %>% 
       filter(str_detect(ID, std_to_retrieve ))

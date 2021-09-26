@@ -14,7 +14,7 @@ process_standard_curve <- function(flnm, .dat_pol)
   
   # Preliminary naming ----
   
-  # Extract a short name for the standard curve from the file name provide. short name has Stdxx_WWxx
+  # Extract a short name for the standard curve from the file name provide. short name has Stdxx_qxx
   fl_namer <- c('Std[:alnum:]*', '^q[:alnum:]*') %>% 
     map_chr(~str_match(flnm, .)) %>% 
     str_c(collapse = '_')

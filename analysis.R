@@ -8,15 +8,15 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q14_dnase removal test_328 330_27-8-21'  
-title_name <-'q14_DNAse removal test'
+flnm <- 'q19_conjug and mixes sone_Std19 check_20-10-21'  
+title_name <-'q19_conjug and mixes'
 
 # options
 plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
 # absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve - calculated or gathered from old std curves 
 # raw_quantification = Cq values are plotted
 
-skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
+skip.std.curves_already.exist <- FALSE # If TRUE, will retrieve std curve data from the google sheet
 default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
 # This pro-active user setting prevents duplicates being processed into the sheet
 

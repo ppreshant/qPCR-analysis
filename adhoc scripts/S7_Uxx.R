@@ -66,6 +66,7 @@ forplot_reduced.data <-
 
 
 # Calculating spliced fraction of the Ribozyme/16s
+  # does not work yet
 wider_reduced.dat <- 
   
   forplot_reduced.data %>% 

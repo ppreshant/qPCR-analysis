@@ -203,3 +203,56 @@ ggsave(str_c('qPCR analysis/Archive/', title_name, '-copies abstract.png'),
        plt.copies,
        width = 6,
        height = 4)
+
+
+# Extra analysis ----
+
+# Estimating the unnormalized copy numbers (if RNA concs were not equal before qPCR)
+# Run after 2G
+
+RNA_after <- 
+  filter(RNA_concs, str_detect(`DNAse status`, 'Before')) %>% 
+  rename('assay_var.label' = 'Timepoint (min)',
+         'biological_replicates' = bio.replicate,
+         'plasmid' = Plasmid) %>% 
+  ungroup() %>% 
+  select(1, 2, `RNA concentration`, biological_replicates) %>% 
+  mutate(diluted_RNA = min(`RNA concentration`))
+
+# estimate copies in undiluted RNA
+copies_and_RNA <- 
+  left_join(forplot_reduced.data, RNA_after) %>% 
+  mutate(undiluted_copies = Copies_proportional / diluted_RNA * `RNA concentration`,
+         mean_undiluted_copies = mean_Copies_proportional / diluted_RNA * `RNA concentration`) #%>% 
+# filter(!Target_name == '16s')
+
+# normalize all curves to start from 1
+normalized_RNA <- 
+  copies_and_RNA %>% 
+  group_by(Target_name, plasmid) %>% 
+  mutate(across(contains('undiluted_copies'), 
+                ~ .x/max(.x)))
+
+# theoretical copy number data -- without using std curves
+plt.normalized <- {plot_facetted_assay(.data = normalized_RNA,  # plotting function call with defaults
+                                   .yvar_plot = undiluted_copies, # plot the fake copy # values
+                                   .colourvar_plot = Target_name, # colour with the primer pair 
+                                   .facetvar_plot = plasmid,  # facet by plasmid/ntc
+                                   points_plt.style = 'jitter') +
+    
+    geom_line(aes(y = mean_undiluted_copies), show.legend = FALSE) + # add a line connecting the mean
+    scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
+    
+    ggtitle(title_name, 
+            subtitle = 'Normalized to max of 1, estimated undiluted copies')} %>%
+  
+  # format_logscale_y() %>% # format logscale
+  print()
+
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized.png'),
+       plt.normalized,
+       width = 6,
+       height = 4)
+
+# show dynamic graph
+plotly::ggplotly(plt.normalized, dynamicTicks = T)

@@ -13,6 +13,7 @@
 /qPCR analysis/Archive/
 /RDML_files
 /rdmlpython
+/.spyproject
 *.png
 *.jp*
 /LinRegPCR

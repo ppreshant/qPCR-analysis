@@ -6,7 +6,7 @@ readqpcr <- function(flnm)
 {
   # bring the first sheet to count the number of rows to skip
   setup_sheet <- flnm %>%  
-    read_excel(., sheet = 'Sample Setup', col_names = FALSE) %>% # read the first sheet
+    read_excel(., sheet = 'Sample Setup', col_names = FALSE) %>% # read any sheet (Sample Setup/Results)
     select(1:3) # retain only the first 3 columns
     
   to.skip  <- setup_sheet %>% 

@@ -11,6 +11,8 @@
 /qPCR analysis/Extra*
 /qPCR analysis/Standards/
 /qPCR analysis/Archive/
+/RDML_files
+/rdmlpython
 *.png
 *.jp*
 /LinRegPCR

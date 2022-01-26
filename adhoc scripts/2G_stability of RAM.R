@@ -230,8 +230,29 @@ copies_and_RNA <-
 normalized_RNA <- 
   copies_and_RNA %>% 
   group_by(Target_name, plasmid) %>% 
-  mutate(across(contains('undiluted_copies'), 
+  mutate(across(contains('undiluted_copies'), # should normalize so that the mean at 0 is 1..
                 ~ .x/max(.x)))
+
+# fitting exponential curves
+
+normalized_with_exponential_fit <- 
+  filter(normalized_RNA, plasmid == 'Ribo') %>%  # select only the good curve with decreasing trend
+  nest() %>% 
+  
+  mutate(.fit = # making the exponential fit
+           map(data, 
+               ~ nls(undiluted_copies ~ SSasymp(assay_var.label, ys, y0, log_alpha),
+                   data = .)
+               ),
+         
+         tidied = map(.fit, broom::tidy), # extracting fitting parameters
+         augmented = map(.fit, broom::augment) # extracting fitting data
+         ) %>% 
+  
+  unnest(augmented) # unpack the fitting data for ease of plotting
+
+# get rate constants now..
+
 
 # theoretical copy number data -- without using std curves
 plt.normalized <- {plot_facetted_assay(.data = normalized_RNA,  # plotting function call with defaults
@@ -241,6 +262,23 @@ plt.normalized <- {plot_facetted_assay(.data = normalized_RNA,  # plotting funct
                                    points_plt.style = 'jitter') +
     
     geom_line(aes(y = mean_undiluted_copies), show.legend = FALSE) + # add a line connecting the mean
+    scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
+    
+    ggtitle(title_name, 
+            subtitle = 'Normalized to max of 1, estimated undiluted copies')} %>%
+  
+  # format_logscale_y() %>% # format logscale
+  print()
+
+
+
+plt.normalized_fits <- {plot_facetted_assay(.data = normalized_with_exponential_fit,  # plotting function call with defaults
+                                       .yvar_plot = undiluted_copies, # plot the fake copy # values
+                                       .colourvar_plot = Target_name, # colour with the primer pair 
+                                       .facetvar_plot = plasmid,  # facet by plasmid/ntc
+                                       points_plt.style = 'jitter') +
+    
+    geom_line(aes(y = .fitted), linetype = 2, show.legend = FALSE) + # add a line connecting the mean
     scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
     
     ggtitle(title_name, 

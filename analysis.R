@@ -8,8 +8,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q19_conjug and mixes sone_Std19 check_20-10-21'  
-title_name <-'q19_conjug and mixes'
+flnm <- 'q22_fgfp-triplex-gradient_24-1-22'  
+title_name <-'q22_fgfp triplex gradient'
 
 # options
 plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 

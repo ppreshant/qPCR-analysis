@@ -6,6 +6,13 @@ Prashant K
 [ ] Need to get R's RDML into a table format, so that sample names from the google sheet can be merged by well
   - How do you change the sample names in both the data ($getFdata) and metadata ($sample)
 
+## General stuff
+
+Tried to generalize the 1-loading_files_funs to work with Quantstudio v2.6
+- Chemistry field is missing -- make it work with the dye column instead
+- Sample Setup sheet not exported, could just use Results
+- Currently there is not much advantage to using the new software, just use V1.5.2 till these are changed
+
 ## 17/1/22
 - Practicing loading rdml files into 
 [x] rdmlpython : Validation fails - 
@@ -13,7 +20,7 @@ Prashant K
 ``` Schema validation result:	False	RDML file is not valid.
 Schema validation error:	False	
 Line 110, Column 0: Element '{http://www.rdml.org}dyeId': 
-No match found for key-sequence ['SYBR'] of keyref '{http://www.rdml.org}dyeKeyRef'.``` 
+No match found for key-sequence ['SYBR'] of keyref '{http://www.rdml.org}dyeKeyRef'. ``` 
 
 Similar error for FAM and VIC in q20 data
 
@@ -25,7 +32,7 @@ Similar error for FAM and VIC in q20 data
 
 - Study the schema to understand the error. A snippet from the schema documentation [RDML V1.2](http://rdml.org/files/rdml/RDML_v1_2_REC.xsd)
 
-```<xs:key name="documentationKey">
+``` <xs:key name="documentationKey">
 <xs:selector xpath="./rdml:documentation"/>
 <xs:field xpath="@id"/>
 </xs:key>
@@ -39,7 +46,7 @@ Similar error for FAM and VIC in q20 data
 </xs:key>
 <xs:key name="experimentIdKey">
 <xs:selector xpath="./rdml:experiment"/>
-<xs:field xpath="@id"/>```
+<xs:field xpath="@id"/> ```
 
 ## 21/1/22
 
@@ -59,3 +66,10 @@ Similar error for FAM and VIC in q20 data
 
 
 - Melt curve analysis on the online portal does not work. Try in the python version. Could be that some parameters need to be changed
+
+## 26/1/22 : exponential fitting done
+
+2G_stability data : did exponential fitting
+- change normalization so that the mean at first data point is 1 for all targets
+- Get rate constants from the data and put it on the plot
+- Check if the fitting can work with fixed parameters of initial and final asymptotes -- noticed singular gradient error..

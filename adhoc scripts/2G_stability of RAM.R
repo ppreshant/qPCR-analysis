@@ -55,7 +55,7 @@ forplot_reduced.data <-
   .df %>% # optional filtering step here
   
   separate(assay_var.label,  # separate plasmid names into a new column
-           into = c('plasmid', 'assay_var.label'),
+           into = c('plasmid', 'time'),
            sep = '/') %>%  # for NTC, fill the right one with NA (default)
   
   # translate to fullish name for plasmid
@@ -63,10 +63,10 @@ forplot_reduced.data <-
   replace_na(replace = list('plasmid' = '')) %>%  # replace the NA of plasmid with empty string
   
   # convert assay variable (x axis var) to numeric
-  mutate(across(assay_var.label, as.numeric)) %>% 
+  mutate(across(time, as.numeric)) %>% 
   
   # code ntcs as 0 (otherwise NAs will not be plotted)
-  replace_na(list(assay_var.label = 0)) %>% 
+  replace_na(list(time = 0)) %>% 
   
   # remove extraneous samples
   filter(Sample_category != 'sludgeconjug') %>% 
@@ -116,13 +116,13 @@ mean_copies_prop <-
   ungroup(forplot_reduced.data) %>% # ungroup data 
   
   # select desired cols
-  select(plasmid, Target_name, assay_var.label, mean_Copies_proportional) %>% 
+  select(plasmid, Target_name, time, mean_Copies_proportional) %>% 
   
   # remove duplicates
-  unique() %>% 
+  unique() %>%
 
   # arrange 
-  arrange(plasmid, Target_name, assay_var.label) %>% 
+  arrange(plasmid, Target_name, time) %>% 
   
   # cleanup decimal points
   mutate(across(mean_Copies_proportional,
@@ -212,7 +212,7 @@ ggsave(str_c('qPCR analysis/Archive/', title_name, '-copies abstract.png'),
 
 RNA_after <- 
   filter(RNA_concs, str_detect(`DNAse status`, 'Before')) %>% 
-  rename('assay_var.label' = 'Timepoint (min)',
+  rename('time' = 'Timepoint (min)',
          'biological_replicates' = bio.replicate,
          'plasmid' = Plasmid) %>% 
   ungroup() %>% 
@@ -223,74 +223,107 @@ RNA_after <-
 copies_and_RNA <- 
   left_join(forplot_reduced.data, RNA_after) %>% 
   mutate(undiluted_copies = Copies_proportional / diluted_RNA * `RNA concentration`,
-         mean_undiluted_copies = mean_Copies_proportional / diluted_RNA * `RNA concentration`) #%>% 
+         mean_undiluted_copies = mean(undiluted_copies)) #%>% 
 # filter(!Target_name == '16s')
 
 # normalize all curves to start from 1
 normalized_RNA <- 
   copies_and_RNA %>% 
   group_by(Target_name, plasmid) %>% 
-  mutate(across(contains('undiluted_copies'), # should normalize so that the mean at 0 is 1..
-                ~ .x/max(.x)))
+  
+  nest() %>% # nest all the other variables : for doing normalization and fitting exponential
+  
+  # bring out the mean and time 0
+  mutate(initial_undiluted_mean = 
+           map_dbl(data, 
+                   ~ filter(., time == 0) %>% pull(mean_undiluted_copies) %>% unique()),
+         
+         # Normalization : within each data frame in the nest
+         data = map(data, 
+                    ~ mutate(., normalized_undiluted_copies = 
+                               .$undiluted_copies / initial_undiluted_mean) # divide such that mean starts at 1
+         )
+  ) # you can do: unnest(normalized_RNA, data) to see the whole dataset
+
 
 # fitting exponential curves
 
 normalized_with_exponential_fit <- 
   filter(normalized_RNA, plasmid == 'Ribo') %>%  # select only the good curve with decreasing trend
-  nest() %>% 
   
   mutate(.fit = # making the exponential fit
-           map(data, 
-               ~ nls(undiluted_copies ~ SSasymp(assay_var.label, ys, y0, log_alpha),
-                   data = .)
-               ),
+           map(data, # SSasymp fitting y ~ ys+(y0-ys)*exp(-exp(log_alpha)*time)
+               # https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/SSasymp
+               
+               ~ nls(normalized_undiluted_copies ~ SSasymp(time, ys, y0, log_alpha),
+                     data = .)
+           ),
          
          tidied = map(.fit, broom::tidy), # extracting fitting parameters
          augmented = map(.fit, broom::augment) # extracting fitting data
-         ) %>% 
+  ) %>% 
   
-  unnest(augmented) # unpack the fitting data for ease of plotting
+  # Get fitting parameters
+  
+  # unnest the model parameters
+  unnest(tidied) %>% 
+  
+  # arrange the parameter estimate, std. error and other stuff for each paramameter in each column
+  pivot_wider(names_from = term,
+              values_from = c(estimate, std.error, statistic, p.value)) %>% 
+  
+  # produce t1/2 estimates
+  mutate(t.half = log(2)* exp(-estimate_log_alpha), 
+         std.error_t.half = log(2) * exp(-estimate_log_alpha) * std.error_log_alpha,
+         
+         t.half.text = str_c( format(t.half, digits = 2), 
+                              '+/-', 
+                              format(std.error_t.half, digits = 2),
+                              sep = ' ')
+  ) # using error propagation - https://en.wikipedia.org/wiki/Propagation_of_uncertainty#Example
+  
 
-# get rate constants now..
 
+# Plot the normalized data with the exponential curves fit
+plt.normalized_fits <-
+  
+  normalized_with_exponential_fit %>% 
+  
+  # Get fitted data for plotting lines
+  unnest(augmented) %>%   # unpack the fitting data for ease of plotting
 
-# theoretical copy number data -- without using std curves
-plt.normalized <- {plot_facetted_assay(.data = normalized_RNA,  # plotting function call with defaults
-                                   .yvar_plot = undiluted_copies, # plot the fake copy # values
-                                   .colourvar_plot = Target_name, # colour with the primer pair 
-                                   .facetvar_plot = plasmid,  # facet by plasmid/ntc
-                                   points_plt.style = 'jitter') +
+  
+ {plot_facetted_assay(.data = .,  # plotting function call with defaults
+                      .xvar_plot = time,
+                      .yvar_plot = normalized_undiluted_copies, # plot the fake copy # values
+                      .colourvar_plot = Target_name, # colour with the primer pair 
+                      .facetvar_plot = plasmid,  # facet by plasmid/ntc
+                      points_plt.style = 'jitter') +
     
-    geom_line(aes(y = mean_undiluted_copies), show.legend = FALSE) + # add a line connecting the mean
-    scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
-    
-    ggtitle(title_name, 
-            subtitle = 'Normalized to max of 1, estimated undiluted copies')} %>%
+     geom_line(aes(y = .fitted), linetype = 2, show.legend = FALSE) + # add a line connecting the mean
+     scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
+     
+     # show t half estimates
+     annotate(geom = 'text', x = 120, y = 1, label = 'Half life') + 
+     
+     geom_text(data = normalized_with_exponential_fit,
+                mapping = aes(x = 120, 
+                              y = 1 - (1:3)/9,
+                              label = t.half.text),
+                direction = 'y', force = 10,
+                show.legend = FALSE) +
+
+   
+     ggtitle(title_name, 
+             subtitle = 'Normalized to max of 1, estimated undiluted copies')} %>%
   
   # format_logscale_y() %>% # format logscale
   print()
 
-
-
-plt.normalized_fits <- {plot_facetted_assay(.data = normalized_with_exponential_fit,  # plotting function call with defaults
-                                       .yvar_plot = undiluted_copies, # plot the fake copy # values
-                                       .colourvar_plot = Target_name, # colour with the primer pair 
-                                       .facetvar_plot = plasmid,  # facet by plasmid/ntc
-                                       points_plt.style = 'jitter') +
-    
-    geom_line(aes(y = .fitted), linetype = 2, show.legend = FALSE) + # add a line connecting the mean
-    scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
-    
-    ggtitle(title_name, 
-            subtitle = 'Normalized to max of 1, estimated undiluted copies')} %>%
-  
-  # format_logscale_y() %>% # format logscale
-  print()
-
-ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized.png'),
-       plt.normalized,
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized_fits.png'),
+       plt.normalized_fits,
        width = 6,
        height = 4)
 
 # show dynamic graph
-plotly::ggplotly(plt.normalized, dynamicTicks = T)
+plotly::ggplotly(plt.normalized_fits, dynamicTicks = T)

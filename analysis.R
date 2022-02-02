@@ -49,6 +49,7 @@ plot_assay_variable <- 'Template name' # printed on the x axis of the graph
 experiment_mode <- 'assay' # options ('old_assay' ; 'assay') ; future implementation: 'custom'. Explanation below
 # 'assay' =  Plots for Assays (facetted by Target_name, colour by Sample_category = control vs experiment ; 
 # naming: primerpairname-overall name_templatename.biologicalreplicatenumber)
+# What will custom include?
 
 # Assay mode features
 
@@ -71,10 +72,24 @@ plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; exc
 
 # Input the data ----
 
-# reading in file and polishing
+# reading in qPCR data excel file
 fl <- readqpcr(str_c('excel files/',flnm, '.xls')) # read excel file exported by Quantstudio
 
-plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) # read samplenames from googlesheets
+# Read the sample names and metadata from google sheet
+plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) %>% # read samplenames from googlesheets
+ 
+  # Parsing sample names from the google sheet table  
+  separate(`Sample_name_bulk`, # Split the components of the sample name bulk by delimiters ('-', '_', '.')
+           c('Target_name', 
+             'Sample_category',
+             'assay_variable',
+             'biological_replicates'),
+           sep = '-|_|\\.') %>% 
+  
+  
+  mutate(across('assay_variable', as.character)) %>% # useful when plasmid numbers are provided, will convert to text
+  mutate(across('biological_replicates', ~str_replace_na(., '')) ) # if no replicates are provided, puts a blank string ('')
+  
 
 # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
 sample_order = columnwise_index(fl) 
@@ -85,8 +100,14 @@ Cq_data <- fl$Results %>%
   .[sample_order,] %>%  # and arrange them according to sample order
   left_join(plate_template) %>% # join the samples names from the spreadsheet
   
-  # useful for multiplexing
-  rename('quantstudio_target_name' = 'Target Name') # Target Name from the Quantstudio
+  # Target name readjustment for probe assays (TAQMAN), for multiplexing
+  # rename the target name from the quantstudio file
+  rename('quantstudio_target_name' = 'Target Name') %>% # Target Name from the Quantstudio
+  
+  # for TAQMAN (assumed multiplexing)     # replace Target_name from layout with quantstudio
+  {if(fl["chemistry_type"] == 'TAQMAN') mutate(., Target_name = quantstudio_target_name) else .} %>% 
+  select(-quantstudio_target_name) 
+
 
 
 # ** Assay mode ----
@@ -96,25 +117,9 @@ if(experiment_mode == 'assay')
   # Parsing names ---- 
   
   polished_cq.dat <- Cq_data %>% 
-    
-    separate(`Sample_name_bulk`, # Split the components of the sample name bulk by delimiters ('-', '_', '.')
-             c('Target_name', 
-               'Sample_category',
-               'assay_variable',
-               'biological_replicates'),
-             sep = '-|_|\\.') %>% 
-    
-    
-    mutate(across('assay_variable', as.character)) %>% # useful when plasmid numbers are provided
-    mutate(across('biological_replicates', ~str_replace_na(., '')) ) %>% # if no replicates are provided, puts a blank string ('')
-    
+  
     filter(!is.na(Target_name)) %>% # remove all samples that don't have a target name - implies plate layout was empty
     # This is intended to remove samples whose labels have been removed to prevent analysis
-    
-    
-    # for TAQMAN (assumed multiplexing)     # replace Target_name from layout with quantstudio
-    {if(fl["chemistry_type"] == 'TAQMAN') mutate(., Target_name = quantstudio_target_name) else .} %>% 
-    select(-quantstudio_target_name) %>% 
     
     # approx copy #
     mutate('Copies_proportional' = 2 ^ (40-CT)) # copy number is proportional to e^-Cq (e = efficiency ~ close to 2)
@@ -262,110 +267,6 @@ if(experiment_mode == 'assay')
   
 }
 
-
-# ** Old--Assay mode ----
-
-# (facetted by Sample category; naming: 'Sample Name'_variable primer pair)
-
-if (experiment_mode == 'old_assay')
-{
-  # Separate the sample name into columns and make factors in the right order for plotting (same order as the plate setup)
-  
-  # isolate the primer pair and assay_variable into 3 columns : Sample name, assay variable and primer pair 
-  Cq_data %<>% separate(.,Sample_name,c('Sample Name','Primer pair'),' ') %>% separate(.,Sample_name,c('Sample Name','assay_variable'),'_')
-  
-  # Factorise the sample name in the order for plotting
-  Cq_data %<>% mutate(across(where(is.character),as_factor)) 
-  
-  # re-arrange the results in same order as the above factors (columnwise order of the plate)
-  Cq_data %<>% arrange(`Well Position`) 
-  
-  # select samples to plot (or to exclude write a similar command)
-  Cq_data %<>% filter(str_detect(Sample_name, paste('^', plot_select_template, sep = ''))) # str_detect will find for regular expression; ^x => starting with x
-  
-  # plot the Tm of multiple peaks in melting curve ; Graph will now show
-  
-  # Gather the Tm's into another data frame and merge into 1 column
-  Tm_data <- Cq_data %>% select(Sample_name, `assay_variable`, `Primer pair`, starts_with('Tm')) %>% gather('Peak number','Tm',-Sample_name, -`Primer pair`, -`assay_variable`)
-  
-  # plot the Tm ; Graph will now show
-  plttm <- Tm_data %>% ggplot(.) + aes(x = `assay_variable`, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
-    theme_classic() + scale_color_brewer(palette="Set1") + 
-    theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
-    ggtitle(paste(title_name,': Melting')) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x')
-  
-  Cq_data %<>% filter(!str_detect(Sample_name, plot_exclude_category)) # exclude unwanted samples categories (sample_name) 
-  Cq_data %<>% filter(!str_detect(assay_variable, plot_exclude_assay_variable)) # excluding unwanted samples from assay_variable
-  
-  if(plot_mode == 'absolute_quantification')
-  { # Computing copy number from standard curve linear fit information
-    Cq_data_grouped <- Cq_data %>% group_by(Target) 
-    results_abs <- Cq_data_grouped %>% do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target
-    
-    if(plot_mean_and_sd == 'yes') {
-      y_variable = quo(mean)
-      results_abs %<>% group_by(Sample_name, Target, assay_variable) %>% summarise_at(vars(`Copy #`), lst(mean(.,na.rm = T), sd)) 
-      # find mean and SD of individual copy #s for each replicate
-      } 
-    else {y_variable = quo(`Copy #`)}
-    
-    plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = !!y_variable, color = !!plot_colour_by)) + ylab('Copy #')    # Specify the plotting variables 
-
-    if(plot_mean_and_sd == 'yes') {plt <- plt + geom_errorbar(aes(ymin = mean -sd, ymax = mean + sd, width = errorbar_width))} # plot errorbars if mean and SD are desired
-    
-  } 
-  
-  else plt <- Cq_data %>% ggplot(aes(x = `assay_variable`, y = CT, color = !!plot_colour_by))+ ylab(expression(C[q])) # plot CT values if absolute quantification is not needed
-    
-  # plot the CT mean and formatting plots
-  plt <- plt + geom_point(size = 2) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x') # plot points and facetting
-  plt.formatted <- plt %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
-  
-  print(plt.formatted)
-
-  # normalizing copy #s to backbone ----  
-  if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
-  { # computing ratio of copy #s of targets : flipped and unflipped to the backbone
-    
-    sel <- results_abs %>% select(Sample_name,assay_variable,`Primer pair`,Target,`Copy #`) # select relevant columns (other numeric columns will throw errors)
-    
-    sel_b <- sel %>% filter(Target == 'Backbone') # filter out each Target
-    sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped');
-    
-    sel_f %<>% mutate("Normalized copy #" = sel_f$`Copy #`/sel_b$`Copy #`); # make ratios to the backbone 
-    sel_u %<>% mutate("Normalized copy #" = sel_u$`Copy #`/sel_b$`Copy #`);
-    
-    results_ratio <- bind_rows(sel_f, sel_u) # bind results into 1 tibble (for easy plotting)
-    
-    # plotting the normalized copy #'s
-    plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized copy #`, color = Target)) +   # plotting
-    geom_point(size = 2) + facet_grid(~Sample_name, scales = 'free_x', space = 'free_x') # plot points and facetting
-    
-    plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
-    
-    print(plt_norm)
-  }
-}
-
-# ggsave('qPCR analysis/S017.png')
-# write.xlsx(results_abs, 'excel files/Test.xls', sheetName = 'analysis', append = TRUE, borders = 'surrounding') # saving data table of inferred copy #s to an excel sheet
-
-# Custom plots (Transformed Assay data; Plots copy #; 'Sample Name'_variable 'primer pair') ----
-
-# Save plots manually - copy paste this command to console
-# ggsave('qPCR analysis/Chk1.png', dpi = 600)
-# ggsave('qPCR analysis/Chk1.png', plot = plttm, dpi = 600)
-
-# assay mode : plotting different colour and facet variables
-# plt <- results_abs %>% ggplot(aes(x = `assay_variable`, y = `Copy #`, color = Sample_name)) + ylab('Copy #') +   # plotting
-#   scale_y_log10(  # logscale for y axis with tick marks
-#     breaks = scales::trans_breaks("log10", function(x) 10^x),
-#     labels = scales::trans_format("log10", scales::math_format(10^.x) ))
-# 
-# plt + geom_point(size = 2, show.legend = T) +
-#   theme_classic() + scale_color_brewer(palette="Set1") +
-#   theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) +
-#   ggtitle(title_name) + xlab(plot_assay_variable) + facet_wrap(~Target, scales = 'free_x')
 
 
 # Save data output ----

@@ -31,9 +31,9 @@ Abandon and move to rdmlpython until this issue is figured out. There seems to b
   	- Could figure out drawing the sample names and attaching it in python
   	- Could try to get rdmlpython to work using a dataframe instead of an RDML file
 
-### RDML-R-attach names
+### RDML-R-attach names-export
 - R's RDML package's `$AxXML` exported `.rdml` file with  cannot be validated by rdmlpython and shows as almost empty file in RDML-ninja
-- 
+	- Looks like the actual data is being written to a temporary folder : `C:\Users\new\AppData\Local\Temp`
 
 ## 17/1/22
 - Practicing loading rdml files into 

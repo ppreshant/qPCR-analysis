@@ -118,6 +118,7 @@ if(experiment_mode == 'assay')
   
   polished_cq.dat <- Cq_data %>% 
   
+    # remove un-named samples
     filter(!is.na(Target_name)) %>% # remove all samples that don't have a target name - implies plate layout was empty
     # This is intended to remove samples whose labels have been removed to prevent analysis
     

@@ -12,13 +12,28 @@ Tried to generalize the 1-loading_files_funs to work with Quantstudio v2.6
 	- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
 ## Sliwin work
-
-
+### pcrfit()
+[x] figure out the input format for pcrfit; why is model not working without loading qPCR package..
+	- [x] qPCR is blocking `dplyr::select()` : _just override select_
+- Negative Rn values cause error (ex: E10 in q22)
+	 `qpcr_fit = map(data, ~pcrfit(.x, cyc = 2, fluo = 3)) x 0 (non-NA) cases`
+	- How to filter automatically or figure out the cause 
+	- _Can have an if_else switch inside the mapping function, with a flag column..?_
+- Sliwin throws same error and stops at samples that don't amplify. very dumb behavior
+	- [ ] identify a variable to flag using fit variablts d (min) and c(max) - if they are too close to each other or some other arbitrary critirea ☹
+Abandon and move to rdmlpython until this issue is figured out. There seems to be too many things needed to make sliwin work - since it is a function written by third party folks, they didn't put that much effort.
 
 ## RDML goals 
 
 [ ] Need to get R's RDML into a table format, so that sample names from the google sheet can be merged by well
   - How do you change the sample names in both the data ($getFdata) and metadata ($sample)
+  - Couldn't validate the RDML file saved from R using `$AsXML` as [documented](https://pcruniversum.github.io/RDML/articles/RDML.html) : So this won't open in python. It means that sample names cannot be attached in R before handing it off to python in another RDML file
+  	- Could figure out drawing the sample names and attaching it in python
+  	- Could try to get rdmlpython to work using a dataframe instead of an RDML file
+
+### RDML-R-attach names
+- R's RDML package's `$AxXML` exported `.rdml` file with  cannot be validated by rdmlpython and shows as almost empty file in RDML-ninja
+- 
 
 ## 17/1/22
 - Practicing loading rdml files into 
@@ -33,7 +48,7 @@ No match found for key-sequence ['SYBR'] of keyref '{http://www.rdml.org}dyeKeyR
 
 Similar error for FAM and VIC in q20 data
 
-- Unable to view the RDML file's like 110 in notepad/libre calc..
+- Unable to view the raw RDML file in notepad/libre calc..
 - online tools also don't show the dyeID field
 - saving the file from R AsXML cannot be read as RDML by rdmltools
 
@@ -61,14 +76,15 @@ Similar error for FAM and VIC in q20 data
 
 ## 21/1/22
 
-- Figured out that this is the only missing line and can be added in RDML-ninja software
+- Figured out that this is the only missing line for each dye, and can be added in RDML-ninja software
 `<dye id="SYBR"/>`
 [ ] Find out what setting is missing in quantstudio to get this automatically
 [ ] see if there is a commandline way to add this line (for all dyes) into the rdml file
 
-- Found new versions of quantstudio 1.5.2 and 2.6
-    - Tested v2.6 : Not writing description and type fields causing validation error
-    - can't figure out if there is some field that need to be filled in the software..
+Found new versions of quantstudio 1.5.2 and 2.6
+- v1.5.2 output RDML has the same validation error as the older 1.5.0
+- v2.6 : new validation error: Not writing `description` and `type`  fields under each target. Error : `Element dyeID is not defined in this scope`
+    - can't figure out if there is some field that need to be filled in the Quantstudio software that can add these fields in the exported RDML file
 
 ```
 <target id="flipped">

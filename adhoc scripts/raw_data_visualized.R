@@ -1,42 +1,42 @@
 # Script to analyze raw data and multicomponent data of qPCR files by hand
 # Author : Prashant
-# data = 7 May 2020
+# Updated on = 3 Feg 2022
 
 # Initialization ----
-# calling libraries ; make sure they are installed (install.packages)
-library(readxl); library(magrittr); library(tidyverse); library(ggrepel); library(plotly)
 
-# Enter file name
-flnm <- 'S06d'  # set the filename : q-S023b GFP 18-2-20
-flpath <- str_c('excel files/',flnm,'.xls') # this completes the file path
-data_range <- c(36,15780) # column range in the sheet where raw data is located
-# Functions ----
-
-# Function to choose range for each sheet
-make_range <- function(x,y,d_range = data_range)
-{
-  str_c(x, d_range[1],':',y , d_range[2])
-}
-
-# data loading and processing ----
-# load file and gather specific data range from specific sheet
-rawdat <- read_excel(flpath, sheet = 'Raw Data', range = make_range('A','G')) # reading raw data from 4 channels
-multidat <- read_excel(flpath, sheet = 'Multicomponent Data', range = make_range('A','E')) # reading extrapolated data for each fluorophore
-procdat <- read_excel(flpath, sheet = 'Amplification Data', range = make_range('A','F')) %>% select(-`Target Name`) # reading extrapolated data for each fluorophore
-
-# Convert data to long form
-combdat <- list(mult = multidat, proc = procdat) %>% map_dfr( ~gather(., key = 'channel', 'signal', -Well, -'Well Position', -Cycle)) # combine all the channels and fluorophores into a pair of name - value columns (long data)
+# Load a dataset into file by running analysis.R until line 92
 
 
-# plotting ----
+# Processing ----
 
-# filtering a single well data = A2
-# plotting ggplot (raw data and fluorophore data)
-# plt1 <- combdat %>% filter(`Well Position` == 'A2') %>%  ggplot(aes(Cycle, signal, colour = channel)) + geom_point() + geom_line()
+# get the amplification data (Rn) from the qPCR excel file
+raw.data <- fl$`Raw Data` %>% 
+  left_join(plate_template) %>% # join the samples names from the spreadsheet
+  
+  # remove un-named samples
+  filter(!is.na(Target_name)) %>%  # remove all samples that don't have a target name - implies plate layout was empty
+  # This is intended to remove samples whose labels have been removed to prevent analysis
+  
+  # long format
+  pivot_longer(cols = matches('x.-m.'),
+               names_to = 'channel',
+               values_to = 'signal')
 
-# interactive plot (raw data and fluorophore data)
-iplt1 <- combdat %>% filter(`Well Position` == 'A1') %>%  plot_ly(x = ~Cycle, y = ~signal, color = ~channel, type = 'scatter', mode = 'lines+markers')
+# Plotting ----
 
-# interactive plot (raw data and fluorophore data)
-iplt2 <- combdat %>% filter(channel == 'ROX') %>%  plot_ly(x = ~Cycle, y = ~signal, color = ~`Well Position`, type = 'scatter', mode = 'lines+markers')
-iplt2
+# quick visual check
+overview_raw_plt <- 
+  raw.data %>% 
+  
+  
+  ggplot(aes(x = Cycle,
+             y = signal,
+             colour = channel,
+             group = biological_replicates, # ensures each replicate is a different line
+             label = `Well Position`)) +
+  geom_line() + 
+  facet_grid(Sample_category ~ assay_variable)
+
+ggplotly(overview_raw_plt)  # Interactive plot. Use it to figure out the wells containing outliers
+
+

@@ -11,29 +11,43 @@ Tried to generalize the 1-loading_files_funs to work with Quantstudio v2.6
 [x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
 	- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
-## Sliwin work
+## Sliwin path
 ### pcrfit()
 [x] figure out the input format for pcrfit; why is model not working without loading qPCR package..
 	- [x] qPCR is blocking `dplyr::select()` : _just override select_
 - Negative Rn values cause error (ex: E10 in q22)
 	 `qpcr_fit = map(data, ~pcrfit(.x, cyc = 2, fluo = 3)) x 0 (non-NA) cases`
 	- How to filter automatically or figure out the cause 
-	- _Can have an if_else switch inside the mapping function, with a flag column..?_
+	-[x] _Can have an if_else switch inside the mapping function, with a flag column..?_
+
+### sliwin()	
 - Sliwin throws same error and stops at samples that don't amplify. very dumb behavior
 	- [ ] identify a variable to flag using fit variablts d (min) and c(max) - if they are too close to each other or some other arbitrary critirea ☹
+- Also the Rn values need to be background subtracted before values are found, **does sliwin do this?** 
 Abandon and move to rdmlpython until this issue is figured out. There seems to be too many things needed to make sliwin work - since it is a function written by third party folks, they didn't put that much effort.
 
-## RDML goals 
+## RDML-linregPCR path 
 
-[ ] Need to get R's RDML into a table format, so that sample names from the google sheet can be merged by well
+_Ignore the 1st point_
+- [ ] Need to get R's RDML into a table format, so that sample names from the google sheet can be merged by well
   - How do you change the sample names in both the data ($getFdata) and metadata ($sample)
   - Couldn't validate the RDML file saved from R using `$AsXML` as [documented](https://pcruniversum.github.io/RDML/articles/RDML.html) : So this won't open in python. It means that sample names cannot be attached in R before handing it off to python in another RDML file
   	- Could figure out drawing the sample names and attaching it in python
   	- Could try to get rdmlpython to work using a dataframe instead of an RDML file
 
+- [ ] Does linregPCR only fit a single run? What if I merge the calibration data from another experiment or run, how to make linregPCR process them together?
+
+_tip:_ use `tojson` to view RDML methods or outputs in plain text
+
+**Quantstudio exported RDML format**
+- [x] Has dyes missing in the RDML file, _fixed in python using `fl.new_dye()` method_
+
 ### RDML-R-attach names-export
 - R's RDML package's `$AxXML` exported `.rdml` file with  cannot be validated by rdmlpython and shows as almost empty file in RDML-ninja
 	- Looks like the actual data is being written to a temporary folder : `C:\Users\new\AppData\Local\Temp`
+	- View AsXML() method in the RDML class as a learning experience
+- Can avoid the initial R step by just relying on well names, as long as target names are there. Load the plate layout just before plotting
+	- How to get target names in for SYBR assays?  _Use manual naming_
 
 ## 17/1/22
 - Practicing loading rdml files into 

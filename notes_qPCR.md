@@ -39,10 +39,14 @@ _Ignore the 1st point_
 
 _tip:_ use `tojson` to view RDML methods or outputs in plain text
 
-**Quantstudio exported RDML format**
+### Quantstudio exported RDML format
 - [x] Has dyes missing in the RDML file, _fixed in python using `fl.new_dye()` method_
+- How to attach target_names in the RDML file: Currently do it manually in quantstudio
 
-### RDML-R-attach names-export
+### R-python integration
+- Make the test_linregpcr.py into a function and call it using `reticulate::source_python("...py")` [documentation](https://rstudio.github.io/reticulate/#sourcing-python-scripts)
+
+### obsolete: RDML-R-attach names-export
 - R's RDML package's `$AxXML` exported `.rdml` file with  cannot be validated by rdmlpython and shows as almost empty file in RDML-ninja
 	- Looks like the actual data is being written to a temporary folder : `C:\Users\new\AppData\Local\Temp`
 	- View AsXML() method in the RDML class as a learning experience

@@ -8,6 +8,18 @@
 library(readxl); library(magrittr); library(tidyverse); library(ggrepel); library(googlesheets4); library(rlang); library(plotly)
 # library(lubridate); # for advanced date operations
 
+# python integration
+# reticulate::use_python('C:/ProgramData/Miniconda3/python.exe') # Change path to your python installation
+# use_condaenv(condaenv = 'base', conda = 'C:/ProgramData/Miniconda3/Scripts/conda')
+
+# R-ladies baltimore recommends this - https://www.youtube.com/watch?v=U3ByGh8RmSc
+# Sys.setenv(RETICULATE_PYTHON = 'C:\\ProgramData\\Miniconda3\\python.exe')
+
+# one-time configuration of 'reticulate' python interface
+# Have your own miniconda/anaconda with environments you need to load
+# Sys.setenv(RETICULATE_MINICONDA_PATH = "/path/to/r-miniconda")  # https://github.com/rstudio/reticulate/issues/745
+  
+
 # google sheets ----
 sheeturls <- list(plate_layouts_PK = 'https://docs.google.com/spreadsheets/d/1RffyflHCQ_GzlRHbeH3bAkiYo4zNlnFWx4FXo7xkUt8/edit#gid=0')
 

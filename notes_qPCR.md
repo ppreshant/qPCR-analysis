@@ -11,7 +11,53 @@ Tried to generalize the 1-loading_files_funs to work with Quantstudio v2.6
 [x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
 	- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
-## Sliwin path
+
+## RDML-linregPCR  
+### Methodology questions
+- Can standards be combined post processing or does threshold need to be the same?
+	- Standards will have their own efficiency (_expected due to DNA context, different contaminant concentrations etc._) and the [paper](https://academic-oup-com.ezproxy.rice.edu/clinchem/article/67/6/829/6247760?login=true) 
+- Should the standard calibrant be diluted or not? _dilution introduces errors, not diluting will increase chances of NTC for future runs_
+	- [Paper](https://academic-oup-com.ezproxy.rice.edu/clinchem/article/67/6/829/6247760?login=true)  recommends `undiluted calibrant` 
+	
+	> PCR efficiency is affected by (_a_) systematic dilution errors in preparing a standard curve, (_b_) random pipetting errors in the standard curve samples, (_c_) the sequence and context of the target, and (_d_) unknown components inherent to the biological sample. Therefore, unbiased efficiency-corrected absolute quantification would benefit from a protocol in which **dilution of the standard is avoided** and the actual PCR efficiencies of the standard and unknown reactions are used in the calculations
+	
+	- mentions that you need `6` replicates for diluent of 1,000 copies from poisson stats -- that means it is diluted to a 1,000 right?
+	- Higher concentrations also reduce subsampling error (poisson)..
+
+- [ ] Does linregPCR only fit a single run? What if I merge the calibration data from another experiment or run, how to make linregPCR process them together?
+
+_tip:_ use `tojson` to view RDML methods or outputs in plain text
+
+### Quantstudio exported RDML format
+- [x] Has dyes missing in the RDML file, _fixed in python using `fl.new_dye()` method_
+- How to attach target_names in the RDML file: Currently do it manually in quantstudio
+
+
+### melt curve analysis
+
+- Melt curve does not return anything for the S019_25-11-19 file both in python and online
+	- Identified that this could be since the meltingTemperature for each target was not present in the rdml file - `fl.targets()[1].tojson()['meltingTemperature']`. This is not shown in the rdmlninja. Verified with `sample-online.rdml` example file downloaded from online rdml website
+	- [ ] _Read from an excel sheet of target-meltingtemps and add it in using python with a switch-case kind of statement_
+		- Use `fl.targets()[0]__setitem__('meltingTemperature', '70.0')`
+	- meltingTemperature inside `target` only seems to be available in `rdml 1.3` ☹. Tried `fl.migrate_version_1_2_to_1_3` to fix
+
+
+### R-python integration
+- Make the test_linregpcr.py into a function and call it using `reticulate::source_python("...py")` [documentation](https://rstudio.github.io/reticulate/#sourcing-python-scripts)
+
+
+### /obsolete/: RDML-R-attach names-export
+Analysis needs _well names_, and _target names_. Attach the names from the plate layout just before plotting. To get target names for each well for SYBR assays -  _Name manually in Quantstudio_ until more automation is explored
+- R's RDML package's `$AxXML` exported `.rdml` file with  cannot be validated by rdmlpython and shows as almost empty file in RDML-ninja
+	- Looks like the actual data is being written to a temporary folder : `C:\Users\new\AppData\Local\Temp`
+	- View AsXML() method in the RDML class as a learning experience
+- _ignore_/ Need to get R's RDML into a table format, so that sample names from the google sheet can be merged by well
+  - How do you change the sample names in both the data ($getFdata) and metadata ($sample)
+
+
+## Sliwin using R
+_This was abandoned in favour of the rdmlpython workflow since there were lot of problems with fitting when no amplifications happen etc. All this effort was already done by the rdml folks in python_
+
 ### pcrfit()
 [x] figure out the input format for pcrfit; why is model not working without loading qPCR package..
 	- [x] qPCR is blocking `dplyr::select()` : _just override select_
@@ -26,32 +72,6 @@ Tried to generalize the 1-loading_files_funs to work with Quantstudio v2.6
 - Also the Rn values need to be background subtracted before values are found, **does sliwin do this?** 
 Abandon and move to rdmlpython until this issue is figured out. There seems to be too many things needed to make sliwin work - since it is a function written by third party folks, they didn't put that much effort.
 
-## RDML-linregPCR path 
-
-_Ignore the 1st point_
-- [ ] Need to get R's RDML into a table format, so that sample names from the google sheet can be merged by well
-  - How do you change the sample names in both the data ($getFdata) and metadata ($sample)
-  - Couldn't validate the RDML file saved from R using `$AsXML` as [documented](https://pcruniversum.github.io/RDML/articles/RDML.html) : So this won't open in python. It means that sample names cannot be attached in R before handing it off to python in another RDML file
-  	- Could figure out drawing the sample names and attaching it in python
-  	- Could try to get rdmlpython to work using a dataframe instead of an RDML file
-
-- [ ] Does linregPCR only fit a single run? What if I merge the calibration data from another experiment or run, how to make linregPCR process them together?
-
-_tip:_ use `tojson` to view RDML methods or outputs in plain text
-
-### Quantstudio exported RDML format
-- [x] Has dyes missing in the RDML file, _fixed in python using `fl.new_dye()` method_
-- How to attach target_names in the RDML file: Currently do it manually in quantstudio
-
-### R-python integration
-- Make the test_linregpcr.py into a function and call it using `reticulate::source_python("...py")` [documentation](https://rstudio.github.io/reticulate/#sourcing-python-scripts)
-
-### obsolete: RDML-R-attach names-export
-- R's RDML package's `$AxXML` exported `.rdml` file with  cannot be validated by rdmlpython and shows as almost empty file in RDML-ninja
-	- Looks like the actual data is being written to a temporary folder : `C:\Users\new\AppData\Local\Temp`
-	- View AsXML() method in the RDML class as a learning experience
-- Can avoid the initial R step by just relying on well names, as long as target names are there. Load the plate layout just before plotting
-	- How to get target names in for SYBR assays?  _Use manual naming_
 
 ## 17/1/22
 - Practicing loading rdml files into 

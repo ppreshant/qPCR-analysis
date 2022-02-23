@@ -26,7 +26,17 @@ We want to test by qPCR if AHL is flipping any constructs. Using this file to no
 ``` {r cq_plt}
 plt.cq
 
+# Horizontal orientation : for label readability
+horz.cq <- plt.cq + 
+  coord_flip() + 
+  facet_grid(rows = vars(Target_name)) +
+  theme(legend.position = 'top')
+
+
+
 plotly::ggplotly(plt.cq)
+
+plotly::ggplotly(horz.cq)
 
 if(exists('plt.cq_w.std')) plt.cq_w.std
 

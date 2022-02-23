@@ -3,43 +3,54 @@ Prashant K
 
 ## General stuff
 
-Tried to generalize the 1-loading_files_funs to work with Quantstudio v2.6
+(_abandon_) Tried to generalize the 1-loading_files_funs to work with latest Quantstudio v2.6
 - Chemistry field is missing -- make it work with the dye column instead
 - Sample Setup sheet not exported, could just use Results
 - Currently there is not much advantage to using the new software, just use V1.5.2 till these are changed
  
+ Streamlining code to modularly work with both cq or linregpcr data..?
 [x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
 	- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
+Streamlining sample input: Can the `.x` replicate number be removed? It makes it harder to type in decimal dilution values in the `assay_variable` spot. 
 
 ## RDML-linregPCR  
 ### Methodology questions
 - Can standards be combined post processing or does threshold need to be the same?
-	- Standards will have their own efficiency (_expected due to DNA context, different contaminant concentrations etc._) and the [paper](https://academic-oup-com.ezproxy.rice.edu/clinchem/article/67/6/829/6247760?login=true) 
+	- Standards will have their own efficiency (_expected due to DNA context, different contaminant concentrations etc._). So it needs to be analyzed separately anyways/the algorithm takes care if identified as calibrant? _I don't see any mathematical problem with using different threshold -- it is set after wol is identified, in the window of the linear region anyway right?__
 - Should the standard calibrant be diluted or not? _dilution introduces errors, not diluting will increase chances of NTC for future runs_
+	- Author: Dr. Maurice Van Der Hoff clarified that 1e3 copies of standard at 5 replicates needs to be used (let's use 6 like the paper says)
 	- [Paper](https://academic-oup-com.ezproxy.rice.edu/clinchem/article/67/6/829/6247760?login=true)  recommends `undiluted calibrant` 
 	
 	> PCR efficiency is affected by (_a_) systematic dilution errors in preparing a standard curve, (_b_) random pipetting errors in the standard curve samples, (_c_) the sequence and context of the target, and (_d_) unknown components inherent to the biological sample. Therefore, unbiased efficiency-corrected absolute quantification would benefit from a protocol in which **dilution of the standard is avoided** and the actual PCR efficiencies of the standard and unknown reactions are used in the calculations
 	
 	- mentions that you need `6` replicates for diluent of 1,000 copies from poisson stats -- that means it is diluted to a 1,000 right?
-	- Higher concentrations also reduce subsampling error (poisson)..
+	- Higher concentrations also reduce subsampling error (poisson).
 
 - [ ] Does linregPCR only fit a single run? What if I merge the calibration data from another experiment or run, how to make linregPCR process them together?
 
-_tip:_ use `tojson` to view RDML methods or outputs in plain text
+_tips for RDML:_ 
+1. use `tojson()` to view RDML methods or outputs in plain text.
+2. use `fl.__getitem__('fieldname')` to quickly view subelements within the rdml fields -- works even in the subsets like target, dye etc..
 
 ### Quantstudio exported RDML format
 - [x] Has dyes missing in the RDML file, _fixed in python using `fl.new_dye()` method_
 - How to attach target_names in the RDML file: Currently do it manually in quantstudio
 
+### amplification analysis
+Works for S019_25-11-19 file (SYBR) and q25_S037_RAM repression_14-2-22 (Probe) with recent changes pulled on _18/2/22_
+> (old, before pulling) Does not work for q25 (TAQMAN) file with `rawFluor[rowCount, cyc] = float(fluor) ; IndexError: index 72 is out of bounds for axis 0 with size 72`
+
+Probe based assays with late amplification (ex: `U64`) is showing very low efficiency (due to plateau phase not present) -- Is there some tweak that can rescue the analysis?
+
 
 ### melt curve analysis
 
-- Melt curve does not return anything for the S019_25-11-19 file both in python and online
-	- Identified that this could be since the meltingTemperature for each target was not present in the rdml file - `fl.targets()[1].tojson()['meltingTemperature']`. This is not shown in the rdmlninja. Verified with `sample-online.rdml` example file downloaded from online rdml website
-	- [ ] _Read from an excel sheet of target-meltingtemps and add it in using python with a switch-case kind of statement_
-		- Use `fl.targets()[0]__setitem__('meltingTemperature', '70.0')`
-	- meltingTemperature inside `target` only seems to be available in `rdml 1.3` ☹. Tried `fl.migrate_version_1_2_to_1_3` to fix
+Melt curve does not return anything for the S019_25-11-19 file both in python and online
+- Identified that this could be since the meltingTemperature for each target was not present in the rdml file - `fl.targets()[1].tojson()['meltingTemperature']`. This is not shown in the rdmlninja. Verified with `sample-online.rdml` example file downloaded from online rdml website
+- [ ] _Read from an excel sheet of target-meltingtemps and add it in using python with a switch-case kind of statement_
+	- Use `fl.targets()[0]__setitem__('meltingTemperature', '70.0')`
+- meltingTemperature inside `target` only seems to be available in `rdml 1.3` ☹. Tried `fl.migrate_version_1_2_to_1_3` to fix
 
 
 ### R-python integration

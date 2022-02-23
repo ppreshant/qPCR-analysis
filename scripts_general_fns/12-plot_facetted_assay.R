@@ -34,3 +34,27 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
       {if(!is.na(.subtitle.plot)) ylab('')} }  %>%  # remove y axis label if a subtitle is provided which is more readable
     print()
 }
+
+
+
+# Convenience function to plot cq after filtering data
+
+# plots 40-CT data
+filter_to_cq_plot <- function(text = 'lysate',  # filtering text
+                              filter_var = Sample_category, # the variable to apply filter on
+                              horizontal = TRUE) # if you want the plot to show horizontal -- good for long labels
+  
+{
+  plot_facetted_assay(.data = forplotting_cq.dat %>% 
+                        filter(str_detect({{filter_var}}, text)),
+                      .yvar_plot = 40 - CT) +
+    
+    {if(horizontal) 
+      
+      list(coord_flip(), 
+           facet_grid(rows = vars(Target_name)),
+           theme(legend.position = 'top'))  
+      
+    }
+  
+}

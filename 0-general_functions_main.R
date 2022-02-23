@@ -23,7 +23,8 @@ library(readxl); library(magrittr); library(tidyverse); library(ggrepel); librar
 # google sheets ----
 sheeturls <- list(plate_layouts_PK = 'https://docs.google.com/spreadsheets/d/1RffyflHCQ_GzlRHbeH3bAkiYo4zNlnFWx4FXo7xkUt8/edit#gid=0')
 
-
+# Convenience function for plotting directory and .png suffix for adhoc plots
+plot_as <- function(plt_name)  str_c('qPCR analysis/Archive/', plt_name, '.png')
 
 # dummy data  ---- 
 # or test data for testing simple functions 

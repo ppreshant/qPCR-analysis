@@ -8,8 +8,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q22_fgfp-triplex-gradient_24-1-22'  
-title_name <-'q22_fgfp triplex gradient'
+flnm <- 'q25_S037_RAM repression_14-2-22'  
+title_name <-'q25_S037_RAM repression check'
 
 # options
 plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 

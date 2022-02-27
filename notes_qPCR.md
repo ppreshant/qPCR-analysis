@@ -83,6 +83,24 @@ _This was abandoned in favour of the rdmlpython workflow since there were lot of
 - Also the Rn values need to be background subtracted before values are found, **does sliwin do this?** 
 Abandon and move to rdmlpython until this issue is figured out. There seems to be too many things needed to make sliwin work - since it is a function written by third party folks, they didn't put that much effort.
 
+_26/2/22 : **Update**: re-visiting sliwin to verify if the rdmlpython individual/group efficiencies for U64/flipped are justifiably very low (~ 1.4), since sliwin shows curves and it's easier to get things to plot with R for me_ 
+- Figure out how rdmlpython treats things as no amplification. Follow `vecNoAmplification` around line 11030
+
+		# Check to detect the negative slopes and the PCR reactions that have an
+		# amplification less than seven the minimum fluorescence
+				if slopeAmp[oRow] < 0 or minSlopeAmp[oRow] < (np.log10(7.0) / minFluCountSum[oRow]):
+					vecNoAmplification[oRow] = True
+		-----------------
+		# There must be an increase in fluorescence after the amplification.
+		did something where mean of fluors check to increase by 1.2, 
+		cycle 8,9 / cycle 0,1 < 1.2
+		
+- Decided on an arbitrary cutoff of 3 fold of final / initial signal to call amplification (for probe q25 data)
+- sliwin works now, but unable to augment fitted data --
+- just create a line with slopes taken from the excel file parallel to initial data to compare?
+
+-------------
+----- old stuff ----------
 
 ## 17/1/22
 - Practicing loading rdml files into 

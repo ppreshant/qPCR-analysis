@@ -1,5 +1,7 @@
 # adhoc inserting sliwin/pcrfit (linregpcr like) workflow into analysis.R
 
+# Load the general functions and the excel file into `fl` using analysis.R
+
 # loading libraries ----
 library(qpcR) # causing problems with dplyr::select()
 select <- dplyr::select # forcing the MASS::select() that masks when loading qpcR
@@ -24,19 +26,21 @@ qpcr_amplification.data <- fl$`Amplification Data` %>%
   
   
   # remove un-named samples
-  filter(!is.na(Target_name)) # remove all samples that don't have a target name - implies plate layout was empty
+  filter(!is.na(Sample_category)) # remove all samples that don't have a Sample_category - implies plate layout was empty
   # This is intended to remove samples whose labels have been removed to prevent analysis
 
   
 # quick visual check
-overview_raw_plt <- ggplot(qpcr_amplification.data,
+overview_raw_plt <- {ggplot(qpcr_amplification.data,
        aes(x = Cycle,
            y = Rn,
            colour = Target_name,
            group = interaction(Target_name, biological_replicates), # ensures each replicate is a different line
            label = `Well Position`)) +
   geom_line() + 
-  facet_grid(Sample_category ~ assay_variable)
+    # make nested facets : category with children of assay variables
+  ggh4x::facet_nested_wrap(. ~ Sample_category + assay_variable)} %>% 
+  print()
 
 ggplotly(overview_raw_plt)  # Interactive plot. Use it to figure out the wells containing outliers
 
@@ -62,13 +66,49 @@ pcrfitted_amplification.data <-
   
   nested_amplification.data %>% 
   filter(!negative_Rn_flag) %>% # remove flagged samples with negative Rn
+  # 
+  # # rename columns to do pcrfit + augment workflow
+  # mutate(data = map(data,
+  #            ~ rename(., Fluo = Rn, Cycles = Cycle))) %>% 
   
   # do pcrfit to default parameters
+  
+  # fitting equation (default l4 model): $$f(x) = c + \frac{d - c}{1 + exp(b(log(x) - log(e)))}$$)
+  # params: b = hill coeff~ , c = min, d = max, e = Kd like. 
+  # Note: I noticed that b is negative, hence the min and max order is c and d..
+  
   mutate(qpcr_fit = 
            map(data, 
                ~ pcrfit(.x,
                         cyc = 2,
-                        fluo = 3)))
+                        fluo = 3)),
+         
+         # extract pcrfit parameters to flag no amplifications
+         params = map(qpcr_fit,
+                      broom::tidy),
+         
+         # estimate of amplification: max signal/initial
+         fold_amplification = map_dbl(params,
+                                      ~ .$estimate[3]/.$estimate[2]), # d/c from params
+         
+         no_amplification_flag = fold_amplification < 3)  # empirically determined for probe qPCR: q25 data                              
+ 
+# aug_amplification.data <- pcrfitted_amplification.data %>% 
+#   
+#   mutate(
+#          # get the fitted values to plot
+#          augmented = map(qpcr_fit,
+#                          broom::augment) # augment gives error that data has 0 rows.. due to different names? 
+#          )
+
+
+
+# plot fold_amplification derived from parameters and compare it with amplification curves
+pcrfitted_amplification.data %>% 
+  ggplot(aes(assay_variable, fold_amplification, colour = Target_name)) +
+  geom_point() +
+  
+  facet_wrap(~ Sample_category)
 
 # Find flags for non amplifying curves..
 # sliwin has errors in fitting flat data with no amplification
@@ -78,17 +118,31 @@ processed_amplification.data <-
   
   pcrfitted_amplification.data %>% 
   
+  # remove samples without amplification
+  filter(!no_amplification_flag) %>% 
+  
   # find window of linearity (fit sliding window)
   mutate(sliwin_fit = 
            map(qpcr_fit, 
                ~ sliwin(object = .x))
         )
-         
+# works now but takes a long time.. 3 mins~
+
+data_to_save <- processed_amplification.data %>% 
   
+  # remove unnecessary columns
+  select(-data, -qpcr_fit, -params) %>% 
   
+  # unpack parameters from sliwin
+  mutate(efficiency = map_dbl(sliwin_fit, ~ .$eff),
+         initial_conc = map_dbl(sliwin_fit, ~ .$init),
+         baseline = map_dbl(sliwin_fit, ~ .$base),
+         window_min = map_dbl(sliwin_fit, ~ .$window[1]),
+         window_max = map_dbl(sliwin_fit, ~ .$window[2])) %>% 
+  
+  select(-sliwin_fit)
 
+# save data ---- 
+# save data to CSV file
 
-
-
-qpcr_sliwin <- sliwin(qpcr_fit)
-# .Error in GRID[i, 1]:GRID[i, 4] : NA/NaN argument -- Is this expecting 4 channels of fluorescence?
+write_csv(data_to_save, file = str_c('excel files/', flnm, '-sliwin.csv'), na = '')

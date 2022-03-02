@@ -45,6 +45,11 @@ overview_raw_plt <- {ggplot(qpcr_amplification.data,
 ggplotly(overview_raw_plt)  # Interactive plot. Use it to figure out the wells containing outliers
 
 
+# Make plot in logscale    
+overview_raw_plt %>% format_logscale_y() %>% print()
+# ggsave(plot_as('q25_logy'), width = 5, height = 6)
+
+
 # qpcR fitting ----
 
 # nested data for model fitting

@@ -36,13 +36,17 @@ _tips for RDML:_
 ### Quantstudio exported RDML format
 - [x] Has dyes missing in the RDML file, _fixed in python using `fl.new_dye()` method_
 - How to attach target_names in the RDML file: Currently do it manually in quantstudio
+- [ ] Do we need to set the `target chemistry` (shows up in the results file) to hydrolysis probe, since it is defaulting to `non-saturating DNA binding dye` all the time?
+	- [ ] More importanly, does this improve the LinregPCR analysis in any way?
 
 ### amplification analysis
 Works for S019_25-11-19 file (SYBR) and q25_S037_RAM repression_14-2-22 (Probe) with recent changes pulled on _18/2/22_
 > (old, before pulling) Does not work for q25 (TAQMAN) file with `rawFluor[rowCount, cyc] = float(fluor) ; IndexError: index 72 is out of bounds for axis 0 with size 72`
 
 Probe based assays with late amplification (ex: `U64`) is showing very low efficiency (due to plateau phase not present) -- Is there some tweak that can rescue the analysis?
-
+- [ ] check if the data makes sense, low efficiencies are reliable
+	- quick amplifications of 16s are not being analyzed due to `baseline error`, considering that we cannot dilute the samples, verdict will be to ABORT LINREGPCR mission 
+	- window of linearity data does not line up with curves..	
 
 ### melt curve analysis
 
@@ -63,7 +67,7 @@ Analysis needs _well names_, and _target names_. Attach the names from the plate
 	- Looks like the actual data is being written to a temporary folder : `C:\Users\new\AppData\Local\Temp`
 	- View AsXML() method in the RDML class as a learning experience
 - _ignore_/ Need to get R's RDML into a table format, so that sample names from the google sheet can be merged by well
-  - How do you change the sample names in both the data ($getFdata) and metadata ($sample)
+  - How do you change the sample names in both the data `($getFdata)` and metadata `($sample)`
 
 
 ## Sliwin using R

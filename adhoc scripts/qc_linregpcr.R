@@ -30,21 +30,43 @@ linreg.results <- read_tsv(str_c('excel files/', flnm, '.csv')) %>%
 # This is intended to remove samples whose labels have been removed to prevent analysis
 
 
-# Overlay window on curve ----
-# will add lines to overview_raw_plot/log to show the window of linearity detected with the E value
+# select useful data ----
+
+# define all the metadata columns coming from the plate_layout
+metadata_unique_columns <- c('Sample_category', 'assay_variable', 'Target_name')
 
 # change the data with the windows as line equation y - y2 = m(x - x2)
 linreg.selected <- linreg.results %>% 
     
   # select only relevant columns
-  select(Sample_category, assay_variable, biological_replicates, Target_name, well, # metadata
+  select(any_of(metadata_unique_columns), # metadata unique
+         well, biological_replicates, # addition metadata for replicates
          `n in log phase`, `last log cycle`, `n included`,  # window range
          
          # linregpcr actual outputs
          `mean PCR eff`, `N0 (mean eff)`, `Cq (mean eff)`,
          
          # window anchors
-         `baseline`, `log lin cycle`, `log lin fluorescence`) 
+         `baseline`, `log lin cycle`, `log lin fluorescence`) %>% 
+  
+  # rename columns for ease of reference while plotting and for equations
+  rename(n = 'n in log phase',
+         x0 = 'log lin cycle', # mid point of log linear phase?
+         y0 = 'log lin fluorescence', # Already baseline subtracted value
+         xend = 'last log cycle',
+         n_sml = 'n included',
+         eff = 'mean PCR eff',
+         N0 = 'N0 (mean eff)',
+         Cq = 'Cq (mean eff)') %>%
+  
+  # make a col for mean of N0 -- for plotting as a line/boxplot
+  group_by(across(all_of(metadata_unique_columns))) %>% 
+  mutate(mean_N0 = mean(N0, na.rm = TRUE))
+
+
+
+# Overlay window on curve ----
+# will add lines to overview_raw_plot/log to show the window of linearity detected with the E value
 
 
 # Make data to plot the window of linearity
@@ -52,20 +74,12 @@ linreg_window.data <-
   
   linreg.selected %>% 
   
-  rename(n = 'n in log phase',
-         x0 = 'log lin cycle', # mid point of log linear phase?
-         y0 = 'log lin fluorescence',
-         xend = 'last log cycle',
-         n_sml = 'n included',
-         eff = 'mean PCR eff',
-         N0 = 'N0 (mean eff)',
-         Cq = 'Cq (mean eff)') %>%
-  
   # Make data for the window
   mutate(window = 
            pmap(list(n, xend, eff, x0, y0),
-                ~ tibble(x_cycle = (..2 - ..1 + 1):xend,
-                         y_fl_log = ..5 + log10(..3) * (x_cycle - ..4) 
+                ~ tibble(x_cycle = (..2 - ..1 + 1):xend, # Make a series of points window start to end
+                         # y_fl_log = ..5 + log10(..3) * (x_cycle - ..4)
+                         y_fl_bs = (..5) * (..3)^(x_cycle - ..4)
                          )
                 )
          ) %>% 
@@ -89,16 +103,18 @@ qpcr_polished.data <- qpcr_amplification.data %>%
 plt_linear_window <- 
   {ggplot(linreg_window.data,
          aes(x_cycle, 
-             y_fl_log,
+             y_fl_bs,
              colour = Target_name,
              group = interaction(Target_name, biological_replicates), # ensures each replicate is a different line
              label = well)) +
   geom_line() + 
   # make nested facets : category with children of assay variables
   ggh4x::facet_nested_wrap(. ~ Sample_category + assay_variable)} %>% 
+  
+  format_logscale_y() %>% 
   print()
 
-# ggsave(plot_as('q25_window-linearity'), width = 5, height = 6)
+ggsave(plot_as('q25_window overlaid'), width = 5, height = 6)
 
 
 # Overlay window on top of raw data
@@ -112,17 +128,18 @@ overview_bs_plt <- {ggplot(qpcr_polished.data,
     geom_line() +
 
     # make nested facets : category with children of assay variables
-    ggh4x::facet_nested_wrap(. ~ Sample_category + assay_variable) #+
+    ggh4x::facet_nested_wrap(. ~ Sample_category + assay_variable) +
 
 
-    # # add lines for window of linearity -- DOES not match
-    # geom_line(data = linreg_window.data,
-    #           mapping = aes(x_cycle,
-    #               10^(y_fl_log) - baseline,
-    #               colour = Target_name,
-    #               group = interaction(Target_name, biological_replicates), # ensures each replicate is a different line
-    #               label = well),
-    #           )
+    # add lines for window of linearity -- DOES not match
+    geom_line(data = linreg_window.data,
+              mapping = aes(x_cycle,
+                  y_fl_bs,
+                  # colour = Target_name,
+                  group = interaction(Target_name, biological_replicates), # ensures each replicate is a different line
+                  label = well),
+              colour = 'black'
+              )
     
   } %>%
 
@@ -135,11 +152,41 @@ overview_bs_plt <- {ggplot(qpcr_polished.data,
 # plot_facetted_assay()
 
 # adhoc plot
-linreg.results %>% 
-  ggplot(aes(assay_variable, 40 - `Cq (mean eff)`, colour = Target_name)) + 
-  geom_point() +
+# N0_linreg_plt <- 
+#   {linreg.results %>% 
+#   ggplot(aes(assay_variable, `N0 (mean eff)`, colour = Target_name)) + 
+#   geom_point() +
+#   
+#   facet_wrap(~ Sample_category, scales = 'free_x')} %>% 
+#   
+#   format_logscale_y() %>% 
+#   print()
+
+# Plot N0 along with mean on logscale
+N0_linreg_plt <- 
+  {plot_facetted_assay(.data = linreg.selected, 
+                      .yvar_plot = N0,
+                      .colourvar_plot = Target_name,
+                      .facetvar_plot = Sample_category,
+                      .xvar_plot = assay_variable,
+                      points_plt.style = 'jitter') + 
+      geom_boxplot(aes(y = mean_N0), show.legend = FALSE)
+      
+      } %>% 
   
-  facet_wrap(~ Sample_category, scales = 'free_x')
+  format_logscale_y() %>% 
+  print()
 
 # saving plot
-ggsave(plot_as('S025_linregpcr_Cq'), width = 5, height = 4)
+ggsave(plot_as('S025_linregpcr_N0 log'), width = 6, height = 4)
+
+# plot 40 - Cq to compare
+title_name <- 'q25_linregpcr cq'
+cq_linregp <- plot_facetted_assay(.data = linreg_window.data, 
+                    .yvar_plot = 40 - Cq,
+                    .colourvar_plot = Target_name,
+                    .facetvar_plot = Sample_category,
+                    .xvar_plot = assay_variable)
+# 
+ggsave(plot_as('q25_linregpcr cq-2'), width = 6, height = 4)
+

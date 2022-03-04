@@ -27,17 +27,27 @@ Streamlining sample input: Can the `.x` replicate number be removed? It makes it
 	- mentions that you need `6` replicates for diluent of 1,000 copies from poisson stats -- that means it is diluted to a 1,000 right?
 	- Higher concentrations also reduce subsampling error (poisson).
 
-- [ ] Does linregPCR only fit a single run? What if I merge the calibration data from another experiment or run, how to make linregPCR process them together?
+- [x] Does linregPCR only fit a single run? _Yes, it looks like that is the valid thing to do, there is a paper recommending overlapping standards to merge data from multiple runs_. What if I merge the calibration data from another experiment or run, how to make linregPCR process them together?
 
 _tips for RDML:_ 
 1. use `tojson()` to view RDML methods or outputs in plain text.
-2. use `fl.__getitem__('fieldname')` to quickly view subelements within the rdml fields -- works even in the subsets like target, dye etc..
+2. `fl.keys()` to see only the keys of all fields
+3. use `fl.__getitem__('fieldname')` to quickly view subelements within the rdml fields -- works even in the subsets like target, dye etc..
+
 
 ### Quantstudio exported RDML format
 - [x] Has dyes missing in the RDML file, _fixed in python using `fl.new_dye()` method_
 - How to attach target_names in the RDML file: Currently do it manually in quantstudio
-- [ ] Do we need to set the `target chemistry` (shows up in the results file) to hydrolysis probe, since it is defaulting to `non-saturating DNA binding dye` all the time?
-	- [ ] More importanly, does this improve the LinregPCR analysis in any way?
+- [x] Do we need to set the `target chemistry` (shows up in the results file) to hydrolysis probe, since it is defaulting to `non-saturating DNA binding dye` all the time?
+	- Not finding this option in RDML-Ninja
+	- Is an attribute of `dye`, with name `dyeChemistry`. Set it to `"hydrolysis probe"` or `non-saturating DNA binding dye` otherwise. 
+	- [x] More importanly, does this improve the LinregPCR analysis in any way? _rdml-tools help says it does_
+- [ ] (_failed_)Also need to indicate `sample_type` in RDML to be ntc for negative control - this will remove errors about no amplification in those samples. clue: `cl.samples()[x].types()[0]['type']`
+- [ ] (_last try_) Remove melt curve data `mdp` for probe data, if you want to open the file as valid rdml in online version. 
+	-  Melt curve junk data is not exported if there is no SYBR on the plate, ex `q22 triplex` and `q24` but fails for `q25`  -- (I thought wrong -> )_Save rdml from quantstudio using `split items into individual files` option, this will prevent writing junk values to the melt data_
+	- Expt -> run -> react -> data -> mdp. It is hard to locate react data onwards. clue: `_get_all_children(self._node, "react")`
+
+**Problems with rdmlpython** : Is giving baseline error in a few samples, I cannot figure out the reason. 
 
 ### amplification analysis
 Works for S019_25-11-19 file (SYBR) and q25_S037_RAM repression_14-2-22 (Probe) with recent changes pulled on _18/2/22_

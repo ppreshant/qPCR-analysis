@@ -33,6 +33,41 @@ plt.cq +
   theme(legend.position = 'top')
 
 
-# linregpcr ----
+# linregpcr data ----
+
+repression.linreg <- 
+  linreg.selected %>% 
+  filter(str_detect(assay_variable, '51|76|67|328'),
+         Target_name != '16s') # grab desired subset of samples
+
+
+present.linreg <- 
+  repression.linreg %>% 
+  select(all_of(metadata_unique_columns), mean_N0) %>% # select only the mean data
+  
+  arrange(Target_name) %>% 
+  mutate(across(mean_N0, ~ formatC(.x, format = 'e', digits = 2))) %>% 
+  unique()
+
+write.csv(present.linreg, 'excel files/processed_data/q25_repressed_linreg.csv', na = '')
+
+# linregpcr plots ----
 
 # run linregPCR on spyder
+# run qc_linregpcr till line 66 (linreg.selected)
+
+repression_linreg.cq <- plot_facetted_assay(.data = repression.linreg,
+                                            .xvar_plot = assay_variable,
+                                            .yvar_plot = N0)
+
+rlrcq_horizontal <- 
+  {repression_linreg.cq + 
+  geom_point(aes(y = mean_N0), shape = '|', size = 5, show.legend = FALSE) + 
+  coord_flip() + 
+  facet_grid(rows = vars(Target_name)) +
+  theme(legend.position = 'top')} %>% 
+  
+  format_logscale_y() %>% 
+  print()
+
+ggsave(plot_as('q25_repression_linreg'), width = 5, height = 3)

@@ -56,7 +56,7 @@ list_of_general_functions <- c("10-process_qpcr.R",
                                "7-COVID specific_writing_funs.R",
                                "8-plot_mean_sd_jitter.R",
                                "9-plot_scatter.R",
-                               '12-facetted_assay_dot_plot.R',
+                               '12-plot_facetted_assay.R',
                                'g.13-std_curve_processing.R') # "0-old_general_functions.R"
 
 # Source all the functions listed above

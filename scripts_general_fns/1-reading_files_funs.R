@@ -56,3 +56,26 @@ get_template_for <- function(bait, sheet_url = sheeturls$plate_layouts_PK)
   plate_template <- read_plate_to_column(plate_template_raw, 'Sample_name_bulk') # convert plate template (Sample_names) into a single vector, columnwise
   
 }
+
+
+
+# gets plate layout from 96 well format and parse it into individual columns
+get_and_parse_plate_layout <- function(flnm)
+{
+  
+  plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) %>% # read samplenames from googlesheets
+    
+    # Parsing sample names from the google sheet table  
+    separate(`Sample_name_bulk`, # Split the components of the sample name bulk by delimiters ('-', '_', '.')
+             c('Target_name', 
+               'Sample_category',
+               'assay_variable',
+               'biological_replicates'),
+             sep = '-|_|\\.') %>% 
+    
+    
+    mutate(across('assay_variable', as.character)) %>% # useful when plasmid numbers are provided, will convert to text
+    mutate(across('biological_replicates', ~str_replace_na(., '')) ) # if no replicates are provided, puts a blank string ('')
+  
+  
+}

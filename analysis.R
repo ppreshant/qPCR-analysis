@@ -8,8 +8,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q25_S037_RAM repression_14-2-22'  
-title_name <-'q25_S037_RAM repression check'
+flnm <- 'q26_S030b_4-3-22'  
+title_name <-'q26_S030-M9 lysis'
 
 # options
 plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
@@ -76,20 +76,7 @@ plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; exc
 fl <- readqpcr(str_c('excel files/',flnm, '.xls')) # read excel file exported by Quantstudio
 
 # Read the sample names and metadata from google sheet
-plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) %>% # read samplenames from googlesheets
- 
-  # Parsing sample names from the google sheet table  
-  separate(`Sample_name_bulk`, # Split the components of the sample name bulk by delimiters ('-', '_', '.')
-           c('Target_name', 
-             'Sample_category',
-             'assay_variable',
-             'biological_replicates'),
-           sep = '-|_|\\.') %>% 
-  
-  
-  mutate(across('assay_variable', as.character)) %>% # useful when plasmid numbers are provided, will convert to text
-  mutate(across('biological_replicates', ~str_replace_na(., '')) ) # if no replicates are provided, puts a blank string ('')
-  
+plate_template <- get_and_parse_plate_layout(flnm)
 
 # this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
 sample_order = columnwise_index(fl) 
@@ -114,7 +101,7 @@ Cq_data <- fl$Results %>%
 if(experiment_mode == 'assay')
 {
   
-  # Parsing names ---- 
+  # Polishing data ---- 
   
   polished_cq.dat <- Cq_data %>% 
   

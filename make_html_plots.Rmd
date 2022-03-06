@@ -27,10 +27,11 @@ We want to test by qPCR if AHL is flipping any constructs. Using this file to no
 plt.cq
 
 # Horizontal orientation : for label readability
-horz.cq <- plt.cq + 
+horz.cq <- {plt.cq + 
   coord_flip() + 
   facet_grid(rows = vars(Target_name)) +
-  theme(legend.position = 'top')
+  theme(legend.position = 'top')} %>% 
+  print()
 
 
 
@@ -45,12 +46,32 @@ if(exists('plt.cq_w.std')) plt.cq_w.std
 ## Copies plot
 ``` {r copies1}
 
-plt.copies
+if(exists('plt.copies')) plt.copies
 
 
-if(exists('plt.copies_w.mean')) plt.copies_w.mean
+if(exists('plt.copies_w.mean')) 
+{
+  # regular plot
+  plt.copies_w.mean
+  
+  # logscale plot
+  log.copies_w.mean <- format_logscale_y(plt.copies_w.mean) %>% print
+  
+  # Horizontal orientation : for label readability
+  horz.copies_w.mean <- {log.copies_w.mean + 
+  coord_flip() + 
+  facet_grid(rows = vars(Target_name)) +
+  theme(legend.position = 'top')} %>% 
+    print()
+  
+  
+  # ggplotly
+  plotly::ggplotly(log.copies_w.mean)
+  
+  plotly::ggplotly(horz.copies_w.mean)
+  
+  }
 
-if(exists('plt.copies_w.mean')) format_logscale_y(plt.copies_w.mean) %>% print
 
 ```
 

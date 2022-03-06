@@ -8,11 +8,17 @@ Prashant K
 - Sample Setup sheet not exported, could just use Results
 - Currently there is not much advantage to using the new software, just use V1.5.2 till these are changed
  
- Streamlining code to modularly work with both cq or linregpcr data..?
+ Streamlining changes
+- [ ] Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader
+ 
+ 
+ Refactoring code to modularly work with both cq or linregpcr data..?
 [x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
 	- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
 Streamlining sample input: Can the `.x` replicate number be removed? It makes it harder to type in decimal dilution values in the `assay_variable` spot. 
+
+- [ ] Output processed linregpcr data from `linreg-post-processing.R` script
 
 ## RDML-linregPCR  
 ### Methodology questions

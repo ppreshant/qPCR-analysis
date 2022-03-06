@@ -18,7 +18,9 @@ Prashant K
 
 Streamlining sample input: Can the `.x` replicate number be removed? It makes it harder to type in decimal dilution values in the `assay_variable` spot. 
 
+Minor things
 - [ ] Output processed linregpcr data from `linreg-post-processing.R` script
+- [ ] Add N0 = 'Copies per sample, extrapolated' to labelling helper
 
 ## RDML-linregPCR  
 ### Methodology questions

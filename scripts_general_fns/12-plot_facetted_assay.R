@@ -18,8 +18,9 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
   # check missing variables
   if(is.null(enquo(.yvar_plot))) stop('Missing y axis variable for plot in plot_facetted_assay() call')  
   
-  # Get plot subtitle
+  # Get plot subtitle (translated from the table if entry exists)
   if(is.null(.subtitle.plot)) .subtitle.plot <- yaxis_translation[deparse(enexpr(.yvar_plot))]
+  if(is.na(.subtitle.plot)) .subtitle.plot <- deparse(enexpr(.yvar_plot)) # use full text if not in the translation table
   
   # plotting
   {ggplot(.data, aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}})) +

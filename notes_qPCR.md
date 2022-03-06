@@ -9,7 +9,7 @@ Prashant K
 - Currently there is not much advantage to using the new software, just use V1.5.2 till these are changed
  
  Streamlining changes
-- [ ] Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader
+- [_archive_] Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader? _This is unwise to do since there could be the same template that is used for more than 1 targets, and we can't trust that the replicates assigned using row_numbers() will be in the same order, if the samples were ordered before this step in some manner_
  
  
  Refactoring code to modularly work with both cq or linregpcr data..?

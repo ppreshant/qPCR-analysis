@@ -43,7 +43,7 @@ plasmid_translation <- c('328' = 'Ribo', # regex based translation to change x-a
 RNA_concs_raw <- 
   googlesheets4::read_sheet(
   ss = 'https://docs.google.com/spreadsheets/d/1d4k3pzR2nm8PnBeLntDbnlCXC92hIhrUyvwnsqtrpCA/edit#gid=584815397',
-  sheet = 'q20: Degradation expt',
+  sheet = 'q20,23: Stability expt',
   range = 'A3:E23',
   col_types = 'icinn') 
 
@@ -210,8 +210,8 @@ ggsave(str_c('qPCR analysis/Archive/', title_name, '-copies abstract.png'),
 # Estimating the unnormalized copy numbers (if RNA concs were not equal before qPCR)
 # Run after 2G
 
-RNA_after <- 
-  filter(RNA_concs, str_detect(`DNAse status`, 'Before')) %>% 
+RNA_after_dnase <- 
+  filter(RNA_concs, str_detect(`DNAse status`, 'After')) %>% 
   rename('time' = 'Timepoint (min)',
          'biological_replicates' = bio.replicate,
          'plasmid' = Plasmid) %>% 
@@ -221,7 +221,11 @@ RNA_after <-
 
 # estimate copies in undiluted RNA
 copies_and_RNA <- 
-  left_join(forplot_reduced.data, RNA_after) %>% 
+  
+  # join the selected : qpcr data to the Qubit concentrations
+  left_join(forplot_reduced.data, RNA_after_dnase) %>% 
+  
+  # extrapolate the qPCR copies (assuming efficiency of 2) to RNA if it were not diluted 
   mutate(undiluted_copies = Copies_proportional / diluted_RNA * `RNA concentration`,
          mean_undiluted_copies = mean(undiluted_copies)) #%>% 
 # filter(!Target_name == '16s')
@@ -327,3 +331,54 @@ ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized_fits.png'),
 
 # show dynamic graph
 plotly::ggplotly(plt.normalized_fits, dynamicTicks = T)
+
+
+# Plot the data not normalized 
+plt.undiluted <- {plot_facetted_assay(.data = copies_and_RNA,  # plotting function call with defaults
+                                       .xvar_plot = time,
+                                       .yvar_plot = undiluted_copies, # plot the fake copy # values
+                                       .colourvar_plot = plasmid, # colour with the primer pair 
+                                       .facetvar_plot = Target_name,  # facet by plasmid/ntc
+                                       points_plt.style = 'jitter') +
+    
+    geom_line(aes(y = mean_undiluted_copies), show.legend = FALSE) + # add a line connecting the mean
+    scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
+    
+    ggtitle(title_name, 
+            subtitle = 'Extrapolated copies of undiluted RNA')} %>% 
+  
+  format_logscale_y() %>% 
+  print()
+
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-undiluted.png'),
+       plt.undiluted,
+       width = 6,
+       height = 4)
+
+
+# Save data ----
+
+exponential_fit_data <- normalized_with_exponential_fit %>% 
+  
+  # Get fitted data for plotting lines
+  unnest(augmented) %>% 
+  
+  # remove nested and fits data
+  select(-data, -.fit) %>% 
+  
+  # order important data first
+  select(Target_name, time, normalized_undiluted_copies, .fitted, t.half.text, everything())
+
+
+write_csv(exponential_fit_data,
+          str_c('excel files/paper_data/provisional-', title_name, '-normalized.csv', sep = ''),
+          na = '')
+
+
+copies_and_RNA %>% 
+  
+  # arrange important columns first
+  select(Target_name, plasmid, time, undiluted_copies, mean_undiluted_copies, everything()) %>% 
+  
+write_csv(str_c('excel files/paper_data/provisional-', title_name, '.csv', sep = ''),
+          na = '')

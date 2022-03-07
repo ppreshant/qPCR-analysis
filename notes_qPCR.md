@@ -22,6 +22,10 @@ Minor things
 - [ ] Output processed linregpcr data from `linreg-post-processing.R` script
 - [ ] Add N0 = 'Copies per sample, extrapolated' to labelling helper
 
+
+(old) Standard curve workflow
+- [ ] Record the ID of the standard curve used in the `-processed` dataset for future lookup and easy reference
+
 ## RDML-linregPCR  
 ### Methodology questions
 - Can standards be combined post processing or does threshold need to be the same?

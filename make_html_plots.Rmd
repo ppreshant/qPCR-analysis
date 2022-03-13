@@ -34,7 +34,7 @@ plt.cq
 # Horizontal orientation : for label readability
 horz.cq <- {plt.cq_straight + 
   coord_flip() + 
-  facet_grid(rows = vars(Target_name)) +
+  facet_grid(rows = vars(Target_name), scales = 'free_y', space = 'free_y') +
   theme(legend.position = 'top')} %>% 
   print()
 
@@ -65,7 +65,7 @@ if(exists('plt.copies_w.mean'))
   # Horizontal orientation : for label readability
   horz.copies_w.mean <- {format_logscale_y(plt.copies_w.mean_straight) + 
   coord_flip() + 
-  facet_grid(rows = vars(Target_name)) +
+  facet_grid(rows = vars(Target_name), scales = 'free_y', space = 'free_y') +
   theme(legend.position = 'top')} %>% 
     print()
   

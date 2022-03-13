@@ -6,8 +6,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q12_328-330-RNAsimple_19-8-21'  # raw filename, without the "-processed" keywork
-title_name <-'P1 loop not required_q12'
+flnm <- 'q27_328 330_Std27_9-3-22'  # raw filename, without the "-processed" keywork
+title_name <-'q27_P1 loop is not required'
 
 # Input the data ----
 
@@ -18,22 +18,24 @@ title_name <-'P1 loop not required_q12'
 # Mess with the data ----
 
 # any custom processing goes here
-forplot_reduced.data <- filter(.df, str_detect(Sample_category, 'GMO kit'),
-                               !str_detect(assay_variable, 's328|NTC')) %>% # filter necessary data  
+forplot_reduced.data <- filter(.df, str_detect(Sample_category, 'RAM'),
+                               !str_detect(assay_variable, 's328|NTC|ntc'),
+                               !str_detect(Target_name, '16s')) %>% # filter necessary data  
   
   # separate(assay_var.label, into = c(assay_var.label, NA), sep = '\n') %>%  # display x axis for publication
   mutate(across(assay_var.identifier, ~ str_replace(., 'empty', '(-)')))
 
 # Plotting ----
 
-plt.copies_w.mean <- {plot_facetted_assay(.data = forplot_reduced.data,  # plotting function call with defaults
-                                          .yvar_plot = Copies.per.ul.template,
-                                          .xvar_plot = assay_var.identifier,
-                                          
-                                          .colourvar_plot = NULL, # remove colour: since only 1 Sample_category
-                                          points_plt.style = 'jitter') + 
-    
-    geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE) # plot mean
+plt.copies_w.mean <- 
+  {plot_facetted_assay(.data = forplot_reduced.data,  # plotting function call with defaults
+                       .yvar_plot = Copies.per.ul.template,
+                       .xvar_plot = assay_var.identifier,
+                       
+                       .colourvar_plot = NULL, # remove colour: since only 1 Sample_category
+                       points_plt.style = 'jitter') + 
+      
+      geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE) # plot mean
 } %>% 
   
   format_logscale_y() %>% # show logscale

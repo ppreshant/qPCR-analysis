@@ -10,10 +10,12 @@ Prashant K
  
  Streamlining changes
 - [_archive_] Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader? _This is unwise to do since there could be the same template that is used for more than 1 targets, and we can't trust that the replicates assigned using row_numbers() will be in the same order, if the samples were ordered before this step in some manner_
- 
+  - Can the `.x` replicate number be removed? It makes it harder to type in decimal dilution values in the `assay_variable` spot. 
+  - Make it backward compatible - could have a regex with `.[:digit:]$` detection in case replicates are specified
+
  
  Refactoring code to modularly work with both cq or linregpcr data..?
-[x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
+- [x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
 	- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
 Standard curve workflow
@@ -26,14 +28,12 @@ Standard curve workflow
 
 
 Minor things
-- [ ] Output processed linregpcr data from `linreg-post-processing.R` script
-- [ ] Add N0 = 'Copies per sample, extrapolated' to labelling helper
-Streamlining sample input: Can the `.x` replicate number be removed? It makes it harder to type in decimal dilution values in the `assay_variable` spot. 
-- [ ] Need to plot pseudolabels next to numbering for horizontal plot, what is the best way to do this without replotting? 
+- [x] Need to plot pseudolabels next to numbering for horizontal plot, ~~what is the best way to do this without replotting?~~ 
 
  ### Method/literature
  
- - [ ] What is the problem with re-using a standard curve from a different run? _Considering the inter-run variation paper from Ruijter, they suggest a scaling between runs, which should preserve the efficiency from the standard curve, but the intercept could change?_
+- [ ] What is the problem with re-using a standard curve from a different run? _Considering the inter-run variation paper from Ruijter, they suggest a scaling between runs, which should preserve the efficiency from the standard curve, but the intercept could change?_
+- [ ] what is the meaning of the intercept in the STD curve, why is it so variable across targets?
 
 ## RDML-linregPCR  
 
@@ -102,6 +102,10 @@ Melt curve does not return anything for the S019_25-11-19 file both in python an
 - [ ] _Read from an excel sheet of target-meltingtemps and add it in using python with a switch-case kind of statement_
 	- Use `fl.targets()[0]__setitem__('meltingTemperature', '70.0')`
 - meltingTemperature inside `target` only seems to be available in `rdml 1.3` ☹. Tried `fl.migrate_version_1_2_to_1_3` to fix
+
+Minor things
+- [ ] Output processed linregpcr data from `linreg-post-processing.R` script
+- [ ] Add N0 = 'Copies per sample, extrapolated' to labelling helper
 
 
 ### R-python integration

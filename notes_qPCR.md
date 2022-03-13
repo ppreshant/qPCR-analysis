@@ -16,17 +16,29 @@ Prashant K
 [x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
 	- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
-Streamlining sample input: Can the `.x` replicate number be removed? It makes it harder to type in decimal dilution values in the `assay_variable` spot. 
+Standard curve workflow
+- [ ] Record the ID of the standard curve used in the `-processed` dataset for future lookup and easy reference. _output it into the html file for now_
+- [x] Add a column for master mix in std curve data output (to be filled manually)
+	- [ ] Can grab the master mix type from above the template in the future _(but is complicated when there is a mix of things on the plate)_  
+- [x] Save the std curve into the bad std folder if rejected
+	- [ ] Could also save the raw data, but add a column to mark std accepted or rejected
+- [ ] How to work with multiple targets on plate which require multiple standard curve numbers? _Currently can rename them to the same number by hand and note in alt name their original name_
+
 
 Minor things
 - [ ] Output processed linregpcr data from `linreg-post-processing.R` script
 - [ ] Add N0 = 'Copies per sample, extrapolated' to labelling helper
+Streamlining sample input: Can the `.x` replicate number be removed? It makes it harder to type in decimal dilution values in the `assay_variable` spot. 
+- [ ] Need to plot pseudolabels next to numbering for horizontal plot, what is the best way to do this without replotting? 
 
-
-(old) Standard curve workflow
-- [ ] Record the ID of the standard curve used in the `-processed` dataset for future lookup and easy reference
+ ### Method/literature
+ 
+ - [ ] What is the problem with re-using a standard curve from a different run? _Considering the inter-run variation paper from Ruijter, they suggest a scaling between runs, which should preserve the efficiency from the standard curve, but the intercept could change?_
 
 ## RDML-linregPCR  
+
+Verdict: **Linregpcr is abandoned for RAM project** due to baseline errors caused by early amplifications in 16s (high abundance)
+
 ### Methodology questions
 - Can standards be combined post processing or does threshold need to be the same?
 	- Standards will have their own efficiency (_expected due to DNA context, different contaminant concentrations etc._). So it needs to be analyzed separately anyways/the algorithm takes care if identified as calibrant? _I don't see any mathematical problem with using different threshold -- it is set after wol is identified, in the window of the linear region anyway right?__
@@ -61,15 +73,28 @@ _tips for RDML:_
 
 **Problems with rdmlpython** : Is giving baseline error in a few samples, I cannot figure out the reason. 
 
-### amplification analysis
+### amplification analysis, qc
 Works for S019_25-11-19 file (SYBR) and q25_S037_RAM repression_14-2-22 (Probe) with recent changes pulled on _18/2/22_
 > (old, before pulling) Does not work for q25 (TAQMAN) file with `rawFluor[rowCount, cyc] = float(fluor) ; IndexError: index 72 is out of bounds for axis 0 with size 72`
 
 Probe based assays with late amplification (ex: `U64`) is showing very low efficiency (due to plateau phase not present) -- Is there some tweak that can rescue the analysis?
 - [ ] check if the data makes sense, low efficiencies are reliable
-	- quick amplifications of 16s are not being analyzed due to `baseline error`, considering that we cannot dilute the samples, verdict will be to ABORT LINREGPCR mission 
-	- window of linearity data does not line up with curves..	
+	- quick amplifications of 16s are not being analyzed due to `baseline error`, _asked on the github page if there is a straightforward fix_ 
+	- Considering that we cannot dilute the samples, verdict will be to ABORT LINREGPCR mission 
+	
+	Improving analysis for flagged samples
+	- [ ] How to troubleshoot baseline error due to very early amplifications?
+	- [ ] I see error `Cq < 10; N0 unreliable` while analyzing q12 data for 16s. Why is this unreliable? 
+	
+Understanding baseline error
+![[baseline-error_q20b.png]]
+Othwerise very similar curves with early amplification have problems with baseline identification if they lack the initial ~ flatness. 
+They also inaccurately say `no plateau` since that is linked to finding a baseline?
 
+### python `linregpcr-analyze.py`
+- [ ] directory issues
+There is something wrong it's interaction with directory, calling `os.chdir` inside the function seems to freeze it's directory state at when the script was run, so any new files added are not found by this script 	
+	
 ### melt curve analysis
 
 Melt curve does not return anything for the S019_25-11-19 file both in python and online

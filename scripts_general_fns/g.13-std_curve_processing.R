@@ -81,6 +81,11 @@ process_standard_curve <- function(flnm, .dat_pol)
    Do you wish to continue with saving the standard curve parameters? Select NO if you wish to change something and re-run the script", sep=" "))
   
   if (proceed_with_standards == 2){
+    
+    # save rejected standards into separate folder 
+    ggsave(str_c('qPCR analysis/Standards/bad standards/', fl_namer , '.png'), width = 5, height = 4)
+    
+    # Stop workflow with an error message
     stop("Cancel selected, script aborted. Standards not saved.")
   }
   
@@ -99,7 +104,8 @@ process_standard_curve <- function(flnm, .dat_pol)
   ) %>% 
     mutate(Target_name = std_table$dat$`Target_name`) %>% 
     select(Target_name, everything()) %>% # bring Target_name to the first column position 
-    mutate(ID = fl_namer, .before = 1) # add the run ID
+    mutate(ID = fl_namer, .before = 1) %>%  # add the run ID
+    mutate('master mix' = '') # add an empty entry for master mix -- record manually
   
   # formatting std curve points for writing (archive for meta-analysis of freeze thaw effects)
   clean_std_data <- std_results %>% # reorder columns 

@@ -19,7 +19,12 @@ knitr::opts_chunk$set(echo = F) #, fig.width = 10, fig.height = 5)
 
 ## Goal of the analysis
 
-We want to test by qPCR if AHL is flipping any constructs. Using this file to normalize copy #s to that of the Backbone
+Analyzing qPCR data. Using Cq values from quantstudio application. Convert to absolute quantification using standard curves  
+
+``` {r stdcurvename}
+if(exists('std_to_retrieve')) str_c('Using Standard curve : ', std_to_retrieve)
+
+```
 
 ## Cq Plots
 
@@ -27,7 +32,7 @@ We want to test by qPCR if AHL is flipping any constructs. Using this file to no
 plt.cq
 
 # Horizontal orientation : for label readability
-horz.cq <- {plt.cq + 
+horz.cq <- {plt.cq_straight + 
   coord_flip() + 
   facet_grid(rows = vars(Target_name)) +
   theme(legend.position = 'top')} %>% 
@@ -58,7 +63,7 @@ if(exists('plt.copies_w.mean'))
   log.copies_w.mean <- format_logscale_y(plt.copies_w.mean) %>% print
   
   # Horizontal orientation : for label readability
-  horz.copies_w.mean <- {log.copies_w.mean + 
+  horz.copies_w.mean <- {format_logscale_y(plt.copies_w.mean_straight) + 
   coord_flip() + 
   facet_grid(rows = vars(Target_name)) +
   theme(legend.position = 'top')} %>% 

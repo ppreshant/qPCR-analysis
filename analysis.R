@@ -8,17 +8,21 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q26_S030b_4-3-22'  
-title_name <-'q26_S030-M9 lysis'
+flnm <- 'q27_328 330_Std27_9-3-22'  
+title_name <-'q27_P1 loop'
 
 # options
-plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
+plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
 # absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve - calculated or gathered from old std curves 
 # raw_quantification = Cq values are plotted
 
+# Standard curve options
 skip.std.curves_already.exist <- FALSE # If TRUE, will retrieve std curve data from the google sheet
+# This will pick the standard curve within the filename '.._Stdx_..', or use default if not found
+# This pro-active user setting prevents duplicates being processed into the sheet when rerunning script
+
 default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
-# This pro-active user setting prevents duplicates being processed into the sheet
+
 
 # Labelling translators ----
 
@@ -120,7 +124,10 @@ if(experiment_mode == 'assay')
                                      assay_variable, # clean up label when no identifier is present 
                                      str_c(assay_var.identifier, assay_variable, sep = '\n')) ) %>% # make compound label
     
-    select(Target_name, Sample_category, assay_var.label, CT, everything())
+    # change label for horizontal plots
+    mutate(assay_var.horz_label = str_replace(assay_var.label, '\n', ' ')) %>% 
+    
+    select(Target_name, Sample_category, assay_var.horz_label, CT, everything())
   
   # Cq plot ----
   
@@ -130,6 +137,7 @@ if(experiment_mode == 'assay')
   
   # plot 40 - Cq
   plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT)
+  plt.cq_straight <- plot_facetted_assay(.yvar_plot = 40-CT, .xvar_plot = assay_var.horz_label)
   
   # Tm plots ----
   
@@ -225,7 +233,15 @@ if(experiment_mode == 'assay')
     # plot absolute copies per ul template
     plt.copies <- plot_facetted_assay(.data = absolute_dat, .yvar_plot = Copies.per.ul.template)
     
-    plt.copies_w.mean <- plot_facetted_assay(.data = absolute_dat, .yvar_plot = Copies.per.ul.template, points_plt.style = 'jitter') + 
+    plt.copies_w.mean <- plot_facetted_assay(.data = absolute_dat, 
+                                             .yvar_plot = Copies.per.ul.template, 
+                                             points_plt.style = 'jitter') + 
+      geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
+    
+    # same plot with x-labels in a single line
+    plt.copies_w.mean_straight <- plot_facetted_assay(.data = absolute_dat, 
+                                            .xvar_plot = assay_var.horz_label,  .yvar_plot = Copies.per.ul.template, 
+                                            points_plt.style = 'jitter') + 
       geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
       
   }

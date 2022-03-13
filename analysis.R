@@ -1,8 +1,6 @@
 # Read in the file and do manual analysis and plotting
 # Author: Prashant Kalvapalle;  October 10 2018
 
-# The last part of the script contains important codes from the console that were used for specific situations : These will be commented
-
 source('./0-general_functions_main.R') # Source the general_functions file before running this
 
 # User inputs  ----
@@ -13,16 +11,17 @@ title_name <-'q27_P1 loop'
 
 # options
 plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
-# absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve - calculated or gathered from old std curves 
+# absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve.. 
+# ..calculated or gathered from old std curves 
 # raw_quantification = Cq values are plotted
 
 # Standard curve options
-skip.std.curves_already.exist <- FALSE # If TRUE, will retrieve std curve data from the google sheet
+skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
 # This will pick the standard curve within the filename '.._Stdx_..', or use default if not found
 # This pro-active user setting prevents duplicates being processed into the sheet when rerunning script
 
 default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
-
+force.use_default.std <- TRUE # forces the use of default std - use when std curve in the current file is bad
 
 # Labelling translators ----
 
@@ -58,7 +57,9 @@ experiment_mode <- 'assay' # options ('old_assay' ; 'assay') ; future implementa
 # Assay mode features
 
 errorbar_width = 0.1; # width of errorbars - emperically change
-plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); Determines which variable is chosen for plotting in different colours
+# Determines which variable is chosen for plotting in different colours
+plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); 
+
 std_par <- tibble(                       
   # Input the slope and y_intercept from standard curve of various primer pairs/targets here 
   # Target should match Target field (provided in excel sheet - Sample input reference.csv) 
@@ -69,8 +70,11 @@ std_par <- tibble(
 plot_select_template <- '' # Options ('' or 'something') ; filters a particular template name to plot 
 plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
 plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point
-plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; exclude Sample_category for plotting; ex: Controls etc.
-plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; exclude assay_variables for plotting; ex: no template control etc.
+# exclude Sample_category for plotting; ex: Controls etc.
+plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; 
+# exclude assay_variables for plotting; ex: no template control etc.
+plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; 
+
 
 
 
@@ -82,12 +86,15 @@ fl <- readqpcr(str_c('excel files/',flnm, '.xls')) # read excel file exported by
 # Read the sample names and metadata from google sheet
 plate_template <- get_and_parse_plate_layout(flnm)
 
-# this gives a vector to order the samples columnwise in the PCR plate or strip (by default : data is shown row-wise) => This command will enable plotting column wise order
+# this gives a vector to order the samples columnwise in the PCR plate or strip 
+# (by default : data is shown row-wise) => This command will enable plotting column wise order
 sample_order = columnwise_index(fl) 
 
 
 Cq_data <- fl$Results %>% 
-  select(`Well Position`, CT, starts_with('Tm'), `Target Name`) %>%  # select only the results used for plotting, calculations etc.
+  
+  # select only the results used for plotting, calculations etc.
+  select(`Well Position`, CT, starts_with('Tm'), `Target Name`) %>%  
   .[sample_order,] %>%  # and arrange them according to sample order
   left_join(plate_template) %>% # join the samples names from the spreadsheet
   
@@ -158,7 +165,8 @@ if(experiment_mode == 'assay')
                  scales = 'free_x', space = 'free_x') +
       xlab(plot_assay_variable)
     
-    plt.alltm_2 <- Tm_data %>% ggplot(.) + aes(x = assay_variable, y = Tm) + geom_point(aes(color = `Peak number`), size = 2) +
+    plt.alltm_2 <- Tm_data %>% ggplot(.) + aes(x = assay_variable, y = Tm) + 
+      geom_point(aes(color = `Peak number`), size = 2) +
       theme_classic() + scale_color_brewer(palette="Set1") + 
       theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
       ggtitle(paste(title_name,': Melting')) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') +
@@ -176,7 +184,9 @@ if(experiment_mode == 'assay')
     { # if Std curve already exists in sheet, read from google sheet
       
       std_to_retrieve <- str_extract(flnm, 'Std[:alnum:]*') # Find the Std id to retrieve
-      std_to_retrieve <- if(is.na(std_to_retrieve)) default_std.to.retrieve else std_to_retrieve # Resort to default if file holds no Std
+      std_to_retrieve <- 
+        if(force.use_default.std || # if forced to use the default or if Std isn't in the file
+           is.na(std_to_retrieve)) default_std.to.retrieve else std_to_retrieve # Resort to default if file holds no Std
       
       std_par <- read_sheet(sheeturls$plate_layouts_PK, sheet = 'qPCR Std curves', range = 'A:G', col_types = 'ccnnnnn') %>% 
       filter(str_detect(ID, std_to_retrieve ))
@@ -190,12 +200,18 @@ if(experiment_mode == 'assay')
         {std_par <- process_standard_curve(flnm, polished_cq.dat) # process the standards within the file
         
         # plot a cq graph with standards included
-        plt.cq_w.std <- plot_facetted_assay(.data =  polished_cq.dat, .yvar_plot = 40-CT, .xvar_plot = assay_variable) + # plot 40 - Cq
-          theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
+        plt.cq_w.std <- 
+          plot_facetted_assay(.data =  polished_cq.dat, 
+                              .yvar_plot = 40-CT, .xvar_plot = assay_variable) + # plot 40 - Cq
+          theme(plot.title = element_text(hjust = 0.5), 
+                axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
         
         # Plot Tm1 graph with standards included
-        plt.tm1_w.std <- plot_facetted_assay(.data = polished_cq.dat, .yvar_plot = Tm1, .xvar_plot = assay_variable) + 
-          theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
+        plt.tm1_w.std <- 
+          plot_facetted_assay(.data = polished_cq.dat, 
+                              .yvar_plot = Tm1, .xvar_plot = assay_variable) + 
+          theme(plot.title = element_text(hjust = 0.5), 
+                axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
         }
         
         
@@ -227,8 +243,6 @@ if(experiment_mode == 'assay')
       ) %>% 
       unnest(cols = c(w.copy.data)) 
     
-      # do(., absolute_backcalc(., std_par)) # iteratively calculates copy #'s from standard curve parameters of each Target_name
-
     
     # plot absolute copies per ul template
     plt.copies <- plot_facetted_assay(.data = absolute_dat, .yvar_plot = Copies.per.ul.template)
@@ -250,21 +264,26 @@ if(experiment_mode == 'assay')
   # if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
   # { # computing ratio of copy #s of targets : flipped and unflipped to the backbone
   #   
-  #   sel <- absolute_dat %>% select(Sample_category,assay_variable,`Primer pair`,Target,`Copies.per.ul.template`) # select relevant columns (other numeric columns will throw errors)
+  #   sel <- absolute_dat %>% select(Sample_category,assay_variable,`Primer pair`,Target,`Copies.per.ul.template`) 
+  #   # select relevant columns (other numeric columns will throw errors)
   #   
   #   sel_b <- sel %>% filter(Target == 'Backbone') # filter out each Target
   #   sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped');
   #   
-  #   sel_f %<>% mutate("Normalized Copies.per.ul.template" = sel_f$`Copies.per.ul.template`/sel_b$`Copies.per.ul.template`); # make ratios to the backbone 
+  #   # make ratios to the backbone
+  #   sel_f %<>% mutate("Normalized Copies.per.ul.template" = sel_f$`Copies.per.ul.template`/sel_b$`Copies.per.ul.template`);  
   #   sel_u %<>% mutate("Normalized Copies.per.ul.template" = sel_u$`Copies.per.ul.template`/sel_b$`Copies.per.ul.template`);
   #   
   #   results_ratio <- bind_rows(sel_f, sel_u) # bind results into 1 tibble (for easy plotting)
   #   
   #   # plotting the normalized copy #'s
-  #   plt_norm <- results_ratio %>% ggplot(aes(x = `assay_variable`, y = `Normalized Copies.per.ul.template`, color = Target)) +   # plotting
-  #     geom_point(size = 2) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') # plot points and facetting
-  #   
-  #   plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() # formatting plot, axes labels, title and logcale plotting
+  # plt_norm <- results_ratio %>% 
+  # ggplot(aes(x = `assay_variable`,
+  #            y = `Normalized Copies.per.ul.template`, color = Target)) +   # plotting
+  # geom_point(size = 2) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') # plot points and facetting
+  # 
+  #   plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() 
+  #   # formatting plot, axes labels, title and logcale plotting
   #   
   #   print(plt_norm)
   # }

@@ -79,3 +79,16 @@ get_and_parse_plate_layout <- function(flnm)
   
   
 }
+
+
+#' Read a bunch of processed data sheets and join them, including the qxx as run_ID
+#' @param .flnms vector of strings with name of file, without the '-processed.csv' 
+get_processed_datasets <- function(.flnms)
+{
+  .df <- map_dfr(.flnms, 
+                 ~ read_csv(str_c('excel files/processed_data/', .x , '-processed.csv')) %>%  # read excel file exported by Quantstudio
+                   mutate(run_ID = str_extract(.x, 'q[:alnum:]*')) # add the run_ID from the filename
+  )
+  
+  
+}

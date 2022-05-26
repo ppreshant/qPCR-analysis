@@ -6,8 +6,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q27_328 330_Std27_9-3-22'  
-title_name <-'q27_P1 loop'
+flnm <- 'q30_RAM probe Std30_24-5-22'  
+title_name <-'Std30'
 
 # options
 plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
@@ -16,12 +16,16 @@ plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' o
 # raw_quantification = Cq values are plotted
 
 # Standard curve options
-skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
+skip.std.curves_already.exist <- FALSE # If TRUE, will retrieve std curve data from the google sheet
 # This will pick the standard curve within the filename '.._Stdx_..', or use default if not found
 # This pro-active user setting prevents duplicates being processed into the sheet when rerunning script
+# FALSE implies stds will be processed from file
 
 default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
-force.use_default.std <- TRUE # forces the use of default std - use when std curve in the current file is bad
+force.use_default.std <- FALSE # forces the use of default std - use when std curve in the current file is bad
+
+dilutions_to_truncate <- 2 # indicate the last n dilutions to be trimmed away before making std curve, default 0
+
 
 # Labelling translators ----
 
@@ -197,7 +201,7 @@ if(experiment_mode == 'assay')
         
         # if it is a standard curve holding file (Stdx), call standard curve processor
         if(str_detect(flnm, 'Std[:digit:]*')) 
-        {std_par <- process_standard_curve(flnm, polished_cq.dat) # process the standards within the file
+        {std_par <- process_standard_curve(flnm, polished_cq.dat, dilutions_to_truncate) # process the standards within the file
         
         # plot a cq graph with standards included
         plt.cq_w.std <- 

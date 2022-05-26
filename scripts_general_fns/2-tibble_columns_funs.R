@@ -52,3 +52,29 @@ paste_without_NAs <- function(.string1, .string2, .sep = "-")
 }
 
 # Calculate the percentage of the B117 variant in the data after pivoting
+# where is the function?
+
+
+
+
+# function to remove last n quantities in std curve data 
+
+remove_last_n_dilutions <- function(.data, dilutions_to_truncate = 0)
+{
+  # Group data by each target_name 
+  group_by(.data, Target_name) %>% 
+    
+    filter(!str_detect(Sample_category, 'Std') | # either the sample is not Std or satisfies below critereon
+             
+             Quantity %in% # check for Quantity present in the top (total - n) unique values for each target
+             {filter(., str_detect(Sample_category, 'Std')) %>%  # only Stds
+                 select(Target_name, Quantity) %>%  # select only relevant columns
+                 unique() %>% 
+                 slice_max(order_by = Quantity, n = -dilutions_to_truncate) %>% # top (total - n) unique values
+                 pull(Quantity)
+             }) 
+  # Warning : imperfect matching of all quantity values without context of Target_name 
+  # -- fails in rare case when multiple targets have identical concentration values 
+  # that are shifted so one must be included and other excluded
+  
+}

@@ -9,14 +9,14 @@ Prashant K
 - Currently there is not much advantage to using the new software, just use V1.5.2 till these are changed
  
  Streamlining changes
-- [_archive_] Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader? _This is unwise to do since there could be the same template that is used for more than 1 targets, and we can't trust that the replicates assigned using row_numbers() will be in the same order, if the samples were ordered before this step in some manner_
-  - Can the `.x` replicate number be removed? It makes it harder to type in decimal dilution values in the `assay_variable` spot. 
-  - Make it backward compatible - could have a regex with `.[:digit:]$` detection in case replicates are specified
+- [archive] Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader? _This is unwise to do since there could be the same template that is used for more than 1 targets, and we can't trust that the replicates assigned using row_numbers() will be in the same order, if the samples were ordered before this step in some manner_
+  - _Use case:_ It makes it harder to type in *decimal dilution values* in the `assay_variable` spot. 
+	  - Can make it backward compatible - could have a regex with `.[:digit:]$` detection in case replicates are specified
 
  
  Refactoring code to modularly work with both cq or linregpcr data..?
 - [x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
-	- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
+		- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
 Standard curve workflow
 - [ ] Record the ID of the standard curve used in the `-processed` dataset for future lookup and easy reference. _output it into the html file for now_
@@ -25,7 +25,9 @@ Standard curve workflow
 - [x] Save the std curve into the bad std folder if rejected
 	- [ ] Could also save the raw data, but add a column to mark std accepted or rejected
 - [ ] How to work with multiple targets on plate which require multiple standard curve numbers? _Currently can rename them to the same number by hand and note in alt name their original name_
-
+- [ ] **Decimal problem** : decimals in Std curve quantity clashes with the biological replicate field. 
+	- Solve by removing replicates from layout -- chcek if NA in replicates for multiple ones causes problems in the pipeline
+	- Whatever comes into the biological replicate field should be added back to the Quantity with a decimal 
 
 Minor things
 - [x] Need to plot pseudolabels next to numbering for horizontal plot, ~~what is the best way to do this without replotting?~~ 
@@ -37,9 +39,20 @@ Minor things
 
 ## RDML-linregPCR  
 
-Verdict: **Linregpcr is abandoned for RAM project** due to baseline errors caused by early amplifications in 16s (high abundance)
+Verdict: **Linregpcr is abandoned for RAM project** due to baseline errors caused by early amplifications in 16s (high abundance) and no plateau for U64 probe assays
+- Could try to use for SYBR dye assays though? (19/5/22) 
 
 ### Methodology questions
+
+- When is linregpcr workable?
+	- Plateau present
+	- Not too early amplifications
+	- Reasonable (?) baseline to plateau distance - [Tuomi, Jari Michael, et al. "Bias in the Cq value observed with hydrolysis probe based quantitative PCR can be corrected with the estimated PCR efficiency value." _Methods_ 50.4 (2010): 313-322.](https://www-sciencedirect-com.ezproxy.rice.edu/science/article/pii/S1046202310000538?via%3Dihub)
+	> An important factor influencing the baseline estimation is the baseline-to-plateau distance (Δ_Rn_) in the raw, i.e. not baseline corrected, data. This distance is determined by intrinsic properties of the fluorescent reporter and on the primer and probe concentrations .. Δ_Rn_ values recorded with hydrolysis probes, however, are reported to be significantly lower due to the use of FRET based chemistries that display inefficient quenching. For these chemistries it is important to choose a reporter/quencher pair that gives the largest baseline-to-plateau difference. This will facilitate the estimation of the correct baseline value and thus reduce the variation in observed PCR efficiency values
+	
+	> . In optimized DNA dye-based assays, baseline fluorescence is below 1% of the fluorescence at the end of the PCR run; in probe-based assays the baseline may still be as high as 10% of the observed fluorescence. [Web based linregpcr, BMCbioinformatics, 2021](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-04306-1)
+
+Standards
 - Can standards be combined post processing or does threshold need to be the same?
 	- Standards will have their own efficiency (_expected due to DNA context, different contaminant concentrations etc._). So it needs to be analyzed separately anyways/the algorithm takes care if identified as calibrant? _I don't see any mathematical problem with using different threshold -- it is set after wol is identified, in the window of the linear region anyway right?__
 - Should the standard calibrant be diluted or not? _dilution introduces errors, not diluting will increase chances of NTC for future runs_
@@ -77,7 +90,7 @@ _tips for RDML:_
 Works for S019_25-11-19 file (SYBR) and q25_S037_RAM repression_14-2-22 (Probe) with recent changes pulled on _18/2/22_
 > (old, before pulling) Does not work for q25 (TAQMAN) file with `rawFluor[rowCount, cyc] = float(fluor) ; IndexError: index 72 is out of bounds for axis 0 with size 72`
 
-Probe based assays with late amplification (ex: `U64`) is showing very low efficiency (due to plateau phase not present) -- Is there some tweak that can rescue the analysis?
+Probe based assays with late amplification (ex: `U64`) is showing very low efficiency (_due to plateau phase not present_) -- Is there some tweak that can rescue the analysis?
 - [ ] check if the data makes sense, low efficiencies are reliable
 	- quick amplifications of 16s are not being analyzed due to `baseline error`, _asked on the github page if there is a straightforward fix_ 
 	- Considering that we cannot dilute the samples, verdict will be to ABORT LINREGPCR mission 

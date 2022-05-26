@@ -9,7 +9,7 @@
 
 
 
-process_standard_curve <- function(flnm, .dat_pol)
+process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
 { # note: Quantity of copies/well must be written in the template sheet for the standards
   
   # Preliminary naming ----
@@ -33,8 +33,8 @@ process_standard_curve <- function(flnm, .dat_pol)
   std_results <- .dat_pol %>% 
     
     filter(str_detect(Sample_category, 'Std') | 
-             str_detect(assay_variable, 'NTC')) %>% # only retain standards or NTCs
-    mutate(Quantity = str_replace(assay_variable, 'NTC', '0') %>% as.numeric) %>%  # replacing NTC with 0 and make numeric
+             str_detect(assay_variable, 'NTC|ntc')) %>% # only retain standards or NTCs
+    mutate(Quantity = str_replace(assay_variable, 'NTC|ntc', '0') %>% as.numeric) %>%  # replacing NTC with 0 and make numeric
     
     filter(Target_name %in% # only retain the targets which have standards
              (filter(., 
@@ -42,7 +42,10 @@ process_standard_curve <- function(flnm, .dat_pol)
                 pull(Target_name)) 
            ) %>% 
     # optional filtering to remove low concentration points in standard curve
-    filter(Quantity > 1| Quantity == 0) # filtering only standard curve within the linear range
+    filter(Quantity > 1| Quantity == 0) %>%  # filtering only standard curve with realistic quantity
+    
+    # # Remove the bottom x dilutions by user input : to fine tune the std curve
+    remove_last_n_dilutions(dilutions_to_truncate = dilutions_to_truncate)
   
   # plotting ----
   
@@ -78,7 +81,9 @@ process_standard_curve <- function(flnm, .dat_pol)
   proceed_with_standards <- menu(c('Yes', 'No'), title = paste("Check the standard curve plot:", 
                                                                fl_namer, 
                                                                "on the right side in Rstudio. 
-   Do you wish to continue with saving the standard curve parameters? Select NO if you wish to change something and re-run the script", sep=" "))
+                                                               
+   Do you wish to continue with saving the standard curve parameters? 
+   Select NO if you wish to truncate any dilutions (using 'dilutions_to_truncate') or change something else and re-run the script", sep=" "))
   
   if (proceed_with_standards == 2){
     

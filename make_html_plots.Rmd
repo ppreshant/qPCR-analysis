@@ -35,7 +35,8 @@ plt.cq
 horz.cq <- {plt.cq_straight + 
   coord_flip() + 
   facet_grid(rows = vars(Target_name), scales = 'free_y', space = 'free_y') +
-  theme(legend.position = 'top')} %>% 
+  theme(legend.position = 'top') + 
+    xlab('') + ylab('40 - Cq')} %>% # x and y refers to original axes before coord_flip
   print()
 
 

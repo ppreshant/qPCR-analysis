@@ -6,8 +6,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q30_RAM probe Std30_24-5-22'  
-title_name <-'Std30'
+flnm <- 'q32_S046 E coli dils_6-6-22'  
+title_name <-'S046 E coli dilutions'
 
 # options
 plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
@@ -16,25 +16,22 @@ plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' o
 # raw_quantification = Cq values are plotted
 
 # Standard curve options
-skip.std.curves_already.exist <- FALSE # If TRUE, will retrieve std curve data from the google sheet
+skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data from the google sheet
 # This will pick the standard curve within the filename '.._Stdx_..', or use default if not found
 # This pro-active user setting prevents duplicates being processed into the sheet when rerunning script
 # FALSE implies stds will be processed from file
+dilutions_to_truncate <- 0 # indicate the last n dilutions to be trimmed away before making std curve, default 0
 
-default_std.to.retrieve <-  'Std7' # if the file name doesn't hold any std curve, it will default to this
-force.use_default.std <- FALSE # forces the use of default std - use when std curve in the current file is bad
+# Default standards : When using same standards for multiple plates (not considered best practice..)
+default_std.to.retrieve <-  'Std30' # if the file name doesn't hold any std curve, it will default to this
+force.use_default.std <- TRUE # forces the use of default std from google sheet, instead of from current file
 
-dilutions_to_truncate <- 2 # indicate the last n dilutions to be trimmed away before making std curve, default 0
 
 
 # Labelling translators ----
 
 # Subtitle labeller (for y axis variables)
-yaxis_translation <- c('40 - CT' = '40 - Cq',
-                       'Copies_proportional' = 'Copies proportional (a.u)',
-                       'Tm1' = 'Melting temperature - peak 1',
-                       'Tm' = 'Melting temperature',
-                       'Copies.per.ul.template' = 'Copies per uL template')
+# variable : yaxis_translation : Check script 16-user_parameters.R
 
 # Label x axis (assay_variable) in easy to interpret form 
 lst_assay.vars_translation <- list('gfp' = c('89', '315'),

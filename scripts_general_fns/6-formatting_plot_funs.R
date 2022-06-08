@@ -26,21 +26,22 @@ format_classic <- function(plt)
 # plot formatting function : format as logscale
 format_logscale_y <- function(plt)
 { # extra comments
-  plt <- plt +
+  plt <- {plt +
     scale_y_log10(  # logscale for y axis with tick marks
       labels = fancy_scientific
       #labels = scales::trans_format("log10", scales::math_format(10^.x) )
-    )
+    )} %>% print()
 }
 
 # plot formatting function : format as logscale x
 format_logscale_x <- function(plt)
 { # extra comments
-  plt <- plt +
+  plt <- {plt +
     scale_x_log10(  # logscale for y axis with tick marks
       labels = fancy_scientific
       #labels = scales::trans_format("log10", scales::math_format(10^.x) )
-    )
+    )} %>% 
+    print()
 }
 
 

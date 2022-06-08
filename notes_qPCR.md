@@ -7,11 +7,12 @@ Prashant K
 - Chemistry field is missing -- make it work with the dye column instead
 - Sample Setup sheet not exported, could just use Results
 - Currently there is not much advantage to using the new software, just use V1.5.2 till these are changed
- 
- Streamlining changes
-- [archive] Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader? _This is unwise to do since there could be the same template that is used for more than 1 targets, and we can't trust that the replicates assigned using row_numbers() will be in the same order, if the samples were ordered before this step in some manner_
+
+### Streamlining changes
+- (_implement_) Make a conditional to plate layout reader if decimal point should be read vs biological replicates -- or (_alternatively_) Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader? 
+	- _Problem with completely removing: the same template is used for more than 1 targets but the order is not consistent.., and we can't trust that the replicates assigned using row_numbers() will be in the correct order; relevant for ratio, normalization or for any matched statistical analysis_
   - _Use case:_ It makes it harder to type in *decimal dilution values* in the `assay_variable` spot. 
-	  - Can make it backward compatible - could have a regex with `.[:digit:]$` detection in case replicates are specified
+	  - Can make it backward compatible - could have a regex with `.[:digit:]$` detection in case replicates are specified :: How will this differentiate with a single decimal value after the point?
 
  
  Refactoring code to modularly work with both cq or linregpcr data..?
@@ -25,12 +26,19 @@ Standard curve workflow
 - [x] Save the std curve into the bad std folder if rejected
 	- [ ] Could also save the raw data, but add a column to mark std accepted or rejected
 - [ ] How to work with multiple targets on plate which require multiple standard curve numbers? _Currently can rename them to the same number by hand and note in alt name their original name_
-- [ ] **Decimal problem** : decimals in Std curve quantity clashes with the biological replicate field. 
+- [ ] _(Ignore the tiny value after decimal..)_: Decimal problem : decimals in Std curve quantity clashes with the biological replicate field. 
 	- Solve by removing replicates from layout -- chcek if NA in replicates for multiple ones causes problems in the pipeline
 	- Whatever comes into the biological replicate field should be added back to the Quantity with a decimal 
 
-Minor things
+### features
 - [x] Need to plot pseudolabels next to numbering for horizontal plot, ~~what is the best way to do this without replotting?~~ 
+- [ ] Output qPCR std curve parameters at the begining of the html output
+	- Here: ![[Pasted image 20220608105107.png]]
+
+### Bugs
+- [ ] Check if the 4 ul template volume is being taken into account in std curve processing or regular sample processing. _Since labels say copies per ul template, this needs to be accurate_
+- [ ] Make `.xaxis.label.custom` and optional variable in `12-plot_facetted_assay.R`
+
 
  ### Method/literature
  

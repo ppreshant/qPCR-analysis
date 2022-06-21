@@ -6,8 +6,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q32_S046 E coli dils_6-6-22'  
-title_name <-'S046 E coli dilutions'
+flnm <- 'q33_RNA stability-3_20-6-22'  
+title_name <-'q33_RAM stability-3'
 
 # options
 plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 

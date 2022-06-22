@@ -11,7 +11,8 @@ _standard curve_ : Include Stdxx (xx = numbering) in the excel file name to proc
 	- If you haven't you need to install R, Rstudio, git; and install the packages listed with the library commands in `0-general_functions_main.R` script using `install.packages('..')`_
 3. *Set metadata sheets*: Make a googlesheet with sheets named `qPCR plate layouts` and `qPCR Std curves` following the template from [my sheet](https://docs.google.com/spreadsheets/d/1RffyflHCQ_GzlRHbeH3bAkiYo4zNlnFWx4FXo7xkUt8/edit#gid=0)
 	- Copy the url of your googlesheet and replace the one in `sheeturls = list(plate_layouts_PK = ..` in the script `0-general_functions_main.R`
-4. Open `analysis.R` script. Change the `flnm` and `title_name` variables. and other options 
+4. Open `analysis.R` script. Change the `flnm` and `title_name` variables. and other options
+5. You can try running the template file `q33_RNA stability-3_20-6-22` within the `excel files` folder by copying the template data for q33 and Std30 standard data from [my sheet](https://docs.google.com/spreadsheets/d/1RffyflHCQ_GzlRHbeH3bAkiYo4zNlnFWx4FXo7xkUt8/edit#gid=0)
 
 **Sample naming scheme**
 Sample names are written in a google sheet (contact me for access to see the template) in this particular format

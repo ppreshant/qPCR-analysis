@@ -281,7 +281,7 @@ exponential_fit_data_formatted <- normalized_with_exponential_fit %>%
   select(-data, -.fit) %>% 
   
   # order important data first
-  select(Target_name, time, normalized_undiluted_copies, .fitted, t.half.text, everything())
+  select(Target_name, time, normalized_Copies_per_ul, .fitted, t.half.text, everything())
 
 
 write_csv(exponential_fit_data_formatted,
@@ -294,7 +294,7 @@ write_csv(exponential_fit_data_formatted,
 forplot_reduced.data %>% 
   
   # arrange important columns first
-  select(Target_name, plasmid, time, undiluted_copies, mean_Copies.per.ul.template, everything()) %>% 
+  select(Target_name, plasmid, time, Copies.per.ul.template, mean_Copies.per.ul.template, everything()) %>% 
   
 write_csv(str_c('excel files/paper_data/', title_name, '.csv', sep = ''),
           na = '')

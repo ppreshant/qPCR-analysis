@@ -36,6 +36,8 @@ Standard curve workflow
 	- Here: ![[Pasted image 20220608105107.png]]
 
 ### Bugs
+- [x] x axis title is being removed in plot_facetted_assay (example: _q32_copies-w line_)
+	- [ ] Check if horizontal plots are ok now
 - [ ] Check if the 4 ul template volume is being taken into account in std curve processing or regular sample processing. _Since labels say copies per ul template, this needs to be accurate_
 - [ ] Make `.xaxis.label.custom` and optional variable in `12-plot_facetted_assay.R`
 

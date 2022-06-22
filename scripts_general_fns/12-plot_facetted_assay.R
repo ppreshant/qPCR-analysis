@@ -31,7 +31,7 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
       facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x') +  # facets
       
       ggtitle(title_name, subtitle = .subtitle.plot) + # custom title and y label as subtitle
-      xlab(.xaxis.label.custom) + # custom label for X axis
+      {if(!is.null(.xaxis.label.custom)) xlab(.xaxis.label.custom)} + # custom label for X axis if specified
       {if(!is.na(.subtitle.plot)) ylab('')} }  %>%  # remove y axis label if a subtitle is provided which is more readable
     print()
 }

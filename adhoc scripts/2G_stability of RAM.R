@@ -122,25 +122,25 @@ plt.copies <- {plot_facetted_assay(.data = forplot_reduced.data,  # plotting fun
 # Save plots ----
 
 # Cq plot
-ggsave(str_c('qPCR analysis/Archive/', title_name, '.png'),
+ggsave(str_c('qPCR analysis/Archive/', flnms, '.png'),
        plt.cq,
        width = 6,
        height = 4)
-
-# with added lines
-ggsave(str_c('qPCR analysis/Archive/', title_name, '-w lines.png'),
-       plt.cq + geom_line(),
-       width = 6,
-       height = 4)
+# 
+# # with added lines
+# ggsave(str_c('qPCR analysis/Archive/', title_name, '-w lines.png'),
+#        plt.cq + geom_line(),
+#        width = 6,
+#        height = 4)
 
 # save Copies proportional plt
-ggsave(str_c('qPCR analysis/Archive/', title_name, '-copies abstract.png'),
+ggsave(str_c('qPCR analysis/Archive/', flnms, '-copies.png'),
        plt.copies,
        width = 6,
        height = 4)
 
 
-# Extra analysis ----
+# Normalization ----
 
 # normalize all curves to start from ~ 1 (dividing by the max mean value in each curve)
 normalized_RNA <- 
@@ -166,7 +166,7 @@ normalized_RNA <-
 # BUG :: Causing singular gradient error
 
 normalized_with_exponential_fit <- 
-  filter(normalized_RNA, plasmid == 'Ribo') %>%  # select only the good curve with decreasing trend
+  filter(normalized_RNA, plasmid == 'Ribo', Target_name != '16s') %>%  # select only the good curves with decreasing trend
   
   mutate(.fit = # making the exponential fit
            map(data, # SSasymp fitting y ~ ys+(y0-ys)*exp(-exp(log_alpha)*time)
@@ -214,59 +214,36 @@ plt.normalized_fits <-
                       .xvar_plot = time,
                       .yvar_plot = normalized_Copies_per_ul, # plot the fake copy # values
                       .colourvar_plot = Target_name, # colour with the primer pair 
-                      .facetvar_plot = plasmid,  # facet by plasmid/ntc
+                      .facetvar_plot = NULL,  # facet by plasmid/ntc
                       points_plt.style = 'jitter') +
     
-     geom_line(aes(y = .fitted), linetype = 2, show.legend = FALSE) + # add a line connecting the mean
+     geom_line(aes(y = .fitted), linetype = 1, show.legend = FALSE) + # add a line connecting the mean
      scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
      
      # show t half estimates
      annotate(geom = 'text', x = 120, y = 1, label = 'Half life') + 
      
-     geom_text(data = normalized_with_exponential_fit,
+     geom_text(data = normalized_with_exponential_fit, # Show the calculated half life 
                 mapping = aes(x = 120, 
-                              y = 1 - (1:3)/9,
+                              y = 1 - (1:nrow(normalized_with_exponential_fit))/9, # space out the values for readability
                               label = t.half.text),
                 direction = 'y', force = 10,
                 show.legend = FALSE) +
 
    
      ggtitle(title_name, 
-             subtitle = 'Normalized to max of 1, estimated undiluted copies')} %>%
+             subtitle = 'Normalized Copies of RNA template')} %>%
   
   # format_logscale_y() %>% # format logscale
   print()
 
 ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized_fits.png'),
        plt.normalized_fits,
-       width = 6,
+       width = 4,
        height = 4)
 
 # show dynamic graph
 plotly::ggplotly(plt.normalized_fits, dynamicTicks = T)
-
-
-# Plot the data not normalized 
-plt.undiluted <- {plot_facetted_assay(.data = forplot_reduced.data,  # plotting function call with defaults
-                                       .xvar_plot = time,
-                                       .yvar_plot = Copies.per.ul.template, # plot the fake copy # values
-                                       .colourvar_plot = plasmid, # colour with the primer pair 
-                                       .facetvar_plot = Target_name,  # facet by plasmid/ntc
-                                       points_plt.style = 'jitter') +
-    
-    geom_line(aes(y = mean_Copies.per.ul.template), show.legend = FALSE) + # add a line connecting the mean
-    scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
-    
-    ggtitle(title_name, 
-            subtitle = 'Extrapolated copies of undiluted RNA')} %>% 
-  
-  format_logscale_y() %>% 
-  print()
-
-ggsave(str_c('qPCR analysis/Archive/', title_name, '-undiluted.png'),
-       plt.undiluted,
-       width = 6,
-       height = 4)
 
 
 # Save data ----

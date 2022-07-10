@@ -12,8 +12,9 @@ inspiration # from : http://rdml.org/referenceImplement.html
 def linregpcr_analyze(filename_rdml = 'S019_25-11-19_v152'):
 
     # Module for running as a python script (for debugging)    
-    import os
-    os.chdir('..') # change to the root directory : '/qPCR'
+    
+    # import os
+    # os.chdir('..') # change to the root directory : '/qPCR'
 
     # Import rdml
     import rdmlpython as rdml # load package
@@ -117,14 +118,16 @@ def linregpcr_analyze(filename_rdml = 'S019_25-11-19_v152'):
     fl.save(dirname + "results/" + filename_rdml + "fixpython.rdml")
     
     # save amplification analysis results as csv file
-    with open('excel files/' + filename_rdml + "-linreg.csv", "w") as filehandle:
+    with open('excel files/linregpcr/' + filename_rdml + "-linreg.csv", "w") as filehandle:
         filehandle.write(qpcr_result["resultsCSV"])
             
     # save melt curve analysis results as csv file: if a non empty result exists
     if('melt_curve_result' in locals() and len(melt_curve_result)):  
-        with open('excel files/' + filename_rdml + "-melt.csv", "w") as filehandle:
+        with open('excel files/linregpcr/' + filename_rdml + "-melt.csv", "w") as filehandle:
             filehandle.write(melt_curve_result["resultsCSV"])
 
 # usage :
 # linregpcr_analyze('q22_fgfp-triplex-gradient_24-1-22')
 
+# using from jupyter-lab
+# from scripts_general_fns.g.14-linregpcr_analyze import linregpcr_analyze 

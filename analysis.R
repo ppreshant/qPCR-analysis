@@ -6,8 +6,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q017a_all organisms_16s_Std17'  
-title_name <-'q17_all organisms-16s'
+flnm <- 'q17b_all organisms_duplx U64 gfp_Std8'  
+title_name <-'q17_all organisms-U64'
 
 # options
 plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
@@ -33,17 +33,9 @@ force.use_default.std <- TRUE # forces the use of default std from google sheet,
 # Subtitle labeller (for y axis variables)
 # variable : yaxis_translation : Check script 16-user_parameters.R
 
-# Label x axis (assay_variable) in easy to interpret form 
-lst_assay.vars_translation <- list('gfp' = c('89', '315'),
-                                'Ribo' = c('328', '295', '297', '298', '299', '300', '186'),
-                                'Ribo-P1' = '330',
-                                'dead-Ribo' = '54',
-                                'empty' = c('314', '103') ) # informative_name -> c('assay_variables' ..)
+# x axis labeller
+# attach explanations to assay_variable (plasmid numbers) for interpretability
 
-tbl_assay.vars_translation <- lst_assay.vars_translation %>% # convert the list into tibble
-  map2_dfr(., names(.), ~ tibble('assay_variable' = .x, 'assay_var.identifier' = .y))
-# Add another column in this tibble for specific conversion of 295, etc. into descriptive names?
-# make a lookup named vector; use str_replace() to make this new column
 
 plot_assay_variable <- 'Template name' # printed on the x axis of the graph
 

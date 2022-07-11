@@ -4,9 +4,10 @@
 
 
 # User input ----
-flnm <- 'q26_S030b_4-3-22-linreg'
+flnm <- 'q16c_Uxx-positives_15-10-21' # mention the file name without the "-linreg"
 
-title_name <-'q26_S030-M9 lysis_linreg'
+title_name <- paste0('q16c_Uxx_positives', 
+                   '_linreg')
 
 
 # pre-requisites ----
@@ -21,7 +22,7 @@ plate_template <- get_and_parse_plate_layout(flnm)
 
 
 # Read the rdmlpython output file (tab separated tsv file)
-linreg.results <- read_tsv(str_c('excel files/', flnm, '.csv'),
+linreg.results <- read_tsv(str_c('excel files/linregpcr/', flnm, '-linreg', '.csv'),
                            col_types = 'nccccccccnnnnniiinnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnccccccccccccc',
                            na = 'nan') %>%
   
@@ -43,23 +44,11 @@ linreg.results <- read_tsv(str_c('excel files/', flnm, '.csv'),
 # Labelling translators ----
 
 # Subtitle labeller (for y axis variables)
-yaxis_translation <- c('40 - CT' = '40 - Cq',
-                       'Copies_proportional' = 'Copies proportional (a.u)',
-                       'Tm1' = 'Melting temperature - peak 1',
-                       'Tm' = 'Melting temperature',
-                       'Copies.per.ul.template' = 'Copies per uL template')
+# variable : yaxis_translation : Check script 16-user_parameters.R
 
-# Label x axis (assay_variable) in easy to interpret form 
-lst_assay.vars_translation <- list('gfp' = c('89', '315'),
-                                   'Ribo' = c('328', '295', '297', '298', '299', '300', '186'),
-                                   'Ribo-P1' = '330',
-                                   'dead-Ribo' = '54',
-                                   'empty' = c('314', '103') ) # informative_name -> c('assay_variables' ..)
 
-tbl_assay.vars_translation <- lst_assay.vars_translation %>% # convert the list into tibble
-  map2_dfr(., names(.), ~ tibble('assay_variable' = .x, 'assay_var.identifier' = .y))
-# Add another column in this tibble for specific conversion of 295, etc. into descriptive names?
-# make a lookup named vector; use str_replace() to make this new column
+# x axis labeller
+# attach explanations to assay_variable (plasmid numbers) for interpretability
 
 plot_assay_variable <- 'Template name' # printed on the x axis of the graph
 
@@ -70,8 +59,8 @@ plot_assay_variable <- 'Template name' # printed on the x axis of the graph
 metadata_unique_columns <- c('Sample_category', 'assay_variable', 'Target_name')
 
 # change the data with the windows as line equation y - y2 = m(x - x2)
-linreg.selected <- linreg.results %>% 
-  
+forplotting_cq.dat <- linreg.results %>% 
+
   # select only relevant columns
   select(any_of(metadata_unique_columns), # metadata unique
          well, biological_replicates, # addition metadata for replicates
@@ -95,15 +84,28 @@ linreg.selected <- linreg.results %>%
   
   # make a col for mean of N0 -- for plotting as a line/boxplot
   group_by(across(all_of(metadata_unique_columns))) %>% 
-  mutate(mean_N0 = mean(N0, na.rm = TRUE))
+  mutate(mean_N0 = mean(N0, na.rm = TRUE)) %>% 
+  
+  
+  left_join(tbl_assay.vars_translation, by = 'assay_variable') %>%  # attach the assay_var translator
+  mutate(assay_var.label = if_else(is.na(assay_var.identifier), # make compound label with translation and original 
+                                   assay_variable, # clean up label when no identifier is present 
+                                   str_c(assay_var.identifier, assay_variable, sep = '\n')) ) %>% # make compound label
+  
+  # change label for horizontal plots
+  mutate(assay_var.horz_label = str_replace(assay_var.label, '\n', ' ')) %>% 
+  
+  select(Target_name, Sample_category, assay_var.horz_label, everything())
+
+
+
 
 
 # Plotting ----
 
 # Plot N0 along with mean on logscale
 plt.copies_w.mean <- 
-  plot_facetted_assay(.data = linreg.selected, 
-                      .yvar_plot = N0,
+  plot_facetted_assay(.yvar_plot = N0,
                       .colourvar_plot = Sample_category,
                       .facetvar_plot = Target_name,
                       .xvar_plot = assay_variable,
@@ -112,6 +114,16 @@ plt.copies_w.mean <-
   
   geom_boxplot(aes(y = mean_N0), show.legend = FALSE)
 
+# N0 plot with extra labels on x axis
+plt.copies_w.mean_straight <- 
+  plot_facetted_assay(.yvar_plot = N0,
+                      .colourvar_plot = Sample_category,
+                      .facetvar_plot = Target_name,
+                      .xvar_plot = assay_var.horz_label,
+                      points_plt.style = 'jitter') + 
+  
+  
+  geom_boxplot(aes(y = mean_N0), show.legend = FALSE)
 
 
 # saving plot
@@ -121,17 +133,29 @@ plt.copies_w.mean <-
 
 # plot 40 - Cq to compare
 
-plt.cq <- plot_facetted_assay(.data = linreg.selected, 
-                                  .yvar_plot = 40 - Cq,
+plt.cq <- plot_facetted_assay(.yvar_plot = 40 - Cq,
                                   .colourvar_plot = Sample_category,
                                   .facetvar_plot = Target_name,
                                   .xvar_plot = assay_variable)
 
+# Cq plot with extra labels on x axis
+plt.cq_straight <- plot_facetted_assay(.yvar_plot = 40 - Cq,
+                                       .colourvar_plot = Sample_category,
+                                       .facetvar_plot = Target_name,
+                                       .xvar_plot = assay_var.horz_label)
+
+
 # ggsave(plot_as('q25_linregpcr cq-2'), width = 6, height = 4)
+
+
+# Save data ----
+
+write.csv(forplotting_cq.dat,
+          str_c('excel files/linregpcr_w_metadata/', flnm, '-linreg-processed', '.csv', sep = ''),
+          na = '')
 
 
 # Render plots html ----
 
 # calling r markdown file
 rmarkdown::render('make_html_plots.rmd', output_file = str_c('./qPCR analysis/', title_name, '.html'))
-

@@ -19,3 +19,5 @@
 /LinRegPCR
 *.pdf
 *.xls#
+scripts_general_fns/__pycache__/
+scripts_general_fns/.ipynb_checkpoints/

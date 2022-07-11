@@ -26,6 +26,7 @@ Standard curve workflow
 - [x] Save the std curve into the bad std folder if rejected
 	- [ ] Could also save the raw data, but add a column to mark std accepted or rejected
 - [ ] How to work with multiple targets on plate which require multiple standard curve numbers? _Currently can rename them to the same number by hand and note in alt name their original name_
+- [ ] (*feature*) Route rejected std curves into the bad standards folder
 - [ ] _(Ignore the tiny value after decimal..)_: Decimal problem : decimals in Std curve quantity clashes with the biological replicate field. 
 	- Solve by removing replicates from layout -- chcek if NA in replicates for multiple ones causes problems in the pipeline
 	- Whatever comes into the biological replicate field should be added back to the Quantity with a decimal 
@@ -115,8 +116,10 @@ Othwerise very similar curves with early amplification have problems with baseli
 They also inaccurately say `no plateau` since that is linked to finding a baseline?
 
 ### python `linregpcr-analyze.py`
-- [ ] directory issues
-There is something wrong it's interaction with directory, calling `os.chdir` inside the function seems to freeze it's directory state at when the script was run, so any new files added are not found by this script 	
+- [ ] directory issues : _Sometimes re-running the script fixes it, if not restart spyder_. Error: `FileNotFoundError: [Errno 2] No such file or directory: 'RDML_files/q27_328 330_Std27_9-3-22.rdml'`. There is something wrong with the script's interaction with directory and files. 
+	- The script works for one rdml file but does not find the file when run again or with other rdml files
+	- Any new files added after running the script are not found. Calling `os.chdir` inside the function seems to freeze it's directory state at when the script was run 
+	- [ ] Try running this from the outside directory., after moving the g14 script
 	
 ### melt curve analysis
 

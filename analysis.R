@@ -6,8 +6,8 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q33_RNA stability-3_20-6-22'  
-title_name <-'q33_RAM stability-3'
+flnm <- 'q017a_all organisms_16s_Std17'  
+title_name <-'q17_all organisms-16s'
 
 # options
 plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
@@ -242,7 +242,10 @@ if(experiment_mode == 'assay')
       summarize(w.copy.data = map2(data, Target_name,  # calculate copy number for each dataset, and the mean for replicates
                                     ~ absolute_backcalc(.x, .y, std_par) ) 
       ) %>% 
-      unnest(cols = c(w.copy.data)) 
+      unnest(cols = c(w.copy.data)) %>%  # expand the absolute copy number data list
+      
+      # append the ID of the std curve and equation used
+      mutate('std_curve id' = std_to_retrieve)
     
     
     # plot absolute copies per ul template

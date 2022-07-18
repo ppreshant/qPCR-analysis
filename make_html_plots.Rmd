@@ -50,7 +50,7 @@ if(exists('plt.cq_w.std')) plt.cq_w.std
 ```
 
 ## Copies plot
-``` {r copies1}
+``` {r copies1, warning = FALSE}
 
 if(exists('plt.copies')) plt.copies
 
@@ -58,7 +58,7 @@ if(exists('plt.copies')) plt.copies
 if(exists('plt.copies_w.mean')) 
 {
   # regular plot
-  plt.copies_w.mean
+  plt.copies_w.mean %>% print()
   
   # logscale plot
   log.copies_w.mean <- format_logscale_y(plt.copies_w.mean)

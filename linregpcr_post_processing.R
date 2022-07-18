@@ -4,9 +4,9 @@
 
 
 # User input ----
-flnm <- 'q16c_Uxx-positives_15-10-21' # mention the file name without the "-linreg"
+flnm <- 'q27_328 330_Std27_9-3-22' # mention the file name without the "-linreg"
 
-title_name <- paste0('q16c_Uxx_positives', 
+title_name <- paste0('q27_W P1 loop', 
                    '_linreg')
 
 
@@ -86,7 +86,7 @@ forplotting_cq.dat <- linreg.results %>%
   group_by(across(all_of(metadata_unique_columns))) %>% 
   mutate(mean_N0 = mean(N0, na.rm = TRUE)) %>% 
   
-  
+  # attach the explanatory labels to assay variables
   left_join(tbl_assay.vars_translation, by = 'assay_variable') %>%  # attach the assay_var translator
   mutate(assay_var.label = if_else(is.na(assay_var.identifier), # make compound label with translation and original 
                                    assay_variable, # clean up label when no identifier is present 

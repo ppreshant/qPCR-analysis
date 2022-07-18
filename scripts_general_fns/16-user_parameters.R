@@ -17,11 +17,11 @@ yaxis_translation <- c('40 - CT' = '40 - Cq',
 
 
 # Label x axis (assay_variable) in easy to interpret form 
-lst_assay.vars_translation <- list('gfp' = c('89', '315'),
+lst_assay.vars_translation <- list('gfp' = c('89', '315'), # informative_name -> c('assay_variables' ..)
                                    'Ribo' = c('328', '295', '297', '298', '299', '300', '186'),
                                    'Ribo-P1' = '330',
                                    'dead-Ribo' = '54',
-                                   'empty' = c('314', '103') ) # informative_name -> c('assay_variables' ..)
+                                   'empty' = c('314', '103') ) # use (-)? 
 
 tbl_assay.vars_translation <- lst_assay.vars_translation %>% # convert the list into tibble
   map2_dfr(., names(.), ~ tibble('assay_variable' = .x, 'assay_var.identifier' = .y))

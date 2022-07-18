@@ -20,7 +20,7 @@ absolute_backcalc <- function(.df, .target_current, std_par)
     mutate(.df, `Copies.per.ul.template` = 10^( (CT - std_current$y_intercept)/std_current$Slope) ) %>% 
       
       group_by(Sample_category, assay_variable) %>%  # grouping by everything except replicates
-      mutate(mean_Copies.per.ul.template = mean(Copies.per.ul.template)) %>% # find mean of the replicates
+      mutate(mean_Copies.per.ul.template = mean(Copies.per.ul.template, na.rm = TRUE)) %>% # find mean of the replicates
       
       # record the std curve equation as text
       mutate('std_curve equation' = glue::glue('Cq = {std_current$Slope} x log10(copies) + {std_current$y_intercept}') )

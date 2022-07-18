@@ -19,8 +19,9 @@ Prashant K
 - [x] Need to generalize the `Sample Name` splitting and `Target Name` reassignment for TAQMAN to happen to the plate layout before merging with data - `Results` or `Amplification data` sheets
 		- This might be an issue when not using assay mode. Since we are only doing assay mode and see no need for any custom mode, we will bother about bringing the whole sample name stuff into the assay mode `if` loop later
 
-Standard curve workflow
-- [ ] Record the ID of the standard curve used in the `-processed` dataset for future lookup and easy reference. _output it into the html file for now_
+### Standard curve workflow
+- [ ] Make a function to find the best fit set of dilutions to calculate std curve parameters - _by iteratively truncating the last 1,2,3 dilutions, with a tolerance of 0.990 R2.
+- [x] Record the ID of the standard curve used in the `-processed` dataset for future lookup and easy reference. _output it into the html file for now_
 - [x] Add a column for master mix in std curve data output (to be filled manually)
 	- [ ] Can grab the master mix type from above the template in the future _(but is complicated when there is a mix of things on the plate)_  
 - [x] Save the std curve into the bad std folder if rejected
@@ -68,7 +69,7 @@ Standards
 	- Standards will have their own efficiency (_expected due to DNA context, different contaminant concentrations etc._). So it needs to be analyzed separately anyways/the algorithm takes care if identified as calibrant? _I don't see any mathematical problem with using different threshold -- it is set after wol is identified, in the window of the linear region anyway right?__
 - Should the standard calibrant be diluted or not? _dilution introduces errors, not diluting will increase chances of NTC for future runs_
 	- Author: Dr. Maurice Van Der Hoff clarified that 1e3 copies of standard at 5 replicates needs to be used (let's use 6 like the paper says)
-	- [Paper](https://academic-oup-com.ezproxy.rice.edu/clinchem/article/67/6/829/6247760?login=true)  recommends `undiluted calibrant` 
+	- [Paper](https://academic-oup-com.ezproxy.rice.edu/clinchem/article/67/6/829/6247760?login=true)  recommends `undiluted calibrant` - which means use a single dilution in the qPCR..
 	
 	> PCR efficiency is affected by (_a_) systematic dilution errors in preparing a standard curve, (_b_) random pipetting errors in the standard curve samples, (_c_) the sequence and context of the target, and (_d_) unknown components inherent to the biological sample. Therefore, unbiased efficiency-corrected absolute quantification would benefit from a protocol in which **dilution of the standard is avoided** and the actual PCR efficiencies of the standard and unknown reactions are used in the calculations
 	

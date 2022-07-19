@@ -120,8 +120,16 @@ They also inaccurately say `no plateau` since that is linked to finding a baseli
 - [ ] directory issues : _Sometimes re-running the script fixes it, if not restart spyder_. Error: `FileNotFoundError: [Errno 2] No such file or directory: 'RDML_files/q27_328 330_Std27_9-3-22.rdml'`. There is something wrong with the script's interaction with directory and files. 
 	- The script works for one rdml file but does not find the file when run again or with other rdml files
 	- Any new files added after running the script are not found. Calling `os.chdir` inside the function seems to freeze it's directory state at when the script was run 
-	- [ ] Try running this from the outside directory., after moving the g14 script
-	
+	- [ ] Move the g14 script to the outside directory and try running it/calling it as a module
+
+### Calibration
+- [ ] Implement code in a follow up to linregpcr post processing.R: 
+	- Identify Stds while running the script and save them into a csv file with the identifier (qxx). _identify the sample with _Std_ in the Sample_category
+	- have a switch for calibration and the identifier
+	- open the calibrants csv and get the matching calibrant samples  -- _have a universal search for targets and a warning when multiple are found so identifer is not necessary. 
+	- For each std : use the concentration in the assay_variable 
+	- divide the each sample of the same target with the mean signal from the std replicates and multiply it's concentration to obtain _absolute copies_
+
 ### melt curve analysis
 
 Melt curve does not return anything for the S019_25-11-19 file both in python and online

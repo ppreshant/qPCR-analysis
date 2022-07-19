@@ -9,7 +9,7 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
                                 .yvar_plot, .xvar_plot = assay_var.label, # variables within the dataframe (not string, use raw name)
                                 .colourvar_plot = Sample_category,
                                 .facetvar_plot = Target_name, # facets align along the x axis, cannot be NULL as of now
-                                .xaxis.label.custom = plot_assay_variable,
+                                .xaxis.label.custom = NULL, # pass in plot_assay_variable if needed
                                 .subtitle.plot = NULL, # 'y axis label' supplied as a string to .subtitle.plot
                                 points_plt.style = 'point') # jitter for scattered effect, else lined up points
   

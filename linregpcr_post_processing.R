@@ -4,9 +4,9 @@
 
 
 # User input ----
-flnm <- 'q27_328 330_Std27_9-3-22' # mention the file name without the "-linreg"
+source('./0.5-user-inputs.R') # source the user inputs from a different script
 
-title_name <- paste0('q27_W P1 loop', 
+title_name <- paste0('base_title_name', 
                    '_linreg')
 
 
@@ -158,4 +158,4 @@ write.csv(forplotting_cq.dat,
 # Render plots html ----
 
 # calling r markdown file
-rmarkdown::render('make_html_plots.rmd', output_file = str_c('./qPCR analysis/', title_name, '.html'))
+rmarkdown::render('make_html_plots.rmd', output_file = str_c('./qPCR analysis/', title_name, '-tst.html'))

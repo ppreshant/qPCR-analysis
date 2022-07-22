@@ -121,6 +121,7 @@ They also inaccurately say `no plateau` since that is linked to finding a baseli
 	- The script works for one rdml file but does not find the file when run again or with other rdml files
 	- Any new files added after running the script are not found. Calling `os.chdir` inside the function seems to freeze it's directory state at when the script was run 
 	- [ ] Move the g14 script to the outside directory and try running it/calling it as a module
+		- Running from jupyter-lab worked for 1 file, will check for second file sometime
 
 ### Calibration
 - [ ] Implement code in a follow up to linregpcr post processing.R: 

@@ -4,9 +4,9 @@
 
 # File name ----
 
-flnm <- 'q012b_gradient and probe test_18-8-21' # mention the file name without the "-linreg"
+flnm <- 'q33_RNA stability-3_20-6-22' # mention the file name without the "-linreg" or "-processed" suffixes
 
-base_title_name <- 'q012b_gradient and probe test'
+base_title_name <- 'q33_RAM stability-3' # This will be the title name of the plots and the name of the html file
 
 
 # Options ----

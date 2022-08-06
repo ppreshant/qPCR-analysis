@@ -31,6 +31,10 @@ plasmid_translation <- c('328' = 'Ribo', # regex based translation to change x-a
                          '314' = '(-)',
                          '315' = 'gfp')
 
+target_translation <- c('16s' = '16S rRNA', # regex to change the target names for publication
+                        'gfpbarcode' = 'QR code',  # 'unspliced CatRNA' used in 2H data..
+                        'U64' = 'barcoded 16S rRNA')
+
 # Input the data ----
 
 # reading in file and polishing
@@ -52,6 +56,10 @@ forplot_reduced.data <-
   mutate(across(plasmid, ~ str_replace_all(.x, plasmid_translation)) ) %>%  
   replace_na(replace = list('plasmid' = '')) %>%  # replace the NA of plasmid with empty string
   
+  # translate to full name for target (could change as paper is flushed out)
+  mutate(across(Target_name, ~ str_replace_all(.x, target_translation) )) %>% 
+  
+  
   # convert assay variable (x axis var) to numeric
   mutate(across(time, as.numeric)) %>% 
   
@@ -71,7 +79,7 @@ forplot_reduced.data <-
   # )
   
 
-# subset mean of Copies proportional for visual commenting : Will change it to the real absolute data later
+# subset mean of Copies proportional for visual commenting
 visual_summary_mean <- 
   
   ungroup(forplot_reduced.data) %>% # ungroup data 
@@ -166,7 +174,7 @@ normalized_RNA <-
 # BUG :: Causing singular gradient error
 
 normalized_with_exponential_fit <- 
-  filter(normalized_RNA, plasmid == 'Ribo', Target_name != '16s') %>%  # select only the good curves with decreasing trend
+  filter(normalized_RNA, plasmid == 'Ribo', Target_name != '16S rRNA') %>%  # select only the good curves with decreasing trend
   
   mutate(.fit = # making the exponential fit
            map(data, # SSasymp fitting y ~ ys+(y0-ys)*exp(-exp(log_alpha)*time)
@@ -273,5 +281,38 @@ forplot_reduced.data %>%
   # arrange important columns first
   select(Target_name, plasmid, time, Copies.per.ul.template, mean_Copies.per.ul.template, everything()) %>% 
   
-write_csv(str_c('excel files/paper_data/', title_name, '.csv', sep = ''),
+write_csv(str_c('excel files/paper_data/', title_name, '-raw.csv', sep = ''),
           na = '')
+
+
+# save important data
+concise_data <- 
+forplot_reduced.data %>% 
+  
+  # arrange important columns first
+  select(Target_name, plasmid, time, Copies.per.ul.template, mean_Copies.per.ul.template) %>% 
+  
+  arrange(Target_name, plasmid, time) %>% 
+  
+  write_csv(str_c('excel files/paper_data/', title_name, '-concise.csv', sep = ''),
+            na = '')
+
+
+
+# summary mean, SD of concise data
+concise_summary <- 
+  
+  concise_data %>% 
+  
+  # group and calculate stdev
+  group_by(Target_name, plasmid, time) %>% 
+  mutate(sd_Copies.per.ul.template = sd(Copies.per.ul.template, na.rm = TRUE)) %>% 
+  
+  select(-Copies.per.ul.template) %>% unique() %>% # remove the individual replicates
+  rename_with(~ str_replace(.x, '_Copies.per.ul.template', '')) %>%  # shorten the names of Copies
+  
+  pivot_wider(names_from = Target_name, values_from = c(mean, sd)) %>% 
+  
+  write_csv(str_c('excel files/paper_data/', title_name, '-summary.csv', sep = ''),
+            na = '')
+  

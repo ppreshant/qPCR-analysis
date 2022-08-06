@@ -123,13 +123,17 @@ They also inaccurately say `no plateau` since that is linked to finding a baseli
 	- [ ] Move the g14 script to the outside directory and try running it/calling it as a module
 		- Running from jupyter-lab worked for 1 file, will check for second file sometime
 
+#### Running through `R`
+- [x] Fix reticulate connection to python: _works now after removing the problematic `&` symbol in the windows path from quantstudio dir name_ 
+- [ ] (?) Implement an if or a user switch to process old files with already processed linreg csv files?
+
 ### Calibration
 - [ ] Implement code in a follow up to linregpcr post processing.R: 
-	- Identify Stds while running the script and save them into a csv file with the identifier (qxx). _identify the sample with _Std_ in the Sample_category
-	- have a switch for calibration and the identifier
+	- Identify Stds while running the script and save them into a csv file, along with the identifiers (qxx). file will have individual data, and mean will be used for calibration after reading the csv. _identify the sample with _Std_ in the Sample_category
+	- (?) have a switch for calibration and the identifier
 	- open the calibrants csv and get the matching calibrant samples  -- _have a universal search for targets and a warning when multiple are found so identifer is not necessary. 
 	- For each std : use the concentration in the assay_variable 
-	- divide the each sample of the same target with the mean signal from the std replicates and multiply it's concentration to obtain _absolute copies_
+	- divide the `N0` values each sample of the same target with the mean signal from the std replicates and multiply it's concentration to obtain _absolute copies_
 
 ### melt curve analysis
 

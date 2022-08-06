@@ -165,8 +165,14 @@ normalized_RNA <-
          # Normalization : within each data frame in the nest
          data = map(data, 
                     ~ mutate(., normalized_Copies_per_ul = 
-                               .$Copies.per.ul.template / initial_mean_Copies_per_ul) # divide such that mean starts at 1
-         )
+                               .$Copies.per.ul.template / initial_mean_Copies_per_ul) %>%  # divide such that mean starts at 1
+                      
+                      group_by(time) %>% # group to calculate mean
+                      
+                      # calculating mean of the normalized
+                      mutate(mean_normalized_Copies_per_ul = mean(normalized_Copies_per_ul, na.rm = TRUE))
+         ) 
+         
   ) # you can do: unnest(normalized_RNA, data) to see the whole dataset
 
 
@@ -247,12 +253,52 @@ plt.normalized_fits <-
 
 ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized_fits.png'),
        plt.normalized_fits,
-       width = 4,
+       width = 6,
        height = 4)
 
 # show dynamic graph
 plotly::ggplotly(plt.normalized_fits, dynamicTicks = T)
 
+
+
+
+# plot the normalized data without fitting
+
+plt.normalized_joined <- filter(normalized_RNA, plasmid == 'Ribo') %>% 
+  unnest(data) %>% 
+  group_by(Target_name, plasmid) %>%
+  
+  {plot_facetted_assay(.data = .,  # plotting function call with defaults
+                       .xvar_plot = time,
+                       .yvar_plot = normalized_Copies_per_ul, # plot the fake copy # values
+                       .colourvar_plot = Target_name, # colour with the primer pair 
+                       .facetvar_plot = NULL ,  # facet by plasmid/ntc
+                       points_plt.style = 'jitter') +
+      
+      geom_line(aes(y = mean_normalized_Copies_per_ul), linetype = 1, show.legend = FALSE) + # add a line connecting the mean
+      scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
+      
+      # show t half estimates
+      annotate(geom = 'text', x = 120, y = 1, label = 'Half life') + 
+      
+      geom_text(data = normalized_with_exponential_fit, # Show the calculated half life for fitted data
+                mapping = aes(x = 120, 
+                              y = 1 - (1:nrow(normalized_with_exponential_fit))/9, # space out the values for readability
+                              label = t.half.text),
+                direction = 'y', force = 10,
+                show.legend = FALSE) +
+      
+      
+      ggtitle(title_name, 
+              subtitle = 'Normalized Copies of RNA template')} %>%
+  
+  # format_logscale_y() %>% # format logscale
+  print()
+
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized.png'),
+       plt.normalized_joined,
+       width = 6,
+       height = 4)
 
 # Save data ----
 

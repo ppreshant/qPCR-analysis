@@ -89,6 +89,7 @@ ggsave(plot_as('q32_Cq'), plt_copies, width = 4.5, height = 4)
 ggsave(plot_as(title_name), plt_copies, width = 4.5, height = 4)
 ggsave(plot_as('q32_copies', '-w line'), plt_monopanel_copies_w_mean, width = 3.7, height = 4)
 ggsave(plot_as('q32_copies-U64', '-w line'), plt_U64_copies_w_mean, width = 3.7, height = 4)
+ggsave(str_c('qPCR analysis/Archive/', 'q32_copies-U64', '-w line.pdf'), plt_U64_copies_w_mean, width = 3.7, height = 2) # save as PDF
 
 
 # Save data ----

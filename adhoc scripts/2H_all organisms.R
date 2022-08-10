@@ -232,6 +232,30 @@ plt.expression_ratio_ribozyme <- {plot_facetted_assay(.data = wider_reduced.dat,
   print()
 
 
+# Correlation between ribozyme expression and splicing
+plt.expression_splicing_correlation <- 
+{ggplot(filter(wider_reduced.dat, assay_variable != 'NTC'), 
+       aes(x = `Copies_unspliced CatRNA`, y = `Copies_barcoded 16S rRNA`, 
+           colour = organism, shape = assay_var.label)) + 
+  geom_point() + 
+    geom_smooth(method = 'lm', aes(colour = NULL, shape = NULL), show.legend = FALSE) + # draw a correlation line
+    scale_shape_manual(values = c(1, 16)) } %>% # points hollow vs filled
+  format_logscale_x() %>% 
+  format_logscale_y()
+
+# presentation: Correlation between ribozyme expression and splicing (without negatives)
+plt.positivesonly_correlation <- 
+  {ggplot(filter(wider_reduced.dat, !str_detect(assay_var.label, 'NTC|(-)')), 
+          aes(x = `Copies_unspliced CatRNA`, y = `Copies_barcoded 16S rRNA`,
+              label = organism)) + 
+      geom_point() + 
+      
+      # ggforce::geom_mark_rect(aes(label = organism)) + labelling points does not work
+      geom_smooth(method = 'lm', show.legend = FALSE, alpha = 0.2) # draw a correlation line
+      } %>%
+  format_logscale_x() %>%
+  format_logscale_y()
+
 
 # Save plot
 
@@ -268,3 +292,11 @@ ggsave(str_c('qPCR analysis/Archive/', 'q17_expression ratio ribozyme', '.png'),
        plt.expression_ratio_ribozyme,
        width = 8,
        height = 4)
+
+# Correlation
+ggsave(plot_as(title_name, '-expression_correlation'), plt.expression_splicing_correlation, 
+       width = 5, height = 4)
+
+# correlation - positives only
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-correlation_positives.pdf'), plt.positivesonly_correlation,
+       width = 4, height = 4)

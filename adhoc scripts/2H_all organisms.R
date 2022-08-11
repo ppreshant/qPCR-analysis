@@ -27,7 +27,7 @@ organism_translation <- c('So' = 'S. oneidensis', # regex based translation to m
                           'Vn' = 'V. natriegens') 
 
 assay_var_translation <- c('328' = 'CatRNA', # regex based translation to change x-axis labels
-                           '314' = '(-)')
+                           '314' = 'Empty vector')
 
 target_translation <- c('16s' = '16S rRNA', # regex to change the target names for publication
                         'gfpbarcode' = 'unspliced CatRNA',
@@ -98,17 +98,18 @@ write_csv(forplot_reduced.data,
           str_c('excel files/paper_data/2H_all organisms', '-raw', '.csv'),
           na = '')
 
-# Replicate data of test/328 data only
+# Replicate data all - wider format - for paper
 individual_copies_data <- 
   
   wider_reduced.dat %>% 
-  filter(str_detect(assay_variable, '328')) %>% # only retain the test data with ribozyme
+  # filter(str_detect(assay_variable, '328')) %>% # only retain the test data with ribozyme
   
   ungroup() %>% # can remove assay_variable column after this
-  select(organism, matches('^Copies')) %>%  # select the minimal columns
+  select(organism, assay_var.label, matches('^Copies')) %>%  # select the minimal columns
   
   rename_with(~ str_remove(.x, 'Copies_')) %>%  # remove the Copies in each column name
-  mutate(Sample = '+ CatRNA (64)')
+  rename('Sample' = assay_var.label) %>% 
+  arrange(organism, Sample)
 
 write_csv(individual_copies_data,
           str_c('excel files/paper_data/2H_all organisms', '-copies', '.csv'),
@@ -118,11 +119,26 @@ write_csv(individual_copies_data,
 summary_data <- 
   individual_copies_data %>% 
   group_by(organism, Sample) %>% 
-  summarise(across(where(is.numeric), mean, na.rm = TRUE))
+  summarise(across(where(is.numeric), lst(mean, sd), na.rm = TRUE))
 
 write_csv(summary_data,
           str_c('excel files/paper_data/2H_all organisms', '-mean', '.csv'),
           na = '')
+
+
+# Standard curve raw data -- just to have in hand to compare to the minumum detected in the samples
+read_csv('qPCR analysis/Standards/all_std_data_points.csv') %>%  # reading full std data from archive
+  filter(str_detect(ID, 'Std30')) %>% # filter the relevant Std curve data
+  select(1:6) %>% # selecting only relevant columns
+  arrange(Target_name, desc(Quantity)) %>% # arrange 
+  # view()
+  
+  # write the data
+  write_csv(str_c('excel files/paper_data/2G,H_Std curve probes, 16S', '-raw', '.csv'),
+            na = '')
+
+
+
 
 
 # Plotting ----

@@ -1,4 +1,4 @@
-# Attach metadata and plot linreg pcr analyzed data
+# Attach metadata and plot linreg pcr analyzed data; Also include calibration processing for absolute quantification
 # Prashant K
 # 5/March/2022
 
@@ -6,8 +6,20 @@
 # User input ----
 source('./0.5-user-inputs.R') # source the user inputs from a different script
 
-title_name <- paste0('base_title_name', 
+title_name <- paste0(base_title_name, 
                    '_linreg')
+
+
+# Run linregpcr ----
+
+# source the reticulate interface to linregpcr function
+source('scripts_general_fns/17-run_linregpcr.R') 
+
+# run linregpcr
+run_linregpcr(flnm)
+
+
+# Post-processing ----
 
 
 # pre-requisites ----
@@ -15,7 +27,6 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 
 
 # Data input ----
-
 
 # Read the sample names and metadata from google sheet
 plate_template <- get_and_parse_plate_layout(flnm)
@@ -96,6 +107,10 @@ forplotting_cq.dat <- linreg.results %>%
   mutate(assay_var.horz_label = str_replace(assay_var.label, '\n', ' ')) %>% 
   
   select(Target_name, Sample_category, assay_var.horz_label, everything())
+
+
+
+# Calibration to standards ----
 
 
 

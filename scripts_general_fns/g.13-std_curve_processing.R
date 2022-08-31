@@ -85,7 +85,7 @@ process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
    Do you wish to continue with saving the standard curve parameters? 
    Select NO if you wish to truncate any dilutions (using 'dilutions_to_truncate') or change something else and re-run the script", sep=" "))
   
-  if (proceed_with_standards == 2){
+  if (proceed_with_standards == 2){ # if standards are rejected -- 
     
     # save rejected standards into separate folder 
     ggsave(str_c('qPCR analysis/Standards/bad standards/', fl_namer , '.png'), width = 5, height = 4)

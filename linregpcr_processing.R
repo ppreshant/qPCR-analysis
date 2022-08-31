@@ -109,17 +109,55 @@ forplotting_cq.dat <- linreg.results %>%
   select(Target_name, Sample_category, assay_var.horz_label, everything())
 
 
+# Calibrant data saving ----
+
+if('Std' %in% forplotting_cq.dat$Sample_category) # go into the loop if calibrants present
+  
+{
+  
+  source('scripts_general_fns/18-process_calibrants_linregpcr.R') # source the script
+  process_calibrants_linregpcr(forplotting_cq.dat) # process the Stds within the file
+  
+}
+
 
 # Calibration to standards ----
 
+# retrieve linregpcr calibrant data
+mean_calibrant.data <- read_csv('qPCR analysis/Standards/linregpcr_calibrants.csv', col_types = 'ccnnn') %>% 
+  select(Target_name, mean_N0.per.copy) # select only relevant columns
+
+# --AddFeature: enable filtering of desired standards by ID when necessary, or ask user when redundancy found
 
 
+# attach to data (remove any Stds in current data)
+calibrated_copies.data <- 
+  filter(forplotting_cq.dat, !str_detect(Sample_category, 'Std')) %>% # remove standards from current data
+  
+  left_join(mean_calibrant.data) %>% # attach the calibration data
+
+  mutate(Copies.per.ul.template = N0/`mean_N0.per.copy`) %>% # normalized to calibration - absolute copies
+  mutate(mean_Copies.per.ul.template = mean(Copies.per.ul.template, na.rm = TRUE)) # get mean of replicates (within each group)
+  
 
 
 # Plotting ----
 
-# Plot N0 along with mean on logscale
+# Plot copies along with mean - after calibration
 plt.copies_w.mean <- 
+  plot_facetted_assay(.data = calibrated_copies.data,
+                      .yvar_plot = Copies.per.ul.template,
+                      .colourvar_plot = Sample_category,
+                      .facetvar_plot = Target_name,
+                      .xvar_plot = assay_variable,
+                      points_plt.style = 'jitter') + 
+  
+  
+  geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
+
+
+# Plot N0 along with mean :: 
+plt.copies <- 
   plot_facetted_assay(.yvar_plot = N0,
                       .colourvar_plot = Sample_category,
                       .facetvar_plot = Target_name,
@@ -165,7 +203,7 @@ plt.cq_straight <- plot_facetted_assay(.yvar_plot = 40 - Cq,
 
 # Save data ----
 
-write.csv(forplotting_cq.dat,
+write.csv(calibrated_copies.data,
           str_c('excel files/linregpcr_w_metadata/', flnm, '-linreg-processed', '.csv', sep = ''),
           na = '')
 

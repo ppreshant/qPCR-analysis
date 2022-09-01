@@ -1,4 +1,4 @@
-# Read in the processed data for specific plotting (papers etc.)
+# Read in the linregpcr processed data for data formatting and plotting (RAM paper)
 # Author: Prashant Kalvapalle;  Sep 27 2021
 
 source('./0-general_functions_main.R') # Source the general_functions file before running this
@@ -14,7 +14,7 @@ title_name <-'q16_Uxx variants'
 # options
 
 # x-axis label
-plot_assay_variable <- 'Template name' # printed on the x axis of the graph
+axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
 
 
 # Labelling translators ----
@@ -31,22 +31,27 @@ assay_var_translation <- c('295' = '(64)', # U64 # regex based translation to ch
                            'NTC' = 'ntc')
 
 target_name_translation <- c('U.*' = 'Spliced',
-                             'gfp:gfp' = 'Spliced')
+                             'gfp:gfp' = 'Spliced',
+                             '16s' = '16S rRNA', # regex to change the target names for publication
+                             'gfpbarcode' = 'unspliced CatRNA')
+                             # 'U64' = 'barcoded 16S rRNA')
+
 
 # Input the data ----
 
 # reading in file and polishing
 .df <- map_dfr(flnms, 
-               ~ read_csv(str_c('excel files/linregpcr_w_metadata/', .x , '-linreg-processed.csv') # read linregpcr + R processed csv
-                          ) # col_types = 'cccncnnnncnnc') 
+               ~ read_csv(str_c('excel files/linregpcr_w_metadata/', .x , '-linreg-processed.csv'), # read linregpcr + R processed csv
+                          col_types = 'cccccnnnnnnnnnnnccnnn')
 )
 
-# Mess with the data ----
 
+# Processing ---- 
+ 
 # any custom processing goes here
 forplot_reduced.data <- 
   
-  .df %>% # optional filtering step here
+  filter(.df, !str_detect(Target_name, 'U8'), !str_detect(assay_variable, '298')) %>% ## Removing U8 data due to false positives ~ mispriming
   
   # translate to meaningful x axis labels
   mutate(across(assay_variable, ~ str_replace_all(.x, assay_var_translation)),
@@ -56,34 +61,10 @@ forplot_reduced.data <-
          across(Target_name, ~ str_replace_all(.x, target_name_translation)) ) 
 
 
-# Calculating spliced fraction of the Ribozyme/16s
-  # does not work yet
-wider_reduced.dat <- 
-  
-  forplot_reduced.data %>% 
-  mutate(across(Copies_proportional, ~ coalesce(.x, Copies.per.ul.template))) %>%  # take inferred copies into copies_proportional
-  
-  select(1:4, Copies_proportional, assay_variable, biological_replicates) %>%  # select only required columns
-  
-  pivot_wider(names_from = Target_name, values_from = Copies_proportional, names_prefix = 'Copies_') %>%  # each target to a col
-  
-  # calculate ratios of each targets per replicate
-  mutate(Splicing_fraction_ribozyme = Copies_Spliced / Copies_gfpbarcode,
-         Splicing_fraction_16s = Copies_Spliced / Copies_16s, 
-         expression_ratio = Copies_gfpbarcode / Copies_16s) %>% 
-  
-  # find the mean across biological replicates for all numeric cols
-  group_by(assay_variable) %>% 
-  mutate(across(where(is.numeric), 
-                mean, ignore.na = TRUE,
-                .names = "mean_{.col}")) 
-  
-
-
 # Plotting ----
 
-plt.ct <- {plot_facetted_assay(.data = forplot_reduced.data,  # plotting function call with defaults
-                               .yvar_plot = 40 - CT,
+plt.cq <- {plot_facetted_assay(.data = forplot_reduced.data,  # plotting function call with defaults
+                               .yvar_plot = 40 - Cq,
                                .xvar_plot = assay_variable,
                                .colourvar_plot = Target_name, 
                                .facetvar_plot = NULL,
@@ -104,6 +85,55 @@ plt.spliced_ct <- {plot_facetted_assay(.data = filter(forplot_reduced.data, Targ
                                                  .facetvar_plot = NULL,
                                                  points_plt.style = 'jitter')  } %>% 
   print()
+
+
+# Plot Calibrated copies-linregpcr
+plt.copies_w.mean <- {plot_facetted_assay(.data = forplot_reduced.data,  # plotting function call with defaults
+                               .yvar_plot = Copies.per.ul.template,
+                               .xvar_plot = assay_variable,
+                               .xaxis.label.custom = axislabel.assay_variable,
+                               .colourvar_plot = Target_name, 
+                               .facetvar_plot = NULL,
+                               points_plt.style = 'jitter') +  
+  
+  geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE) # plot mean
+  
+} %>% 
+  
+  format_logscale_y() %>% # show logscale
+  print()
+
+
+
+# Extra: analysis ratios -----
+
+# Mess with the data ----
+
+# Calculating spliced fraction of the Ribozyme/16s
+# does not work yet
+wider_reduced.dat <- 
+  
+  forplot_reduced.data %>% 
+  mutate(across(Copies_proportional, ~ coalesce(.x, Copies.per.ul.template))) %>%  # take inferred copies into copies_proportional
+  
+  select(1:4, Copies_proportional, assay_variable, biological_replicates) %>%  # select only required columns
+  
+  pivot_wider(names_from = Target_name, values_from = Copies_proportional, names_prefix = 'Copies_') %>%  # each target to a col
+  
+  # calculate ratios of each targets per replicate
+  mutate(Splicing_fraction_ribozyme = Copies_Spliced / Copies_gfpbarcode,
+         Splicing_fraction_16s = Copies_Spliced / Copies_16s, 
+         expression_ratio = Copies_gfpbarcode / Copies_16s) %>% 
+  
+  # find the mean across biological replicates for all numeric cols
+  group_by(assay_variable) %>% 
+  mutate(across(where(is.numeric), 
+                mean, ignore.na = TRUE,
+                .names = "mean_{.col}")) 
+
+
+
+# Plotting ratios ----
 
 # plotting splicing fractions
 
@@ -151,9 +181,23 @@ plt.expression_ratio_ribozyme <- {plot_facetted_assay(.data = wider_reduced.dat,
 
 
 
-# Save plot
+# Save plots ----
 
-ggsave(str_c('qPCR analysis/Archive/', title_name, '-thin.png'),
-       plt.ct,
+# Cq plot
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-Cq-linreg.png'),
+       plt.cq,
        width = 5,
        height = 4)
+
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-thin.png'),
+       plt.copies_w.mean,
+       width = 5,
+       height = 4)
+
+
+# Save data ----
+
+# save raw data
+# write_csv(forplot_reduced.data,
+#           str_c('excel files/paper_data/2H_all organisms', '-raw', '.csv'),
+#           na = '')

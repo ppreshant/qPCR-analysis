@@ -18,7 +18,7 @@ title_name <- base_title_name
 # attach explanations to assay_variable (plasmid numbers) for interpretability
 
 
-plot_assay_variable <- 'Template name' # printed on the x axis of the graph
+axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
 
 
 # obsolete options ----
@@ -113,19 +113,20 @@ if(experiment_mode == 'assay')
   # Cq plot ----
   
   # plot ~ copies (relative quantification)
-  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional) 
+  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional, .xaxis.label.custom = axislabel.assay_variable) 
   # This is a standby plot in the absence of absolute copy number calculation
   
   # plot 40 - Cq
-  plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT)
-  plt.cq_straight <- plot_facetted_assay(.yvar_plot = 40-CT, .xvar_plot = assay_var.horz_label)
+  plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT, .xaxis.label.custom = axislabel.assay_variable)
+  plt.cq_straight <- plot_facetted_assay(.yvar_plot = 40-CT, .xvar_plot = assay_var.horz_label, 
+                                         .xaxis.label.custom = axislabel.assay_variable)
   
   # Tm plots ----
   
   # only plots if it is SYBR_GREEN chemistry ; not TAQMAN
   if(fl["chemistry_type"] != 'TAQMAN') 
   {
-    plt.tm1 <- plot_facetted_assay(.yvar_plot = Tm1)
+    plt.tm1 <- plot_facetted_assay(.yvar_plot = Tm1, .xaxis.label.custom = axislabel.assay_variable)
     
     # Gather 4 peaks of melting temperatures into long format
     Tm_data <- forplotting_cq.dat %>% 
@@ -134,17 +135,17 @@ if(experiment_mode == 'assay')
       pivot_longer(cols = starts_with('Tm'), names_to = 'Peak number', values_to = 'Tm') # get all Tms into 1 column
     
     # plot mutliple Tms ; Graph will now show
-    plt.alltm <- plot_facetted_assay(.data = Tm_data, .yvar_plot = Tm) + 
+    plt.alltm <- plot_facetted_assay(.data = Tm_data, .yvar_plot = Tm, .xaxis.label.custom = axislabel.assay_variable) + 
       facet_grid(`Peak number` ~ Target_name,  # redo facets
                  scales = 'free_x', space = 'free_x') +
-      xlab(plot_assay_variable)
+      xlab(axislabel.assay_variable)
     
     plt.alltm_2 <- Tm_data %>% ggplot(.) + aes(x = assay_variable, y = Tm) + 
       geom_point(aes(color = `Peak number`), size = 2) +
       theme_classic() + scale_color_brewer(palette="Set1") + 
       theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) + 
       ggtitle(paste(title_name,': Melting')) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') +
-      xlab(plot_assay_variable)
+      xlab(axislabel.assay_variable)
   }
   
   # Absolute quantification ----
@@ -176,14 +177,16 @@ if(experiment_mode == 'assay')
         # plot a cq graph with standards included
         plt.cq_w.std <- 
           plot_facetted_assay(.data =  polished_cq.dat, 
-                              .yvar_plot = 40-CT, .xvar_plot = assay_variable) + # plot 40 - Cq
+                              .yvar_plot = 40-CT, .xvar_plot = assay_variable, 
+                              .xaxis.label.custom = axislabel.assay_variable) + # plot 40 - Cq
           theme(plot.title = element_text(hjust = 0.5), 
                 axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
         
         # Plot Tm1 graph with standards included
         plt.tm1_w.std <- 
           plot_facetted_assay(.data = polished_cq.dat, 
-                              .yvar_plot = Tm1, .xvar_plot = assay_variable) + 
+                              .yvar_plot = Tm1, .xvar_plot = assay_variable, 
+                              .xaxis.label.custom = axislabel.assay_variable) + 
           theme(plot.title = element_text(hjust = 0.5), 
                 axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
         }
@@ -222,16 +225,20 @@ if(experiment_mode == 'assay')
     
     
     # plot absolute copies per ul template
-    plt.copies <- plot_facetted_assay(.data = absolute_dat, .yvar_plot = Copies.per.ul.template)
+    plt.copies <- plot_facetted_assay(.data = absolute_dat, .yvar_plot = Copies.per.ul.template, 
+                                      .xaxis.label.custom = axislabel.assay_variable)
     
     plt.copies_w.mean <- plot_facetted_assay(.data = absolute_dat, 
                                              .yvar_plot = Copies.per.ul.template, 
+                                             .xaxis.label.custom = axislabel.assay_variable, 
                                              points_plt.style = 'jitter') + 
       geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
     
     # same plot with x-labels in a single line
     plt.copies_w.mean_straight <- plot_facetted_assay(.data = absolute_dat, 
-                                            .xvar_plot = assay_var.horz_label,  .yvar_plot = Copies.per.ul.template, 
+                                            .xvar_plot = assay_var.horz_label, 
+                                            .xaxis.label.custom = axislabel.assay_variable,
+                                            .yvar_plot = Copies.per.ul.template, 
                                             points_plt.style = 'jitter') + 
       geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
       
@@ -259,7 +266,7 @@ if(experiment_mode == 'assay')
   #            y = `Normalized Copies.per.ul.template`, color = Target)) +   # plotting
   # geom_point(size = 2) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') # plot points and facetting
   # 
-  #   plt_norm.formatted <- plt_norm %>% format_classic(., title_name, plot_assay_variable) %>% format_logscale() 
+  #   plt_norm.formatted <- plt_norm %>% format_classic(., title_name, axislabel.assay_variable) %>% format_logscale() 
   #   # formatting plot, axes labels, title and logcale plotting
   #   
   #   print(plt_norm)

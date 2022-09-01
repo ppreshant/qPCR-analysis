@@ -31,8 +31,8 @@ process_calibrants_linregpcr <- function(forplotting_cq.dat)
   patchwork::wrap_plots(list(calibrant_plt, log_cal_plt), nrow = 2) %>% print() # combine plots
   
   
-  # Let the user approve the calibrants (in case some standards need to be excluded/ --AddFeature)
-  # --AddFeature: excluding targets directly from user input -- might need alternative to 'menu' function
+  #  --AddFeature: Let the user approve a subset of calibrants (excluding few outliers/targets)
+  # excluding targets directly from user input -- might need alternative to 'menu' function
   
   proceed_with_standards <- menu(c('Yes', 'No'), title = paste("Check the calibrant standards plots:", 
                                                                fl_namer, 

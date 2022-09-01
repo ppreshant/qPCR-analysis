@@ -12,11 +12,15 @@ title_name <- paste0(base_title_name,
 
 # Run linregpcr ----
 
-# source the reticulate interface to linregpcr function
-source('scripts_general_fns/17-run_linregpcr.R') 
-
-# run linregpcr
-run_linregpcr(flnm)
+if(run_linregpcr)
+{
+  # source the reticulate interface to linregpcr function
+  source('scripts_general_fns/17-run_linregpcr.R') 
+  
+  # run linregpcr
+  run_linregpcr(flnm)
+  
+}
 
 
 # Post-processing ----
@@ -58,10 +62,10 @@ linreg.results <- read_tsv(str_c('excel files/linregpcr/', flnm, '-linreg', '.cs
 # variable : yaxis_translation : Check script 16-user_parameters.R
 
 
-# x axis labeller
+# x axis labeller : Check script 16-user_parameters.R
 # attach explanations to assay_variable (plasmid numbers) for interpretability
 
-plot_assay_variable <- 'Template name' # printed on the x axis of the graph
+axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
 
 
 # select useful data ----
@@ -149,7 +153,7 @@ plt.copies_w.mean <-
                       .yvar_plot = Copies.per.ul.template,
                       .colourvar_plot = Sample_category,
                       .facetvar_plot = Target_name,
-                      .xvar_plot = assay_variable,
+                      .xvar_plot = assay_variable, .xaxis.label.custom = axislabel.assay_variable,
                       points_plt.style = 'jitter') + 
   
   
@@ -161,7 +165,7 @@ plt.copies <-
   plot_facetted_assay(.yvar_plot = N0,
                       .colourvar_plot = Sample_category,
                       .facetvar_plot = Target_name,
-                      .xvar_plot = assay_variable,
+                      .xvar_plot = assay_variable, .xaxis.label.custom = axislabel.assay_variable, 
                       points_plt.style = 'jitter') + 
   
   
@@ -172,7 +176,7 @@ plt.copies_w.mean_straight <-
   plot_facetted_assay(.yvar_plot = N0,
                       .colourvar_plot = Sample_category,
                       .facetvar_plot = Target_name,
-                      .xvar_plot = assay_var.horz_label,
+                      .xvar_plot = assay_var.horz_label, .xaxis.label.custom = axislabel.assay_variable,
                       points_plt.style = 'jitter') + 
   
   
@@ -187,15 +191,17 @@ plt.copies_w.mean_straight <-
 # plot 40 - Cq to compare
 
 plt.cq <- plot_facetted_assay(.yvar_plot = 40 - Cq,
-                                  .colourvar_plot = Sample_category,
-                                  .facetvar_plot = Target_name,
-                                  .xvar_plot = assay_variable)
+                              .colourvar_plot = Sample_category,
+                              .facetvar_plot = Target_name,
+                              .xvar_plot = assay_variable,
+                              .xaxis.label.custom = axislabel.assay_variable)
 
 # Cq plot with extra labels on x axis
 plt.cq_straight <- plot_facetted_assay(.yvar_plot = 40 - Cq,
                                        .colourvar_plot = Sample_category,
                                        .facetvar_plot = Target_name,
-                                       .xvar_plot = assay_var.horz_label)
+                                       .xvar_plot = assay_var.horz_label,
+                                       .xaxis.label.custom = axislabel.assay_variable)
 
 
 # ggsave(plot_as('q25_linregpcr cq-2'), width = 6, height = 4)
@@ -211,4 +217,4 @@ write.csv(calibrated_copies.data,
 # Render plots html ----
 
 # calling r markdown file
-rmarkdown::render('make_html_plots.rmd', output_file = str_c('./qPCR analysis/', title_name, '-tst.html'))
+rmarkdown::render('make_html_plots.rmd', output_file = str_c('./qPCR analysis/', title_name, '.html'))

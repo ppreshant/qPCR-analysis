@@ -96,25 +96,36 @@ _tips for RDML:_
 	-  Melt curve junk data is not exported if there is no SYBR on the plate, ex `q22 triplex` and `q24` but fails for `q25`  -- (I thought wrong -> )_Save rdml from quantstudio using `split items into individual files` option, this will prevent writing junk values to the melt data_
 	- Expt -> run -> react -> data -> mdp. It is hard to locate react data onwards. clue: `_get_all_children(self._node, "react")`
 
-**Problems with rdmlpython** : Is giving baseline error in a few samples, I cannot figure out the reason. 
+**Problems with rdmlpython** : Is giving baseline error in a few samples, I cannot figure out the reason -- _seems like its better after pulling a recent version_. 
 
-### amplification analysis, qc
+### Amplification analysis
 Works for S019_25-11-19 file (SYBR) and q25_S037_RAM repression_14-2-22 (Probe) with recent changes pulled on _18/2/22_
 > (old, before pulling) Does not work for q25 (TAQMAN) file with `rawFluor[rowCount, cyc] = float(fluor) ; IndexError: index 72 is out of bounds for axis 0 with size 72`
 
-Probe based assays with late amplification (ex: `U64`) is showing very low efficiency (_due to plateau phase not present_) -- Is there some tweak that can rescue the analysis?
-- [ ] check if the data makes sense, low efficiencies are reliable
-	- quick amplifications of 16s are not being analyzed due to `baseline error`, _asked on the github page if there is a straightforward fix_ 
+**Probe based** assays with late amplification (ex: `U64`) is showing very low efficiency (_due to plateau phase not present_) -- Is there some tweak that can rescue the analysis?
+- [ ] check if the data makes sense, and if low efficiencies are reliable
+	- quick amplifications of 16s are not being analyzed due to `baseline error`, _asked on the github page if there is a straightforward fix -- updated to be more lenient on the baseline error now I guess?_ 
 	- Considering that we cannot dilute the samples, verdict will be to ABORT LINREGPCR mission 
 	
 	Improving analysis for flagged samples
 	- [ ] How to troubleshoot baseline error due to very early amplifications?
-	- [ ] I see error `Cq < 10; N0 unreliable` while analyzing q12 data for 16s. Why is this unreliable? 
-	
+		- [ ] I see error `Cq < 10; N0 unreliable` while analyzing q12 data for 16s. Why is this unreliable? 
+	- [ ] How to analyze late amplifications (~ negative controls) without plateau?
+		- Message: q16b_Uxx negatives : `no plateau;Cq > 34;N0 unreliable;indiv PCR eff is 1.643 < 1.7`
+		- Are there any parameters we can pass that improves this or should these just be excluded when analyzing N0 to prevent misinterpretations. 
+		
 Understanding baseline error
 ![[baseline-error_q20b.png]]
 Othwerise very similar curves with early amplification have problems with baseline identification if they lack the initial ~ flatness. 
 They also inaccurately say `no plateau` since that is linked to finding a baseline?
+
+### Quality control
+- [ ] How do we visually confirm or troubleshoot linregpcr fits for single curves? 
+	- Ex. low efficiency amplifications? _Try R/sliwin for these specific wells so we can play with the plotting, include a couple positive controls too?_
+
+### Issues - 
+1. q16_Uxx negative samples : For (-) samples the high Cq (~ 35) has too high N0 values due to anomolously low efficiency (1.5 vs the typical 1.8-1.9). How to deal with this issue?
+2. 
 
 ### python `linregpcr-analyze.py`
 - [ ] directory issues : _Sometimes re-running the script fixes it, if not restart spyder_. Error: `FileNotFoundError: [Errno 2] No such file or directory: 'RDML_files/q27_328 330_Std27_9-3-22.rdml'`. There is something wrong with the script's interaction with directory and files. 

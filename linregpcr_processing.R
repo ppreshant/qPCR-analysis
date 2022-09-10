@@ -211,7 +211,7 @@ plt.cq_straight <- plot_facetted_assay(.yvar_plot = 40 - Cq,
 
 write.csv(calibrated_copies.data,
           str_c('excel files/linregpcr_w_metadata/', flnm, '-linreg-processed', '.csv', sep = ''),
-          na = '')
+          na = '', row.names = FALSE)
 
 
 # Render plots html ----

@@ -4,14 +4,17 @@
 
 # File name ----
 
-flnm <- 'q33_RNA stability-3_20-6-22' # mention the file name without the "-linreg" or "-processed" suffixes
+flnm <- 'q16c_Uxx-positives_15-10-21' # mention the file name without the "-linreg" or "-processed" suffixes
 
-base_title_name <- 'q33_RAM stability-3' # This will be the title name of the plots and the name of the html file
+base_title_name <- 'q16c_Uxx positives' # This will be the title name of the plots and the name of the html file
 
 
 # Options ----
 
-# options
+# Linregpcr options
+run_linregpcr <- FALSE
+
+# Traditional Cq analysis - options
 plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
 # absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve.. 
 # ..calculated or gathered from old std curves 
@@ -27,4 +30,10 @@ dilutions_to_truncate <- 0 # indicate the last n dilutions to be trimmed away be
 # Default standards : When using same standards for multiple plates (not considered best practice..)
 default_std.to.retrieve <-  'Std30' # if the file name doesn't hold any std curve, it will default to this
 force.use_default.std <- TRUE # forces the use of default std from google sheet, instead of from current file
+
+
+# error check ----
+if(str_detect(flnm, '-linreg|-processed')) 
+{stop('Invalid filename (flnm) in 0.5-user-inputs.R,
+  flnm contains suffixes -linreg or -processed')}
 

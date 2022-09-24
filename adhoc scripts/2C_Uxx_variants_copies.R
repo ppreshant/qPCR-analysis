@@ -19,23 +19,25 @@ axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
 
 # Labelling translators ----
 
-assay_var_translation <- c('295' = '(64)', # U64 # regex based translation to change x-axis labels
-                           '297' = '(1)',   #  U1
-                           '298' = '(8)', # U8
-                           '299' = '(34)',  # U34
-                           '300' = '(73)', # U73
+assay_var_translation <- c('295' = 'design 3', # U64 # regex based translation to change x-axis labels
+                           '297' = 'design 1',   #  U1
+                           '298' = '(8)', # U8  --- Removed from further analysis
+                           '299' = 'design 2',  # U34
+                           '300' = 'design 4', # U73
                            
-                           '186' = '(gfp)', # gfp:gfp
+                           '186' = 'split-gfp design', # gfp:gfp
                            
-                           '103' = '(-)',
-                           'NTC' = 'ntc')
+                           '103' = 'Empty vector', # previously : (-)
+                           'NTC' = 'no template control') # use full form for easy understanding
 
 target_name_translation <- c('U.*' = 'Spliced',
                              'gfp:gfp' = 'Spliced',
                              '16s' = '16S rRNA', # regex to change the target names for publication
-                             'gfpbarcode' = 'unspliced CatRNA')
-                             # 'U64' = 'barcoded 16S rRNA')
+                             'gfpbarcode' = 'unspliced cat-RNA barcode')
 
+target_name_to_design <- c('34' = '2', '64' = '3', '73' = '4', # change to design numbers 
+                           'U(.*)$' = 'design \\1', # add pre-fix
+                           'gfp:gfp' = 'split-gfp design')
 
 # Input the data ----
 
@@ -69,29 +71,28 @@ polished_data_for_output <-
   mutate(forplot_reduced.data,
          
          # Make a design field for both template and primer set
-         Design = if_else(str_detect(assay_variable, '(-)|ntc'), # for negative controls
-                          original_target_name, # grab name from original target name
+         Design = if_else(str_detect(assay_variable, 'Empty vector|no template control') & 
+                            !str_detect(original_target_name, 'gfpbarcode|16s'), # for negative controls
+                          str_replace_all(original_target_name, target_name_to_design), # transform from original target name
                           assay_variable),
          
-         .before = 1) %>% 
+         .before = 1) %>%
   
-  mutate(across(Design,
-                ~ if_else(str_detect(.x, 'gfpbarcode|16s'), assay_variable, # put back the (-)/ntc
-                          str_replace(.x,'U(.*)$', '(\\1)')) %>% # change U34 notation to (34)
-                  
-                  str_replace('gfp:gfp', '(gfp)') # fix inconsistency in target and assay_variable
-                
-  )) %>%
   
-  # Make a more informative Sample_category
-  mutate(Sample = if_else(str_detect(assay_variable, '(-)|ntc' ), 
-                          str_replace(assay_variable, '\\(-\\)', 'Empty vector'),
-                          'CatRNA'), .after = 1 ) %>%
+  # Rearrange as factors in custom order
   
-  arrange(Design, assay_variable, Target_name) %>%  # arrange in systematic order for output
+  # Make an ordered vector Sample from assay_variable
+  mutate(Sample = fct_relevel(assay_variable, 'Empty vector') %>% # put empty vector first
+           fct_relevel('no template control', after = Inf)) %>%  # put no template controls last
+
+  # rearrange Target_name and Design
+  mutate(across(Target_name, ~ fct_relevel(.x, "Spliced"))) %>% # Bring Spliced on the top
+  mutate(across(Design, ~ fct_relevel(.x, "Empty vector", 'no template control', after = Inf))) %>% 
+  
+  arrange(Design, Sample, Target_name) %>%  # arrange all rows in systematic order for output
   
   # :: Arrange columns
-  select(1,2,3, contains('Copies'), everything()) %>% 
+  select(Design, Sample, Target_name, contains('Copies'), everything()) %>% 
   select(-Sample_category, -matches('assay_var')) # remove redundant columns to avoid confusion
 
 
@@ -110,12 +111,12 @@ polished.summary <-
 # save raw data
 write_csv(polished_data_for_output,
           str_c('excel files/paper_data/2C_Uxx_variants', '-raw', '.csv'),
-          na = '')
+          na = 'nd')
 
 # save summary data
 write_csv(polished.summary,
           str_c('excel files/paper_data/2C_Uxx_variants', '-summary', '.csv'),
-          na = '')
+          na = 'nd')
 
 
 

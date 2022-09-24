@@ -36,6 +36,7 @@ Prashant K
 - [x] Need to plot pseudolabels next to numbering for horizontal plot, ~~what is the best way to do this without replotting?~~ 
 - [ ] Output qPCR std curve parameters at the begining of the html output
 	- Here: ![[Pasted image 20220608105107.png]]
+- [ ] Update (for general public) the readme.md to indicate the machine type `Applied Biosystems Quantstudio 3` and give a screenshot of the columns maybe?
 
 ### Bugs
 - [x] x axis title is being removed in plot_facetted_assay (example: _q32_copies-w line_)
@@ -124,8 +125,20 @@ They also inaccurately say `no plateau` since that is linked to finding a baseli
 	- Ex. low efficiency amplifications? _Try R/sliwin for these specific wells so we can play with the plotting, include a couple positive controls too?_
 
 ### Issues - 
-1. q16_Uxx negative samples : For (-) samples the high Cq (~ 35) has too high N0 values due to anomolously low efficiency (1.5 vs the typical 1.8-1.9). How to deal with this issue?
+1. Negative controls with no plateau have unusually high N0 (low efficiency) -- _I guess this is only an issue when the run does not contain any positive samples for the same target that could make a reasonable efficiency estimate_
+	- q16_Uxx negative samples : For (-) samples the high Cq (~ 35) has too high N0 values due to anomolously low efficiency (1.5 vs the typical 1.8-1.9). How to deal with this issue?
+	- _Possible fix_ : Merge the RDML files of positive and negative datasets as two different runs. [RDML paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2673419/) says runs within experiment are combined and analyzed as a single dataset. To merge, need to figure out using RDML-tools online - _tried making Run002 for one file but only one experiment is retained eventually_
 2. 
+
+
+### Comparison with CT from quantstudio
+
+#### Dye based assay
+The Cqs seem very comparable :: There are a few (~ 8) negative control samples where high Cqs are being called by linregpcr
+- Test q16 positives and negatives data
+![[q16_CT vs linregpcr Cq comparison.png|400]]
+- Internal comparison of logscale N0 with Cq: to check if the error is with the extrapolation of the window of linearity
+![[q16_linregpcr Cq vs N0 comparison.png|400]]
 
 ### python `linregpcr-analyze.py`
 - [ ] directory issues : _Sometimes re-running the script fixes it, if not restart spyder_. Error: `FileNotFoundError: [Errno 2] No such file or directory: 'RDML_files/q27_328 330_Std27_9-3-22.rdml'`. There is something wrong with the script's interaction with directory and files. 

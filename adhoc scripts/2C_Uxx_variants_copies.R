@@ -73,11 +73,16 @@ polished_data_for_output <-
          # Make a design field for both template and primer set
          Design = if_else(str_detect(assay_variable, 'Empty vector|no template control') & 
                             !str_detect(original_target_name, 'gfpbarcode|16s'), # for negative controls
-                          str_replace_all(original_target_name, target_name_to_design), # transform from original target name
+                          # transform the original target name into design x numbering
+                          str_replace_all(original_target_name, target_name_to_design), 
                           assay_variable),
          
          .before = 1) %>%
   
+  # Refine target to be unique for each spliced design
+  mutate(across(Target_name, ~ if_else(.x == 'Spliced', # for spliced samples
+                                       str_c(.x, ' (', Design, ')'), # attach the design name
+                                       .x))) %>% 
   
   # Rearrange as factors in custom order
   
@@ -85,8 +90,8 @@ polished_data_for_output <-
   mutate(Sample = fct_relevel(assay_variable, 'Empty vector') %>% # put empty vector first
            fct_relevel('no template control', after = Inf)) %>%  # put no template controls last
 
-  # rearrange Target_name and Design
-  mutate(across(Target_name, ~ fct_relevel(.x, "Spliced"))) %>% # Bring Spliced on the top
+  # rearrange Target_name and Design  # Bring Spliced on the top
+  mutate(across(Target_name, ~ fct_relevel(.x, '16S rRNA', 'unspliced cat-RNA barcode', after = Inf))) %>% 
   mutate(across(Design, ~ fct_relevel(.x, "Empty vector", 'no template control', after = Inf))) %>% 
   
   arrange(Design, Sample, Target_name) %>%  # arrange all rows in systematic order for output

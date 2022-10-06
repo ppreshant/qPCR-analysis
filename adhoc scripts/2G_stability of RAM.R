@@ -32,7 +32,7 @@ plasmid_translation <- c('328' = 'Ribo', # regex based translation to change x-a
                          '315' = 'gfp')
 
 target_translation <- c('16s' = '16S rRNA', # regex to change the target names for publication
-                        'gfpbarcode' = 'QR code',  # 'unspliced CatRNA' used in 2H data..
+                        'gfpbarcode' = 'unspliced cat-RNA barcode',  # 'unspliced CatRNA' used in 2H data..
                         'U64' = 'barcoded 16S rRNA')
 
 # Input the data ----

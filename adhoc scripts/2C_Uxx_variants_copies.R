@@ -19,21 +19,23 @@ axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
 
 # Labelling translators ----
 
-assay_var_translation <- c('295' = 'design 3', # U64 # regex based translation to change x-axis labels
-                           '297' = 'design 1',   #  U1
+assay_var_translation <- c('295' = 'cat-RNA design 3', # U64 # regex based translation to change x-axis labels
+                           '297' = 'cat-RNA design 1',   #  U1
                            '298' = '(8)', # U8  --- Removed from further analysis
-                           '299' = 'design 2',  # U34
-                           '300' = 'design 4', # U73
+                           '299' = 'cat-RNA design 2',  # U34
+                           '300' = 'cat-RNA design 4', # U73
                            
                            '186' = 'split-gfp design', # gfp:gfp
                            
                            '103' = 'Empty vector', # previously : (-)
-                           'NTC' = 'no template control') # use full form for easy understanding
+                           'NTC' = 'ntc') # use full form for easy understanding
 
-target_name_translation <- c('U.*' = 'Spliced',
-                             'gfp:gfp' = 'Spliced',
-                             '16s' = '16S rRNA', # regex to change the target names for publication
-                             'gfpbarcode' = 'unspliced cat-RNA barcode')
+target_name_translation <- c('34' = '2', '64' = '3', '73' = '4', # change to design numbers 
+                             'U(.*)$' = 'rRNA-barcoded primer pair \\1', # add pre-fix
+                             
+                             'gfp:gfp' = 'gfp-complemented primer pair',
+                             '16s' = '16S rRNA primer pair', # regex to change the target names for publication
+                             'gfpbarcode' = 'cat-RNA barcode primer pair')
 
 target_name_to_design <- c('34' = '2', '64' = '3', '73' = '4', # change to design numbers 
                            'U(.*)$' = 'design \\1', # add pre-fix
@@ -71,28 +73,30 @@ polished_data_for_output <-
   mutate(forplot_reduced.data,
          
          # Make a design field for both template and primer set
-         Design = if_else(str_detect(assay_variable, 'Empty vector|no template control') & 
+         
+         # Design = str_replace_all(original_target_name, target_name_to_design),          
+         Design = if_else(str_detect(assay_variable, 'Empty vector|ntc') &
                             !str_detect(original_target_name, 'gfpbarcode|16s'), # for negative controls
                           # transform the original target name into design x numbering
-                          str_replace_all(original_target_name, target_name_to_design), 
-                          assay_variable),
-         
+                          str_replace_all(original_target_name, target_name_to_design),
+                          str_remove(assay_variable, 'cat-RNA ')),
+
          .before = 1) %>%
   
-  # Refine target to be unique for each spliced design
-  mutate(across(Target_name, ~ if_else(.x == 'Spliced', # for spliced samples
-                                       str_c(.x, ' (', Design, ')'), # attach the design name
-                                       .x))) %>% 
+  # # Refine target to be unique for each spliced design
+  # mutate(across(Target_name, ~ if_else(.x == 'Spliced', # for spliced samples
+  #                                      str_c(.x, ' (', Design, ')'), # attach the design name
+  #                                      .x))) %>% 
   
   # Rearrange as factors in custom order
   
   # Make an ordered vector Sample from assay_variable
   mutate(Sample = fct_relevel(assay_variable, 'Empty vector') %>% # put empty vector first
-           fct_relevel('no template control', after = Inf)) %>%  # put no template controls last
+           fct_relevel('ntc', after = Inf)) %>%  # put no template controls last
 
   # rearrange Target_name and Design  # Bring Spliced on the top
-  mutate(across(Target_name, ~ fct_relevel(.x, '16S rRNA', 'unspliced cat-RNA barcode', after = Inf))) %>% 
-  mutate(across(Design, ~ fct_relevel(.x, "Empty vector", 'no template control', after = Inf))) %>% 
+  mutate(across(Target_name, ~ fct_relevel(.x, '16S rRNA primer pair', 'cat-RNA barcode primer pair', after = Inf))) %>% 
+  mutate(across(Design, ~ fct_relevel(.x, "Empty vector", 'ntc', after = Inf))) %>% 
   
   arrange(Design, Sample, Target_name) %>%  # arrange all rows in systematic order for output
   

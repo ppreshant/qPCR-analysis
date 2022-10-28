@@ -39,6 +39,7 @@ Prashant K
 - [ ] Update (for general public) the readme.md to indicate the machine type `Applied Biosystems Quantstudio 3` and give a screenshot of the columns maybe?
 
 ### Bugs
+- [ ] Change the de-limiter from `-` to `_` for every field -- to prevent problems with negative numbers... _or could put a symbol that R converts to -?_
 - [x] x axis title is being removed in plot_facetted_assay (example: _q32_copies-w line_)
 	- [ ] Check if horizontal plots are ok now
 - [ ] Check if the 4 ul template volume is being taken into account in std curve processing or regular sample processing. _Since labels say copies per ul template, this needs to be accurate_

@@ -9,7 +9,8 @@ Prashant K
 - Currently there is not much advantage to using the new software, just use V1.5.2 till these are changed
 
 ### Streamlining changes
-- (_implement_) Make a conditional to plate layout reader if decimal point should be read vs biological replicates -- or (_alternatively_) Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader? 
+- (_implement_) Change the de-limiter from `-` to `_` for every field -- solves problem with negative numbers, decimals. Auto-generate the replicate numbering if not provided by the user. Relates to 1st [[#Bugs]]  
+	- Make a conditional to plate layout reader if decimal point should be read vs biological replicates -- or (_alternatively_) Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader? 
 	- _Problem with completely removing: the same template is used for more than 1 targets but the order is not consistent.., and we can't trust that the replicates assigned using row_numbers() will be in the correct order; relevant for ratio, normalization or for any matched statistical analysis_
   - _Use case:_ It makes it harder to type in *decimal dilution values* in the `assay_variable` spot. 
 	  - Can make it backward compatible - could have a regex with `.[:digit:]$` detection in case replicates are specified :: How will this differentiate with a single decimal value after the point?
@@ -39,7 +40,7 @@ Prashant K
 - [ ] Update (for general public) the readme.md to indicate the machine type `Applied Biosystems Quantstudio 3` and give a screenshot of the columns maybe?
 
 ### Bugs
-- [ ] Change the de-limiter from `-` to `_` for every field -- to prevent problems with negative numbers... _or could put a symbol that R converts to -?_
+- [ ] Change the de-limiter from `-` to `_` for every field -- to prevent problems with negative numbers... _or could put a symbol (or write "minus") that R converts to -?_
 - [x] x axis title is being removed in plot_facetted_assay (example: _q32_copies-w line_)
 	- [ ] Check if horizontal plots are ok now
 - [ ] Check if the 4 ul template volume is being taken into account in std curve processing or regular sample processing. _Since labels say copies per ul template, this needs to be accurate_

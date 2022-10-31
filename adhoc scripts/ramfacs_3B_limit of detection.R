@@ -5,9 +5,13 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # User inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
-flnm <- 'q32_S046 E coli dils_6-6-22'  
-title_name <-'3B Limit of detection of splicing-qPCR'
+flnm <- 'q39_S052_e coli dil exp_28-10-22'  
+title_name <-'exponential: Limit of detection of splicing-qPCR'
+titlename_short <- 'q39_S052_exp'
 
+# flnm <- 'q32_S046 E coli dils_6-6-22' # for stationary phase data
+# title_name <-'3B Limit of detection of splicing-qPCR'
+# titlename_short <- title_name
 
 # Sample name modifiers 
 
@@ -85,11 +89,12 @@ plt_U64_copies_w_mean <-
 
 # Save plot ----
 
-ggsave(plot_as('q32_Cq'), plt_copies, width = 4.5, height = 4)
-ggsave(plot_as(title_name), plt_copies, width = 4.5, height = 4)
-ggsave(plot_as('q32_copies', '-w line'), plt_monopanel_copies_w_mean, width = 3.7, height = 4)
-ggsave(plot_as('q32_copies-U64', '-w line'), plt_U64_copies_w_mean, width = 3.7, height = 4)
-ggsave(str_c('qPCR analysis/Archive/', 'q32_copies-U64', '-w line.pdf'), plt_U64_copies_w_mean, width = 3.7, height = 2) # save as PDF
+# ggsave(plot_as(titlename_short, '-Cq'), plt_cq, width = 4.5, height = 4)
+# ggsave(plot_as(titlename_short), plt_copies, width = 4.5, height = 4)
+ggsave(plot_as(titlename_short, '-copies'), plt_monopanel_copies_w_mean, width = 3.7, height = 4)
+ggsave(plot_as(titlename_short, '-spliced'), plt_U64_copies_w_mean, width = 3.7, height = 4)
+ggsave(str_c('qPCR analysis/Archive/', titlename_short, '-spliced.pdf'), 
+       plt_U64_copies_w_mean, width = 3.7, height = 2) # save as PDF
 
 
 # Save data ----
@@ -102,5 +107,5 @@ select(forplotting_cq.dat,
        Sample_category,
        everything()) %>%
   
-write_csv(str_c('excel files/paper_data/', 'ramfacs-', title_name, '.csv', sep = ''),
+write_csv(str_c('excel files/paper_data/', 'ramfacs-', titlename_short, '.csv', sep = ''),
           na = '')

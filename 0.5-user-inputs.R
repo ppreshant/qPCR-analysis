@@ -4,18 +4,21 @@
 
 # File name ----
 
-flnm <- 'q16c_Uxx-positives_15-10-21' # mention the file name without the "-linreg" or "-processed" suffixes
+flnm <- 'q040b_S050_re-followup -ves_memory' # mention the file name without the "-linreg" or "-processed" suffixes
 
-base_title_name <- 'q16c_Uxx positives' # This will be the title name of the plots and the name of the html file
-
+base_title_name <- 'q40b_S050_-ves 2' # This will be the title name of the plots and the name of the html file
 
 # Options ----
+
+# get templates from google sheet or from data excel file
+template_source <- 'googlesheet' # googlesheet/excel = parse through a list of templates in the respective formats and
+# get the template with the matching qxx ID. 'excel' looks for the file 'excel files/Plate layouts.xlsx'
 
 # Linregpcr options
 run_linregpcr <- FALSE
 
 # Traditional Cq analysis - options
-plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
+plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
 # absolute_quantification = Will calculate copy #'s based on y_intercept and slope from standard curve.. 
 # ..calculated or gathered from old std curves 
 # raw_quantification = Cq values are plotted

@@ -33,8 +33,17 @@ readqpcr <- function(flnm)
 get_template_for <- function(bait, sheet_url = sheeturls$plate_layouts_PK)
 { # Looking for WWx or Stdx - example WW21 or Std7 within the filename; Assumes plate spans from row B to N (1 row below the matching ID)
   
+  # get template from google sheets or excel file
+  
   # Finding the plate to be read
-  plate_names_row <- read_sheet(sheet_url, sheet = 'qPCR plate layouts', range = 'C:C', col_types = 'c')
+  plate_names_row <- if(template_source == 'googlesheet') # googlesheet vs excel options
+  
+    {read_sheet(sheet_url, sheet = 'qPCR plate layouts', range = 'C:C', col_types = 'c') } else {
+      
+      readxl::read_excel(path = 'excel files/Plate layouts.xlsx', range = cell_cols('C:C'), col_types = 'text')
+    } 
+  
+  
   m_row <- plate_names_row %>% unlist() %>% as.character() %>% 
     # find the row with standard beginnings matching the filename
     str_detect(., str_c('^', bait %>% str_match('^(q)[:digit:]*') %>% .[1]) ) %>% # select the q0xy digits part of the file
@@ -49,8 +58,14 @@ get_template_for <- function(bait, sheet_url = sheeturls$plate_layouts_PK)
     } else if(!length(m_row)) stop( str_c('Plate ID of :', bait, 'does not match anything on the plate layout. 
     Please fix and re-run the script', sep = ' '))
   
-  # read the template corresponding to the file name
-  plate_template_raw <- read_sheet(sheet_url, sheet = 'qPCR plate layouts', range = range_to_get)
+  # read the template corresponding to the file name -- from the range determined above
+  plate_template_raw <- 
+    if(template_source == 'googlesheet') # googlesheet vs excel options
+    
+      {read_sheet(sheet_url, sheet = 'qPCR plate layouts', range = range_to_get)} else {
+      
+      readxl::read_excel(path = 'excel files/Plate layouts.xlsx', range = range_to_get)
+    }
   
   # Convert the 96 well into a single column, alongside the Well position
   plate_template <- read_plate_to_column(plate_template_raw, 'Sample_name_bulk') # convert plate template (Sample_names) into a single vector, columnwise

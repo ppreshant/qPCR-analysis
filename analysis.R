@@ -166,7 +166,7 @@ if(experiment_mode == 'assay')
       std_par <- 
         {if(template_source == 'googlesheet')
           read_sheet(sheeturls$plate_layouts_PK, sheet = 'qPCR Std curves', range = 'A:G', col_types = 'ccnnnnn') else {
-            read_csv(path = 'qPCR analysis/Standards/qPCR_Std_curve_parameters.csv', range = cell_cols('A:G'))}
+            read_csv(file = 'qPCR analysis/Standards/qPCR_Std_curve_parameters.csv')}
         } %>% 
         
       filter(str_detect(ID, std_to_retrieve ))

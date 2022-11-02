@@ -1,2 +1,5 @@
 ID,Target_name,Slope,y_intercept,Efficiency,%,Efficiency,R-square,Alt,name,master,"mix,",Tm
 Std1_q06,old16sU73,-3.22,29.48,2.044367679,104.4367679,0.995,,1-step,"detect,",60,,
+Std30_q30,16s,-3.05,34.09,2.127496491,112.7496491,0.992,,1-step,probe,"Go,",65,
+Std30_q30,gfpbarcode,-3.08,33.3,2.111909602,111.1909602,0.998,,1-step,probe,"Go,",65,
+Std30_q30,U64,-3.1,33.05,2.101748011,110.1748011,0.998,,Blue,mix,+,"RT,",65

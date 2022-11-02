@@ -117,9 +117,12 @@ process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
     select(Target_name, CT, Quantity, biological_replicates, Sample_category, everything()) %>% 
     mutate(ID = fl_namer, .before = 1) # add the run ID
   
-  # Writing data
-  sheet_append(sheeturls$plate_layouts_PK, efficiency_table, sheet = 'qPCR Std curves') # Add parameters to standard curves into google sheet
+  # Writing data : google sheet or excel file 
   
+  if(template_source == 'googlesheet') # Add parameters to standard curves
+    sheet_append(sheeturls$plate_layouts_PK, efficiency_table, sheet = 'qPCR Std curves') else { # into google sheet
+      write_csv(efficiency_table, path = 'qPCR analysis/Standards/qPCR_Std_curve_parameters.csv', append = TRUE)} # into excel file
+
   write_csv(clean_std_data, 'qPCR analysis/Standards/all_std_data_points.csv',append = TRUE) # Writing full std data for archive
   
   # return the table with std curve parameters

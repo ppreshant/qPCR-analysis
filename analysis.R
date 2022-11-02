@@ -163,7 +163,12 @@ if(experiment_mode == 'assay')
         if(force.use_default.std || # if forced to use the default or if Std isn't in the file
            is.na(std_to_retrieve)) default_std.to.retrieve else std_to_retrieve # Resort to default if file holds no Std
       
-      std_par <- read_sheet(sheeturls$plate_layouts_PK, sheet = 'qPCR Std curves', range = 'A:G', col_types = 'ccnnnnn') %>% 
+      std_par <- 
+        {if(template_source == 'googlesheet')
+          read_sheet(sheeturls$plate_layouts_PK, sheet = 'qPCR Std curves', range = 'A:G', col_types = 'ccnnnnn') else {
+            read_csv(path = 'qPCR analysis/Standards/qPCR_Std_curve_parameters.csv', range = cell_cols('A:G'))}
+        } %>% 
+        
       filter(str_detect(ID, std_to_retrieve ))
     
       } else {
@@ -189,17 +194,6 @@ if(experiment_mode == 'assay')
                               .xaxis.label.custom = axislabel.assay_variable) + 
           theme(plot.title = element_text(hjust = 0.5), 
                 axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
-        }
-        
-        
-        # if it needs an old standard curve (Stdoldx), bring from google sheet
-        if(str_detect(flnm, 'Stdold[:digit:]*')) 
-        { # dynamic update of standard curve parameters : default parameters in the inputs_for_analysis.R file
-          std_to_retrieve <- str_c('Std', # recreate the Stdxx (xx = number)
-                                   str_match(flnm, 'Stdold([:alnum:])*')[2]) # Just take the number
-          
-          std_par <- read_sheet(sheeturls$plate_layouts_PK, sheet = 'qPCR Std curves', range = 'A:G', col_types = 'ccnnnnn') %>% 
-            filter(str_detect(ID, std_to_retrieve ))
         }
     
       }

@@ -3,53 +3,21 @@
 
 source('./0-general_functions_main.R') # Source the general_functions file before running this
 
-# User inputs  ----
+# Source user inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
 source('./0.5-user-inputs.R') # source the user inputs from a different script
 title_name <- base_title_name
 
+
 # Labelling translators ----
 
-# Subtitle labeller (for y axis variables)
-# variable : yaxis_translation : Check script 16-user_parameters.R
+# check 16-user_paremeters.R for modifying these options
 
-# x axis labeller
-# attach explanations to assay_variable (plasmid numbers) for interpretability
-
+# variable : yaxis_translation ; (replaces the y axis names to be readable in the plots)
+# x axis labeller : attach explanations to assay_variable (plasmid numbers) for interpretability
 
 axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
-
-
-# obsolete options ----
-
-experiment_mode <- 'assay' # options ('old_assay' ; 'assay') ; future implementation: 'custom'. Explanation below
-# 'assay' =  Plots for Assays (facetted by Target_name, colour by Sample_category = control vs experiment ; 
-# naming: primerpairname-overall name_templatename.biologicalreplicatenumber)
-# What will custom include?
-
-# Assay mode features
-
-errorbar_width = 0.1; # width of errorbars - emperically change
-# Determines which variable is chosen for plotting in different colours
-plot_colour_by <- quo(Target) # Options : (quo(Target) or quo(Sample Name); 
-
-std_par <- tibble(                       
-  # Input the slope and y_intercept from standard curve of various primer pairs/targets here 
-  # Target should match Target field (provided in excel sheet - Sample input reference.csv) 
-  target = c('Flipped', 'Unflipped', 'Backbone'),
-  slope =  c(-3.36, -3.23, -3.55),
-  y_intercept = c(42, 38, 42) # values for primer pairs: Flipped:q4-5. Unflipped:q9-10, Backbone:q12-13
-)
-plot_select_template <- '' # Options ('' or 'something') ; filters a particular template name to plot 
-plot_normalized_backbone <- 'no' # Options: ('yes' or 'no'); plots copy #'s normalized to backbone 
-plot_mean_and_sd <- 'yes' # Options: ('yes' or 'no'); plots mean and errorbars instead of each replicate as a point
-# exclude Sample_category for plotting; ex: Controls etc.
-plot_exclude_category <- '^MHT*' # Regex pattern: 'Controls2', '^MHT*', '^none; 
-# exclude assay_variables for plotting; ex: no template control etc.
-plot_exclude_assay_variable <- '^none' # Regex pattern: '^N', '^none' or ''; 
-
-
 
 
 # Input the data ----
@@ -112,14 +80,20 @@ if(experiment_mode == 'assay')
   
   # Cq plot ----
   
-  # plot ~ copies (relative quantification)
-  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional, .xaxis.label.custom = axislabel.assay_variable) 
-  # This is a standby plot in the absence of absolute copy number calculation
   
   # plot 40 - Cq
-  plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT, .xaxis.label.custom = axislabel.assay_variable)
-  plt.cq_straight <- plot_facetted_assay(.yvar_plot = 40-CT, .xvar_plot = assay_var.horz_label, 
-                                         .xaxis.label.custom = axislabel.assay_variable)
+  plt.cq <- plot_facetted_assay(.yvar_plot = 40-CT, .xaxis.label.custom = axislabel.assay_variable, 
+                                flipped_plot = FALSE)
+  
+  horz.cq <- plot_facetted_assay(.yvar_plot = 40-CT, .xvar_plot = assay_var.horz_label, 
+                                 .xaxis.label.custom = axislabel.assay_variable)
+  
+  
+  # plot ~ copies (2^40-Cq : not representative copy number)
+  plt.copies <- plot_facetted_assay(.yvar_plot = Copies_proportional,
+                                    .xaxis.label.custom = axislabel.assay_variable)
+  
+  # This is a standby plot in the absence of absolute copy number calculation
   
   # Tm plots ----
   
@@ -177,7 +151,8 @@ if(experiment_mode == 'assay')
         
         # if it is a standard curve holding file (Stdx), call standard curve processor
         if(str_detect(flnm, 'Std[:digit:]*')) 
-        {std_par <- process_standard_curve(flnm, polished_cq.dat, dilutions_to_truncate) # process the standards within the file
+        { # process the standards within the file
+          std_par <- process_standard_curve(flnm, polished_cq.dat, dilutions_to_truncate) 
         
         # plot a cq graph with standards included
         plt.cq_w.std <- 
@@ -199,9 +174,13 @@ if(experiment_mode == 'assay')
       }
     
     # If no standard curve is found, then throw an informative error
-    if(is.null(std_par)) stop(str_c('No Std curve information found in the file name:',
-                                    flnm,
-                                    '\n Run with plot_mode <-  raw_quantification if you dont want Std curve information '))
+    if(is.null(std_par)) 
+      stop(str_c('No Std curve information found in the file name:',
+                 flnm,
+                 '\n Run with plot_mode <-  raw_quantification if you dont want Std curve information '))
+
+        
+    # calculate absolute copies ----
     
     # Use the std curve parameters to back-calculate the absolute copies
     absolute_dat <- forplotting_cq.dat %>%
@@ -209,7 +188,9 @@ if(experiment_mode == 'assay')
       
       group_by(Target_name) %>%
       nest() %>% # create a new column with data frames for each target
-      summarize(w.copy.data = map2(data, Target_name,  # calculate copy number for each dataset, and the mean for replicates
+      
+      # calculate copy number for each dataset, and the mean for replicates
+      summarize(w.copy.data = map2(data, Target_name,  
                                     ~ absolute_backcalc(.x, .y, std_par) ) 
       ) %>% 
       unnest(cols = c(w.copy.data)) %>%  # expand the absolute copy number data list
@@ -218,53 +199,30 @@ if(experiment_mode == 'assay')
       mutate('std_curve id' = std_to_retrieve)
     
     
+    # plot absolute copies ----
+    
     # plot absolute copies per ul template
     plt.copies <- plot_facetted_assay(.data = absolute_dat, .yvar_plot = Copies.per.ul.template, 
-                                      .xaxis.label.custom = axislabel.assay_variable)
+                                      .xaxis.label.custom = axislabel.assay_variable, flipped_plot = F)
     
     plt.copies_w.mean <- plot_facetted_assay(.data = absolute_dat, 
                                              .yvar_plot = Copies.per.ul.template, 
                                              .xaxis.label.custom = axislabel.assay_variable, 
-                                             points_plt.style = 'jitter') + 
+                                             points_plt.style = 'jitter', flipped_plot = F) + 
       geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
     
     # same plot with x-labels in a single line
-    plt.copies_w.mean_straight <- plot_facetted_assay(.data = absolute_dat, 
+    horz.copies_w.mean <- {plot_facetted_assay(.data = absolute_dat, 
                                             .xvar_plot = assay_var.horz_label, 
                                             .xaxis.label.custom = axislabel.assay_variable,
                                             .yvar_plot = Copies.per.ul.template, 
                                             points_plt.style = 'jitter') + 
-      geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
+      geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)} %>% 
+      
+      format_logscale_y()
       
   }
   
-  # # normalizing copy #s to backbone ----  
-  # if(plot_mode == 'absolute_quantification' & plot_normalized_backbone == 'yes')
-  # { # computing ratio of copy #s of targets : flipped and unflipped to the backbone
-  #   
-  #   sel <- absolute_dat %>% select(Sample_category,assay_variable,`Primer pair`,Target,`Copies.per.ul.template`) 
-  #   # select relevant columns (other numeric columns will throw errors)
-  #   
-  #   sel_b <- sel %>% filter(Target == 'Backbone') # filter out each Target
-  #   sel_f <- sel %>% filter(Target == 'Flipped'); sel_u <- sel %>% filter(Target == 'Unflipped');
-  #   
-  #   # make ratios to the backbone
-  #   sel_f %<>% mutate("Normalized Copies.per.ul.template" = sel_f$`Copies.per.ul.template`/sel_b$`Copies.per.ul.template`);  
-  #   sel_u %<>% mutate("Normalized Copies.per.ul.template" = sel_u$`Copies.per.ul.template`/sel_b$`Copies.per.ul.template`);
-  #   
-  #   results_ratio <- bind_rows(sel_f, sel_u) # bind results into 1 tibble (for easy plotting)
-  #   
-  #   # plotting the normalized copy #'s
-  # plt_norm <- results_ratio %>% 
-  # ggplot(aes(x = `assay_variable`,
-  #            y = `Normalized Copies.per.ul.template`, color = Target)) +   # plotting
-  # geom_point(size = 2) + facet_grid(~Sample_category, scales = 'free_x', space = 'free_x') # plot points and facetting
-  # 
-  #   plt_norm.formatted <- plt_norm %>% format_classic(., title_name, axislabel.assay_variable) %>% format_logscale() 
-  #   # formatting plot, axes labels, title and logcale plotting
-  #   
-  #   print(plt_norm)
-  # }
   
 }
 

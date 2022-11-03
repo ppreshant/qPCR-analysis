@@ -2,38 +2,65 @@
 # Prashant, 2/April/21
 
 # Will start with certain specific features. 
-# More hard-coded variabels can be user-input as use cases arrive
+# More hard-coded variables can be user-input as use cases arrive
 
 plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tibble
+                                
                                 # required variable .yvar_plot
                                 .yvar_plot, .xvar_plot = assay_var.label, # variables within the dataframe (not string, use raw name)
+                                
                                 .colourvar_plot = Sample_category,
+                                .filter_colourvar = '.*', # wrapper for plotting a subset of colours
+                                
                                 .facetvar_plot = Target_name, # facets align along the x axis, cannot be NULL as of now
+  
                                 .xaxis.label.custom = NULL, # pass in plot_assay_variable if needed
                                 .subtitle.plot = NULL, # 'y axis label' supplied as a string to .subtitle.plot
-                                points_plt.style = 'point') # jitter for scattered effect, else lined up points
+                                
+                                points_plt.style = 'jitter', # jitter for scattered effect, else 'point' for lined up points
+                                flipped_plot = TRUE) # if you want the quantity on x axis and labels on y
+
   
 {
   
-  # check missing variables
+  # check missing variables ----
   if(is.null(enquo(.yvar_plot))) stop('Missing y axis variable for plot in plot_facetted_assay() call')  
   
+  # make labels ----
   # Get plot subtitle (translated from the table if entry exists)
   if(is.null(.subtitle.plot)) .subtitle.plot <- yaxis_translation[deparse(enexpr(.yvar_plot))]
   if(is.na(.subtitle.plot)) .subtitle.plot <- deparse(enexpr(.yvar_plot)) # use full text if not in the translation table
   
-  # plotting
-  {ggplot(.data, aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}})) +
+  
+  
+  # plotting ----
+  {ggplot(filter(.data, # prefilter data for specific colours -- typically sample_categories
+                 str_detect({{.colourvar_plot}}, .filter_colourvar)), 
+          
+          aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}})) +
       
       {if(points_plt.style == 'jitter') {geom_jitter(height = 0, width = .2) # plot points in 'jitter' or normal fashion
-        } else geom_point() } +
+      } else geom_point() } +
       
-      facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x') +  # facets
+      # formatting for flipped plots : Warning x and y still refer to the original orientation (not flipped)
+      {if(flipped_plot) {list(
+        coord_flip(), 
+        facet_grid(rows = vars({{.facetvar_plot}}), scales = 'free_y', space = 'free_y'), # flipped facets
+        theme(legend.position = 'top'), # put legend on the top
+        xlab(''))
+        
+        # facetting and ylab for regular plots
+                        } else list(
+        facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x'), # facets regular
+        {if(!is.na(.subtitle.plot)) ylab('')}, # remove y axis label if a subtitle is provided which is more readable
+        {if(!is.null(.xaxis.label.custom)) xlab(.xaxis.label.custom)}) # custom label for X axis if specified
+      } + 
       
-      ggtitle(title_name, subtitle = .subtitle.plot) + # custom title and y label as subtitle
-      {if(!is.null(.xaxis.label.custom)) xlab(.xaxis.label.custom)} + # custom label for X axis if specified
-      {if(!is.na(.subtitle.plot)) ylab('')} }  %>%  # remove y axis label if a subtitle is provided which is more readable
-    print()
+      # titles and axis names
+      ggtitle(title_name, subtitle = .subtitle.plot) # custom title and y label as subtitle
+      
+    
+  } %>% print()
 }
 
 

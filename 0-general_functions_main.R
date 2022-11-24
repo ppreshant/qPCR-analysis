@@ -5,7 +5,11 @@
 
 # Library calling  ----
 # calling libraries ; make sure they are installed (install.packages)
-library(readxl); library(magrittr); library(tidyverse); library(ggrepel); library(googlesheets4); library(rlang); library(plotly)
+library(tidyverse); library(rlang); # tidyverse general tabular stuff. rlang -- unconventional tidyeval stuff
+library(plotly) # interactive plots
+
+# library(magrittr); # special chaining functions beyond "%>%"
+# library(ggrepel); # for non-overlapping labels of points on plots
 # library(lubridate); # for advanced date operations
 
 

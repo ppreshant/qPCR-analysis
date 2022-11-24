@@ -10,12 +10,13 @@ source('./0.5-user-inputs.R') # source the user inputs from a different script
 title_name <- base_title_name
 
 
-# Labelling translators ----
+# Labeling translators ----
 
-# check 16-user_paremeters.R for modifying these options
+# check 16-user_parameters.R for modifying these options to make plots more readable
 
-# variable : yaxis_translation ; (replaces the y axis names to be readable in the plots)
-# x axis labeller : attach explanations to assay_variable (plasmid numbers) for interpretability
+# yaxis_translation : (replaces the y axis names to be readable in the plots)
+# lst_assay.vars_translation : attach explanations to assay_variable appearing on x axis (ex: plasmid numbers) 
+
 
 axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
 

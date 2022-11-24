@@ -18,6 +18,7 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
                                 .subtitle.plot = NULL, # 'y axis label' supplied as a string to .subtitle.plot
                                 
                                 points_plt.style = 'jitter', # jitter for scattered effect, else 'point' for lined up points
+                                jitter_width = 0.05, # the width of jitter (0 - 0.5), adjust depending on # of assay_variables
                                 flipped_plot = TRUE) # if you want the quantity on x axis and labels on y
 
   
@@ -39,7 +40,7 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
           
           aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}})) +
       
-      {if(points_plt.style == 'jitter') {geom_jitter(height = 0, width = .2) # plot points in 'jitter' or normal fashion
+      {if(points_plt.style == 'jitter') {geom_jitter(height = 0, width = jitter_width) # plot points in 'jitter' or normal fashion
       } else geom_point() } +
       
       # formatting for flipped plots : Warning x and y still refer to the original orientation (not flipped)

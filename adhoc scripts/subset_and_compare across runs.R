@@ -3,8 +3,11 @@
 
 # User inputs ----
 
-flnms <- c('q38_S055_8-orgs expression_22-10-22', # raw file name, without the "-processed" keyword
-           'q038b_S055_10xdil_8-orgs-expression_26-10-22')
+# flnms <- c('q38_S055_8-orgs expression_22-10-22', # raw file name, without the "-processed" keyword
+#            'q038b_S055_10xdil_8-orgs-expression_26-10-22')
+
+# auto-recognize files with regex pattern : Remove .xlsx (since we want -processed.csv files)
+flnms <- dir(path = 'excel files/', pattern = 'q.?4[01]') %>% str_replace('.xls', '')
 
 # Load processed data ----
 
@@ -13,7 +16,7 @@ proc_data <- map_dfr(flnms,
 
 plt.comparison <- plot_facetted_assay(.data = proc_data, .yvar_plot = 40-CT, .colourvar_plot = run_ID)
 
-ggsave(plot_as(base_title_name), width = 12, height = 4)
+ggsave(plot_as(base_title_name), width = 6, height = 8)
 
 
 # additional analysis ----

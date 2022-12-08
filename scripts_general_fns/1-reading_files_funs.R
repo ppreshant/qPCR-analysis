@@ -14,7 +14,7 @@ readqpcr <- function(flnm)
     {which(. == 'Well') - 1} # check where "Well" appears, and subtract 1
   
   fl <- flnm %>%  
-    excel_sheets() %>% 
+    readxl::excel_sheets() %>% 
     set_names(.,.) %>% 
     map(readxl::read_excel, path = flnm, skip = to.skip) # change skip # if channels are not calibrated
   

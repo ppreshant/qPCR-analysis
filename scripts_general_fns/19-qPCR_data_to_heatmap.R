@@ -17,13 +17,17 @@ qPCR_data_to_heatmap <- function(.df = forplotting_cq.dat,
            into = c('row', 'column'),
            sep = 1) %>% 
     
+    # order columns in numerical order
+    mutate(across(column, fct_inorder)) %>% 
+    
     filter(str_detect(Target_name, .target)) %>% # filter one target -- TODO : vectorize/loop?
     
     # order levels : H -> A 
     mutate(across(row, ~ fct_inorder(.x) %>% fct_rev)) %>%  
   
     # mutate(across(row, ~ match(.x, LETTERS[1:26]))) # convert the letter to number
-    mutate(importance = if_else(str_detect({{.transparency}}, 'Uninduced|Control|negative|ntc'), 
+    mutate(importance = if_else(str_detect({{.transparency}}, 
+                                           regex('Uninduced|Control|negative|ntc|Water', ignore_case = TRUE)), 
                                 1, 0.5)) %>% 
     
     {ggplot(data = ., 
@@ -44,3 +48,57 @@ qPCR_data_to_heatmap <- function(.df = forplotting_cq.dat,
 
 
 
+#' Make a ~heatmap for qPCR data based on well positions, for all targets
+#' useful for quick spotting of cross contamination
+qPCR_multitarget_heatmap <- function(.df = forplotting_cq.dat, 
+                                 wellposition = `Well Position`,
+                                 .target = 'flipped',
+                                 .transparency = `Sample_category`,
+                                 title_name = base_title_name)
+{
+  
+  # separate the well position into rows and columns
+  separate(.df,
+           {{wellposition}},
+           into = c('row', 'column'),
+           sep = 1) %>% 
+    
+    # order columns in numerical order
+    mutate(across(column, fct_inorder)) %>% 
+    
+    # filter(str_detect(Target_name, .target)) %>% # filter one target -- TODO : vectorize/loop?
+    
+    # order levels : H -> A 
+    mutate(across(row, ~ fct_inorder(.x))) %>%  
+    
+    # mutate(across(row, ~ match(.x, LETTERS[1:26]))) # convert the letter to number
+    mutate(importance = if_else(str_detect({{.transparency}}, 
+                                           regex('Uninduced|Control|negative|ntc|Water', ignore_case = TRUE)), 
+                                1, 0.5)) %>% 
+    
+    {ggplot(data = ., 
+            aes(x = 1, y = 40 - CT, fill = Target_name, colour = Target_name,
+                alpha = importance)) + 
+        
+        geom_bar(stat = 'identity', position = position_dodge2(width = 0.9)) + # heatmap with spacing
+        
+        # scale_fill_viridis_c() +  # colour scale
+        scale_fill_brewer(palette = 'Set1') +
+        scale_alpha_continuous(breaks = c(0.5, 1), limits = c(0, 1)) + 
+        
+        geom_text(aes(label = round(40-CT, 0), y = 42 - CT), 
+                  size = 2,
+                  position = position_dodge2(width = 0.9), vjust = 0, hjust = 0.5) + # show the 40-Cq - no decimals 
+        
+        theme(axis.text = element_blank(), axis.ticks = element_blank())+ # hide axis labels
+        xlab('') + ylab('')+
+        
+        ggtitle(glue::glue(title_name, " : ", .target), subtitle = 'bars showing 40-Cq') +  # add title
+        
+        facet_grid(rows = vars(row), cols = vars(column), switch = 'y')
+      
+    } 
+}
+
+# TODO : add grey panels where data is present.. even if bars are not. (similar to heatmap)
+# TODO : move text into the bar (depending on bar height?) and change colour ~ importance -- ensure dodge still works

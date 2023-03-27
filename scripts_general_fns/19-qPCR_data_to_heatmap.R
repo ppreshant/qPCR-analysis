@@ -7,26 +7,19 @@
 qPCR_data_to_heatmap <- function(.df = forplotting_cq.dat, 
                                  wellposition = `Well Position`,
                                  .target = 'flipped',
-                                 .transparency = `Sample_category`,
+                                 .importance_column = `Sample_category`,
                                  title_name = base_title_name)
 {
   
-  # separate the well position into rows and columns
-  separate(.df,
-           {{wellposition}},
-           into = c('row', 'column'),
-           sep = 1) %>% 
-    
-    # order columns in numerical order
-    mutate(across(column, fct_inorder)) %>% 
+  make_rows_cols(.df, {{wellposition}}) %>% # Separate wells into rows and cols and freeze proper order
     
     filter(str_detect(Target_name, .target)) %>% # filter one target -- TODO : vectorize/loop?
     
-    # order levels : H -> A 
-    mutate(across(row, ~ fct_inorder(.x) %>% fct_rev)) %>%  
+    # re-order levels : H -> A 
+    mutate(across(row, fct_rev)) %>%  # reverse order of rows for plotting
   
     # mutate(across(row, ~ match(.x, LETTERS[1:26]))) # convert the letter to number
-    mutate(importance = if_else(str_detect({{.transparency}}, 
+    mutate(importance = if_else(str_detect({{.importance_column}}, 
                                            regex('Uninduced|Control|negative|ntc|Water', ignore_case = TRUE)), 
                                 1, 0.5)) %>% 
     
@@ -52,27 +45,14 @@ qPCR_data_to_heatmap <- function(.df = forplotting_cq.dat,
 #' useful for quick spotting of cross contamination
 qPCR_multitarget_heatmap <- function(.df = forplotting_cq.dat, 
                                  wellposition = `Well Position`,
-                                 .target = 'flipped',
-                                 .transparency = `Sample_category`,
+                                 .importance_column = `Sample_category`,
                                  title_name = base_title_name)
 {
   
-  # separate the well position into rows and columns
-  separate(.df,
-           {{wellposition}},
-           into = c('row', 'column'),
-           sep = 1) %>% 
-    
-    # order columns in numerical order
-    mutate(across(column, fct_inorder)) %>% 
-    
-    # filter(str_detect(Target_name, .target)) %>% # filter one target -- TODO : vectorize/loop?
-    
-    # order levels : H -> A 
-    mutate(across(row, ~ fct_inorder(.x))) %>%  
-    
+  make_rows_cols(.df, {{wellposition}}) %>% # Separate wells into rows and cols and freeze proper order
+      
     # mutate(across(row, ~ match(.x, LETTERS[1:26]))) # convert the letter to number
-    mutate(importance = if_else(str_detect({{.transparency}}, 
+    mutate(importance = if_else(str_detect({{.importance_column}}, 
                                            regex('Uninduced|Control|negative|ntc|Water', ignore_case = TRUE)), 
                                 1, 0.5)) %>% 
     
@@ -93,7 +73,7 @@ qPCR_multitarget_heatmap <- function(.df = forplotting_cq.dat,
         theme(axis.text = element_blank(), axis.ticks = element_blank())+ # hide axis labels
         xlab('') + ylab('')+
         
-        ggtitle(glue::glue(title_name, " : ", .target), subtitle = 'bars showing 40-Cq') +  # add title
+        ggtitle(title_name, subtitle = 'bars showing 40-Cq') +  # add title
         
         facet_grid(rows = vars(row), cols = vars(column), switch = 'y')
       
@@ -102,3 +82,21 @@ qPCR_multitarget_heatmap <- function(.df = forplotting_cq.dat,
 
 # TODO : add grey panels where data is present.. even if bars are not. (similar to heatmap)
 # TODO : move text into the bar (depending on bar height?) and change colour ~ importance -- ensure dodge still works
+
+
+#' Separate qPCR data Wells into rows and columns in alphabetical and numerical order
+make_rows_cols <- function(.df = forplotting_cq.dat, 
+                           wellposition = `Well Position`)
+{
+  # separate the well position into rows and columns
+  separate(.df,
+           {{wellposition}},
+           into = c('row', 'column'),
+           sep = 1) %>% 
+    
+    # order columns in numerical order : 1 -> 12
+    mutate(across(column, fct_inseq)) %>% # arrange numerical columns sequentially
+    
+    # order levels : A -> H 
+    mutate(across(row, ~ as.factor(.x))) # base R `as.factor` arranges alphabetical order
+}

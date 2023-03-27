@@ -4,9 +4,7 @@
 
 # File name ----
 
-flnm <- 'q040b_S050_re-followup -ves_memory' # mention the file name without the "-linreg" or "-processed" suffixes
-
-base_title_name <- 'q40b_S050_-ves 2' # This will be the title name of the plots and the name of the html file
+flnm <- 'q44_S068 best lysis_S057i marine lysate_23-3-23' # mention the file name without the "-linreg" or "-processed" suffixes
 
 # Options ----
 
@@ -39,4 +37,11 @@ force.use_default.std <- TRUE # forces the use of default std from google sheet,
 if(str_detect(flnm, '-linreg|-processed')) 
 {stop('Invalid filename (flnm) in 0.5-user-inputs.R,
   flnm contains suffixes -linreg or -processed')}
+
+# Calculation ----
+
+date_regex <- '[:digit:]*-[:digit:]*-[:digit:]*' # Date regex
+
+# title_name : appears on the html file name and header of selected plots, change as required
+base_title_name <- stringr::str_remove(flnm, stringr::str_c("_", date_regex)) 
 

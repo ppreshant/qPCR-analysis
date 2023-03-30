@@ -1,4 +1,4 @@
-# Functions for general operations with tibbles/data frames (manipulating columns)
+# Function wrappers for general operations with tibbles/data frames (manipulating columns)
 
 
 # takes in a qPCR file (read in columnwise) and arranges elements rowise
@@ -57,7 +57,7 @@ paste_without_NAs <- function(.string1, .string2, .sep = "-")
 
 
 
-# function to remove last n quantities in std curve data 
+#' function to remove last n quantities in std curve data 
 
 remove_last_n_dilutions <- function(.data, dilutions_to_truncate = 0)
 {
@@ -76,5 +76,24 @@ remove_last_n_dilutions <- function(.data, dilutions_to_truncate = 0)
   # Warning : imperfect matching of all quantity values without context of Target_name 
   # -- fails in rare case when multiple targets have identical concentration values 
   # that are shifted so one must be included and other excluded
+  
+}
+
+
+#' Wrapper to change "Water" samples to control and retain their numbering for reference to cross-contamination
+#' Samples named as 'T_Water_3' -- this way preserves the numbering as biological replicate, converts Water into control
+#' and makes assay variable as 'water'. The final plots need to be annotated selectively to show water (S065_q43_plotting.R)
+
+clean_up_water_wells <- function(.df, new_sample_category_for_Water = 'control')
+{
+  mutate_cond(.df,
+              str_detect(Sample_category, 'Water'),  # clean up names for 'Water' samples only
+              
+              # apply below transformations to only the "Water" rows
+              across(assay_variable, ~ str_replace(., 'spillH4', '11')), # change the name to a number
+              
+              biological_replicates = as.numeric(assay_variable), 
+              across(contains('assay_var'), ~ 'water'),
+              across(Sample_category, ~ str_replace(., 'Water', new_sample_category_for_Water))) # change "Water" to "control"
   
 }

@@ -43,7 +43,7 @@ a_plt <- ggplot(a, aes(a1, a2, colour = a3)) +
 # calling more funs ----
 
 list_of_general_functions <- c("1-reading_files_funs.R",
-                               "2-tibble_columns_funs.R",
+                               "2-tibble_columns_wrapper_funs.R",
                                "3-obsolete_arcane_funs.R",
                                "4-qPCR_specific_funs.R",
                                "5-mathematical_fitting_funs.R",

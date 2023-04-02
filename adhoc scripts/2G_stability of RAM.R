@@ -180,26 +180,29 @@ normalized_RNA <-
   # Exponential fit ----
 
 # fitting exponential curves 
-# BUG :: Causing singular gradient error for 16S rRNA ; try using purrr::safely() to fix this
+# BUG :: Causing singular gradient error for 16S rRNA ; using purrr::safely() to fix this
 
-# safe_exp <- safely(.f = ~ nls(normalized_Copies_per_ul ~ SSasymp(time, ys, y0, log_alpha), data = .x))
-# use as map(data, ~ safe_exp(.x)); tidied = map(.fit, ~ broom::tidy(.x$result)) // need some way to safely tidy and augment as well
+safe_exp_fit <- safely(.f = ~ nls(normalized_Copies_per_ul ~ SSasymp(time, ys, y0, log_alpha), data = .x))
+# use as map(data, ~ safe_exp(.x)); tidied = map(.fit, ~ broom::tidy(.x$result)) 
 # Source : https://aosmith.rbind.io/2020/08/31/handling-errors/
+
+# TODO : need some way to substitute mean for augmented data when no fit
 
 
 normalized_with_exponential_fit <- 
-  filter(normalized_RNA, plasmid == 'Ribo', Target_name != '16S rRNA') %>%  # select only the good curves with decreasing trend
+  filter(normalized_RNA, plasmid == 'Ribo') %>%  # select only the good curves with decreasing trend
   
   mutate(.fit = # making the exponential fit
            map(data, # SSasymp fitting y ~ ys+(y0-ys)*exp(-exp(log_alpha)*time)
                # https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/SSasymp
                
-               ~ nls(normalized_Copies_per_ul ~ SSasymp(time, ys, y0, log_alpha),
-                     data = .)
+               ~ safe_exp_fit(.x)
+               # ~ nls(normalized_Copies_per_ul ~ SSasymp(time, ys, y0, log_alpha),
+               #       data = .)
            ),
          
-         tidied = map(.fit, broom::tidy), # extracting fitting parameters
-         augmented = map(.fit, broom::augment) # extracting fitting data // extra step. Not used
+         tidied = map(.fit, ~ broom::tidy(.x$result)), # extracting fitting parameters
+         augmented = map(.fit, ~ broom::augment(.x$result)) # extrapolating fitting data, for plotting
   ) %>% 
   
   # Get fitting parameters

@@ -111,7 +111,9 @@ plt_flip_fraction <- {ggplot(filter(ratio_data, assay_variable != 'ntc'),
     
     ggtitle(title_name)} %>% 
   
-  format_logscale_y()
+  print 
+
+format_logscale_y(plt_flip_fraction)
 
 ggsave(plot_as('q41_S050_79+silents_flipped_fraction'), plt_flip_fraction, width = 4, height = 3)
 

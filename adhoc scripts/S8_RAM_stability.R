@@ -32,8 +32,8 @@ plasmid_translation <- c('328' = 'Ribo', # regex based translation to change x-a
                          '315' = 'gfp')
 
 target_translation <- c('16s' = '16S rRNA', # regex to change the target names for publication
-                        'gfpbarcode' = 'total barcode',  # 'unspliced CatRNA' used in 2H data..
-                        'U64' = 'barcoded 16S rRNA')
+                        'gfpbarcode' = 'Total barcode',  # 'unspliced CatRNA' used in 2H data..
+                        'U64' = 'Barcoded 16S rRNA')
 
 # Input the data ----
 
@@ -177,7 +177,7 @@ normalized_RNA <-
 
 
 
-  # Exponential fit ----
+# Exponential fit ----
 
 # fitting exponential curves 
 # BUG :: Causing singular gradient error for 16S rRNA ; using purrr::safely() to fix this
@@ -285,7 +285,8 @@ plt.normalized_joined <- filter(normalized_RNA, plasmid == 'Ribo') %>%
                        .yvar_plot = normalized_Copies_per_ul, # plot the fake copy # values
                        .colourvar_plot = Target_name, # colour with the primer pair 
                        .facetvar_plot = NULL ,  # facet by plasmid/ntc
-                       points_plt.style = 'jitter') +
+                       points_plt.style = 'jitter',
+                       flipped_plot = F) +
       
       geom_line(aes(y = mean_normalized_Copies_per_ul), linetype = 1, show.legend = FALSE) + # add a line connecting the mean
       scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
@@ -311,6 +312,15 @@ ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized.png'),
        plt.normalized_joined,
        width = 6,
        height = 4)
+
+
+format_logscale_y(plt.normalized_joined) + theme(legend.position = 'top')
+
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized-logscale.pdf'),
+       # plt.normalized_joined,
+       width = 5.5,
+       height = 4)
+
 
 # Save data ----
 
@@ -373,4 +383,6 @@ concise_summary <-
   
   write_csv(str_c('excel files/paper_data/', title_name, '-summary.csv', sep = ''),
             na = '')
-  
+ 
+
+# Statistics ---- 

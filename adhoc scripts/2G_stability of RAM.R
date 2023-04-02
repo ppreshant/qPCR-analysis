@@ -176,8 +176,16 @@ normalized_RNA <-
   ) # you can do: unnest(normalized_RNA, data) to see the whole dataset
 
 
+
+  # Exponential fit ----
+
 # fitting exponential curves 
-# BUG :: Causing singular gradient error
+# BUG :: Causing singular gradient error for 16S rRNA ; try using purrr::safely() to fix this
+
+# safe_exp <- safely(.f = ~ nls(normalized_Copies_per_ul ~ SSasymp(time, ys, y0, log_alpha), data = .x))
+# use as map(data, ~ safe_exp(.x)); tidied = map(.fit, ~ broom::tidy(.x$result)) // need some way to safely tidy and augment as well
+# Source : https://aosmith.rbind.io/2020/08/31/handling-errors/
+
 
 normalized_with_exponential_fit <- 
   filter(normalized_RNA, plasmid == 'Ribo', Target_name != '16S rRNA') %>%  # select only the good curves with decreasing trend
@@ -191,7 +199,7 @@ normalized_with_exponential_fit <-
            ),
          
          tidied = map(.fit, broom::tidy), # extracting fitting parameters
-         augmented = map(.fit, broom::augment) # extracting fitting data
+         augmented = map(.fit, broom::augment) # extracting fitting data // extra step. Not used
   ) %>% 
   
   # Get fitting parameters

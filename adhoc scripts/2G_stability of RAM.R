@@ -240,7 +240,8 @@ plt.normalized_fits <-
                       .yvar_plot = normalized_Copies_per_ul, # plot the fake copy # values
                       .colourvar_plot = Target_name, # colour with the primer pair 
                       .facetvar_plot = NULL,  # facet by plasmid/ntc
-                      points_plt.style = 'jitter') +
+                      points_plt.style = 'jitter',
+                      flipped_plot = FALSE) +
     
      geom_line(aes(y = .fitted), linetype = 1, show.legend = FALSE) + # add a line connecting the mean
      scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis

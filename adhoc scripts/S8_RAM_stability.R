@@ -41,7 +41,7 @@ target_translation <- c('16s' = '16S rRNA', # regex to change the target names f
 .df <- get_processed_datasets(flnms) # read processed excel file from the analysis.R script
 
 
-# Mess with the data ----
+# Processing ----
 
 # any custom processing goes here
 forplot_reduced.data <- 
@@ -79,6 +79,9 @@ forplot_reduced.data <-
   # )
   
 
+
+# Extra processing ----
+
 # subset mean of Copies proportional for visual commenting
 visual_summary_mean <- 
   
@@ -98,7 +101,7 @@ visual_summary_mean <-
                 ~ formatC(.x, digits = 1)))
   
   
-# Plotting ----
+# exploratory plotting ----
 
 # Cq data
 plt.cq <- {plot_facetted_assay(.data = forplot_reduced.data,  # plotting function call with defaults
@@ -126,26 +129,6 @@ plt.copies <- {plot_facetted_assay(.data = forplot_reduced.data,  # plotting fun
   print()
 
 
-
-# Save plots ----
-
-# Cq plot
-ggsave(str_c('qPCR analysis/Archive/', flnms, '.png'),
-       plt.cq,
-       width = 6,
-       height = 4)
-# 
-# # with added lines
-# ggsave(str_c('qPCR analysis/Archive/', title_name, '-w lines.png'),
-#        plt.cq + geom_line(),
-#        width = 6,
-#        height = 4)
-
-# save Copies proportional plt
-ggsave(str_c('qPCR analysis/Archive/', flnms, '-copies.png'),
-       plt.copies,
-       width = 6,
-       height = 4)
 
 
 # Normalization ----
@@ -322,6 +305,36 @@ ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized-logscale.pdf'),
        height = 4)
 
 
+# Statistics ---- 
+
+# Timewise tests bw 16S and the other two targets pairwise -
+# filter the tibble and row join the 2 subsets with a new index variable
+# nest by time and do t.test() ; can unravel with $p.value
+
+timewise_normalized_RNA <- 
+  
+  # make two separate groups
+  {map2(c('^Barcoded', '^Total'), 1:2,
+        ~ filter(normalized_RNA, plasmid == 'Ribo', # retain only the comparison data
+                 !str_detect(Target_name, .x)) %>% # and the current Targets
+          mutate(comparison_group = .y, .before = 1))} %>% 
+  
+  bind_rows %>% # join the two comparison groups
+  unnest(data) %>% # unnest all data
+  nest(data = !c(comparison_group, time)) %>% # nest for each comparison
+  
+  # one-sided t-test 16S > others
+  mutate(testing = map(data, ~ t.test(normalized_Copies_per_ul ~ Target_name, alternative = 'greater',
+                                      data = .x)),
+         pvalue = map_dbl(testing, ~ .x$p.value)) %>% # extract the p values
+  
+  mutate(`check pvalue < 0.05` = pvalue < 0.05)
+  
+  
+
+
+# ------------------------------------------------
+  
 # Save data ----
 
 # Save normalized data with exponential fit
@@ -385,4 +398,28 @@ concise_summary <-
             na = '')
  
 
-# Statistics ---- 
+select(timewise_normalized_RNA, -data) %>% 
+  
+  write_csv(str_c('excel files/paper_data/', title_name, '-stats.csv', sep = ''),
+            na = '') # modified by hand, added key for comparison_groups 1, 2 and moved to writing/Archive
+
+# Save exploratory plots ----
+
+# Cq plot
+ggsave(str_c('qPCR analysis/Archive/', flnms, '.png'),
+       plt.cq,
+       width = 6,
+       height = 4)
+# 
+# # with added lines
+# ggsave(str_c('qPCR analysis/Archive/', title_name, '-w lines.png'),
+#        plt.cq + geom_line(),
+#        width = 6,
+#        height = 4)
+
+# save Copies proportional plt
+ggsave(str_c('qPCR analysis/Archive/', flnms, '-copies.png'),
+       plt.copies,
+       width = 6,
+       height = 4)
+

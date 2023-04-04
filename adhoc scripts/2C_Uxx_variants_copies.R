@@ -19,11 +19,11 @@ axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
 
 # Labelling translators ----
 
-assay_var_translation <- c('295' = 'cat-RNA design 3', # U64 # regex based translation to change x-axis labels
-                           '297' = 'cat-RNA design 1',   #  U1
+assay_var_translation <- c('295' = 'cat-RNA design 3', # U64 // U1376 # regex based translation to change x-axis labels
+                           '297' = 'cat-RNA design 1',   #  U1 // U17
                            '298' = '(8)', # U8  --- Removed from further analysis
-                           '299' = 'cat-RNA design 2',  # U34
-                           '300' = 'cat-RNA design 4', # U73
+                           '299' = 'cat-RNA design 2',  # U34 // U891
+                           '300' = 'cat-RNA design 4', # U73 // 1490
                            
                            '186' = 'split-gfp design', # gfp:gfp
                            
@@ -177,24 +177,27 @@ plt.N0 <- {plot_facetted_assay(.data = forplot_reduced.data,
   print()
 
 
-# Extra: analysis ratios -----
-
-# Mess with the data ----
+# Ratio analysis -----
 
 # Calculating spliced fraction of the Ribozyme/16s
-# does not work yet
+
+simple_target_translation <- c('U.*' = 'Spliced',
+                             'gfp:gfp' = 'Spliced')
+
+
 wider_reduced.dat <- 
   
   forplot_reduced.data %>% 
   
-  # take inferred copies into copies_proportional
-  mutate(across(Copies_proportional, ~ coalesce(.x, Copies.per.ul.template))) %>%  
+  # rename target for easier calculations
+  mutate(Target_name = str_replace_all(original_target_name, simple_target_translation)) %>% 
   
-  # select only required columns
-  select(1:4, Copies_proportional, assay_variable, biological_replicates) %>%  
+  # select only required columns and rows
+  select(Sample_category, Target_name, Copies.per.ul.template, assay_variable, biological_replicates) %>%  
+  filter(Sample_category != 'negative') %>% # remove negative rows, with non-unique targets (pivoting issues)
   
   pivot_wider(names_from = Target_name, 
-              values_from = Copies_proportional, 
+              values_from = Copies.per.ul.template, 
               names_prefix = 'Copies_') %>%  # each target to a col
   
   # calculate ratios of each targets per replicate
@@ -205,14 +208,16 @@ wider_reduced.dat <-
   # find the mean across biological replicates for all numeric cols
   group_by(assay_variable) %>% 
   mutate(across(where(is.numeric), 
-                mean, ignore.na = TRUE,
+                ~ mean(.x, ignore.na = TRUE),
                 .names = "mean_{.col}")) 
 
 
 
 # Plotting ratios ----
+# All code below does not work yet ------------------------
 
 # plotting splicing fractions
+
 
 plt.splicing_ratio_ribozyme <- 
   {plot_facetted_assay(.data = wider_reduced.dat,  # plotting function call with defaults

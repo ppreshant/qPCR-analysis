@@ -7,7 +7,7 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
 flnms <- c('q33_RNA stability-3_20-6-22')  # raw filename, without the "-processed" keyword
-title_name <-'2G_RAM stability'
+title_name <-'S8_RAM stability'
 
 # options
 
@@ -209,6 +209,8 @@ normalized_with_exponential_fit <-
   
 
 
+# Plot normalized ----
+
 # Plot the normalized data with the exponential curves fit
 plt.normalized_fits <-
   
@@ -226,7 +228,7 @@ plt.normalized_fits <-
                       points_plt.style = 'jitter',
                       flipped_plot = FALSE) +
     
-     geom_line(aes(y = .fitted), linetype = 1, show.legend = FALSE) + # add a line connecting the mean
+     geom_line(aes(y = .fitted), linetype = 2, show.legend = FALSE) + # add a line connecting the mean
      scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
      
      # show t half estimates
@@ -246,9 +248,26 @@ plt.normalized_fits <-
   # format_logscale_y() %>% # format logscale
   print()
 
-ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized_fits.png'),
-       plt.normalized_fits,
-       width = 6,
+
+# Add 16S data that is not fitted
+
+plt.normalized_fits_extended <- 
+  
+{plt.normalized_fits + 
+  geom_point(aes(y = normalized_Copies_per_ul),
+             data = filter(normalized_RNA, plasmid == 'Ribo', Target_name == '16S rRNA') %>% 
+               unnest(data)) + 
+    
+    theme(legend.position = 'top') + # put legend on top
+    # change titles and y axis label for consistency
+    ggtitle(NULL, subtitle = NULL) + ylab('Normalized Copies of RNA') + xlab('Time (min)')} %>% 
+  
+  format_logscale_y() # make logscale
+
+
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized_fits-extended.pdf'),
+       plt.normalized_fits_extended,
+       width = 5.2,
        height = 4)
 
 # show dynamic graph

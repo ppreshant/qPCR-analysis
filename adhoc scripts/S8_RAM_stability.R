@@ -171,6 +171,8 @@ safe_exp_fit <- safely(.f = ~ nls(normalized_Copies_per_ul ~ SSasymp(time, ys, y
 
 # TODO : need some way to substitute mean for augmented data when no fit
 
+extrapol_tibble <- tibble(time = 
+                            normalized_RNA$data[[1]]$time %>% range %>% {.[1]:.[2]}) # make 
 
 normalized_with_exponential_fit <- 
   filter(normalized_RNA, plasmid == 'Ribo') %>%  # select only the good curves with decreasing trend
@@ -179,13 +181,15 @@ normalized_with_exponential_fit <-
            map(data, # SSasymp fitting y ~ ys+(y0-ys)*exp(-exp(log_alpha)*time)
                # https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/SSasymp
                
-               ~ safe_exp_fit(.x)
+               ~ safe_exp_fit(.x) # makes a list with $result and $error
                # ~ nls(normalized_Copies_per_ul ~ SSasymp(time, ys, y0, log_alpha),
                #       data = .)
            ),
          
+         
          tidied = map(.fit, ~ broom::tidy(.x$result)), # extracting fitting parameters
-         augmented = map(.fit, ~ broom::augment(.x$result)) # extrapolating fitting data, for plotting
+         augmented = map(.fit, ~ broom::augment(.x$result)), # extrapolating fitting data, for plotting
+         extrapolated = map(.fit, ~ broom::augment(.x$result, newdata = extrapol_tibble))
   ) %>% 
   
   # Get fitting parameters
@@ -217,7 +221,7 @@ plt.normalized_fits <-
   normalized_with_exponential_fit %>% 
   
   # Get fitted data for plotting lines
-  unnest(augmented) %>%   # unpack the fitting data for ease of plotting
+  unnest(data) %>%   # unpack the fitting data for ease of plotting
 
   
  {plot_facetted_assay(.data = .,  # plotting function call with defaults
@@ -227,19 +231,23 @@ plt.normalized_fits <-
                       .facetvar_plot = NULL,  # facet by plasmid/ntc
                       points_plt.style = 'jitter',
                       flipped_plot = FALSE) +
-    
-     geom_line(aes(y = .fitted), linetype = 2, show.legend = FALSE) + # add a line connecting the mean
+     
+     # show fitting - smoothened
+     geom_line(aes(y = .fitted),
+               data = unnest(normalized_with_exponential_fit, extrapolated), # give the extrapolated data 0:180 min
+               linetype = 2, show.legend = FALSE) + # add a line connecting the mean
+     
      scale_x_continuous(breaks = c(0, 30, 60, 120, 180)) +  # adjust the values on x axis
      
      # show t half estimates
-     annotate(geom = 'text', x = 120, y = 1, label = 'Half life') + 
-     
-     geom_text(data = normalized_with_exponential_fit, # Show the calculated half life 
-                mapping = aes(x = 120, 
-                              y = 1 - (1:nrow(normalized_with_exponential_fit))/9, # space out the values for readability
-                              label = t.half.text),
-                direction = 'y', force = 10,
-                show.legend = FALSE) +
+     # annotate(geom = 'text', x = 120, y = 1, label = 'Half life') + 
+     # 
+     # geom_text(data = normalized_with_exponential_fit, # Show the calculated half life 
+     #            mapping = aes(x = 120, 
+     #                          y = 1 - (1:nrow(normalized_with_exponential_fit))/9, # space out the values for readability
+     #                          label = t.half.text),
+     #            # direction = 'y', force = 10, # for ggrepel
+     #            show.legend = FALSE) +
 
    
      ggtitle(title_name, 

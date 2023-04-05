@@ -273,7 +273,7 @@ plt.normalized_fits_extended <-
   format_logscale_y() # make logscale
 
 
-ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized_fits-extended.pdf'),
+ggsave(str_c('qPCR analysis/Archive/', title_name, '-normalized_fits-extended.png'),
        plt.normalized_fits_extended,
        width = 5.2,
        height = 4)

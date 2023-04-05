@@ -20,7 +20,7 @@ qPCR_data_to_heatmap <- function(.df = forplotting_cq.dat,
   
     # mutate(across(row, ~ match(.x, LETTERS[1:26]))) # convert the letter to number
     mutate(importance = if_else(str_detect({{.importance_column}}, 
-                                           regex('Uninduced|Control|negative|ntc|Water', ignore_case = TRUE)), 
+                                           regex('Uninduced|U$|Control|negative|ntc|Water', ignore_case = TRUE)), 
                                 1, 0.5)) %>% 
     
     {ggplot(data = ., 
@@ -75,14 +75,16 @@ qPCR_multitarget_heatmap <- function(.df = forplotting_cq.dat,
         
         ggtitle(title_name, subtitle = 'bars showing 40-Cq') +  # add title
         
-        facet_grid(rows = vars(row), cols = vars(column), switch = 'y')
+        facet_grid(rows = vars(row), cols = vars(column), switch = 'y') + 
+        
+        # Add grey background where data is present (highlights wells with no amplifications)
+        geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), alpha = 0.05, colour = NA)
       
     } 
 }
 
-# TODO : add grey panels where data is present.. even if bars are not. (similar to heatmap)
 # TODO : move text into the bar (depending on bar height?) and change colour ~ importance -- ensure dodge still works
-
+# TODO : add label for emphasized wells - at the bottom of the bars?
 
 #' Separate qPCR data Wells into rows and columns in alphabetical and numerical order
 make_rows_cols <- function(.df = forplotting_cq.dat, 

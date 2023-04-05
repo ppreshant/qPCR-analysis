@@ -11,7 +11,7 @@ qPCR_data_to_heatmap <- function(.df = forplotting_cq.dat,
                                  title_name = base_title_name)
 {
   
-  make_rows_cols(.df, {{wellposition}}) %>% # Separate wells into rows and cols and freeze proper order
+  make_rows_cols(.df, {{wellposition}}, {{.importance_column}}) %>% # Separate wells into rows and cols and freeze proper order
     
     filter(str_detect(Target_name, .target)) %>% # filter one target -- TODO : vectorize/loop?
     
@@ -19,9 +19,6 @@ qPCR_data_to_heatmap <- function(.df = forplotting_cq.dat,
     mutate(across(row, fct_rev)) %>%  # reverse order of rows for plotting
   
     # mutate(across(row, ~ match(.x, LETTERS[1:26]))) # convert the letter to number
-    mutate(importance = if_else(str_detect({{.importance_column}}, 
-                                           regex('Uninduced|U$|Control|negative|ntc|Water', ignore_case = TRUE)), 
-                                1, 0.5)) %>% 
     
     {ggplot(data = ., 
             aes(x = column, y = row, fill = 40-CT, 
@@ -49,12 +46,8 @@ qPCR_multitarget_heatmap <- function(.df = forplotting_cq.dat,
                                  title_name = base_title_name)
 {
   
-  make_rows_cols(.df, {{wellposition}}) %>% # Separate wells into rows and cols and freeze proper order
+  make_rows_cols(.df, {{wellposition}}, {{.importance_column}}) %>% # Separate wells into rows and cols and freeze proper order
       
-    # mutate(across(row, ~ match(.x, LETTERS[1:26]))) # convert the letter to number
-    mutate(importance = if_else(str_detect({{.importance_column}}, 
-                                           regex('Uninduced|Control|negative|ntc|Water', ignore_case = TRUE)), 
-                                1, 0.5)) %>% 
     
     {ggplot(data = ., 
             aes(x = 1, y = 40 - CT, fill = Target_name, colour = Target_name,
@@ -88,7 +81,8 @@ qPCR_multitarget_heatmap <- function(.df = forplotting_cq.dat,
 
 #' Separate qPCR data Wells into rows and columns in alphabetical and numerical order
 make_rows_cols <- function(.df = forplotting_cq.dat, 
-                           wellposition = `Well Position`)
+                           wellposition = `Well Position`,
+                           .importance_column)
 {
   # separate the well position into rows and columns
   separate(.df,
@@ -100,5 +94,10 @@ make_rows_cols <- function(.df = forplotting_cq.dat,
     mutate(across(column, fct_inseq)) %>% # arrange numerical columns sequentially
     
     # order levels : A -> H 
-    mutate(across(row, ~ as.factor(.x))) # base R `as.factor` arranges alphabetical order
+    mutate(across(row, ~ as.factor(.x))) %>%  # base R `as.factor` arranges alphabetical order
+    
+    # choose important wells to highlight : negative controls / things that shouldn't amplify
+    mutate(importance = if_else(str_detect({{.importance_column}}, 
+                                           regex('Uninduced|U$|Control|negative|ntc|Water', ignore_case = TRUE)), 
+                                1, 0.5)) 
 }

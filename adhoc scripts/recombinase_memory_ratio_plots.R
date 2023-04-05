@@ -33,6 +33,20 @@ plt_fraction <-
 ggsave(plot_as(title_name, 'flipped-fraction'), width = 4, height = 4)
 
 
+# fraction flipped / replicate ----
+
+plt_fraction_repl <- 
+  {plot_facetted_assay(.data = ratio_data, 
+                       .yvar_plot = flipped_fraction, .xvar_plot = Sample_category, 
+                       .colourvar_plot = assay_variable,
+                       flipped_plot = FALSE, .facetvar_plot = NULL) + 
+      
+      geom_line(aes(group = interaction(assay_variable, biological_replicates), alpha = 0.2 ))} %>% 
+  
+  format_logscale_y()
+
+ggsave(plot_as(title_name, 'flipped-fraction-repl'), width = 4, height = 4)
+
 # plasmid copy number ----
 plt_copies <- 
   {plot_facetted_assay(.data = ratio_data, 

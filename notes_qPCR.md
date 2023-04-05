@@ -37,6 +37,7 @@ tags : #notes
 	- Whatever comes into the biological replicate field should be added back to the Quantity with a decimal 
 
 ### features
+- [ ] heatmap for cross-contam : add labels in some non obtrusive way (once for all replicates?) - could use `geom_label()` - `Sample_category` or `assay_variable` or first letter of these ; only for emphasized control samples?
 - [x] Need to plot pseudolabels next to numbering for horizontal plot, ~~what is the best way to do this without replotting?~~ 
 - [ ] Output qPCR std curve parameters at the begining of the html output
 	- Here: ![[Pasted image 20220608105107.png]]

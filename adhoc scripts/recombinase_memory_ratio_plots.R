@@ -9,6 +9,20 @@ pltd <- plot_facetted_assay(.yvar_plot = 40-CT, .xvar_plot = Sample_category,
 ggsave(plot_as(title_name), height = 4, width = 6)
 
 
+# flipped - join replicates
+plt_flipped_repl <- 
+  {plot_facetted_assay(.data = ratio_data, 
+                       .yvar_plot = flipped, .xvar_plot = Sample_category, 
+                       .colourvar_plot = assay_variable,
+                       flipped_plot = FALSE, .facetvar_plot = NULL) + 
+      
+      geom_line(aes(group = interaction(assay_variable, biological_replicates), alpha = 0.2 ))} %>% 
+  
+  format_logscale_y()
+
+ggsave(plot_as(title_name, 'flipped-repl'), width = 4, height = 4)
+
+
 # pivot and make ratios ----
 ratio_data <- select(forplotting_cq.dat, -CT) %>% # remove the non unique columns
   pivot_wider(names_from = Target_name, values_from = Copies_proportional) %>% 

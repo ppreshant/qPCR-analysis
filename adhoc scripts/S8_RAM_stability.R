@@ -24,16 +24,16 @@ yaxis_translation <- c('40 - CT' = '40 - Cq',
                        'Tm' = 'Melting temperature',
                        'Copies.per.ul.template' = 'Copies per uL template',
                        'Splicing_fraction_ribozyme' = 'Fraction of the ribozyme mRNA spliced',
-                       'Splicing_fraction_16s' = 'Fraction of the 16s rRNA spliced',
-                       'expression_ratio' = 'Expression of ribozyme mRNA per 16s rRNA')
+                       'Splicing_fraction_16s' = 'Fraction of the Native rRNA spliced',
+                       'expression_ratio' = 'Expression of ribozyme mRNA per Native rRNA')
 
 plasmid_translation <- c('328' = 'Ribo', # regex based translation to change x-axis labels
                          '314' = '(-)',
                          '315' = 'gfp')
 
-target_translation <- c('16s' = '16S rRNA', # regex to change the target names for publication
+target_translation <- c('16s' = 'Native rRNA', # regex to change the target names for publication
                         'gfpbarcode' = 'Total barcode',  # 'unspliced CatRNA' used in 2H data..
-                        'U64' = 'Barcoded 16S rRNA')
+                        'U64' = 'Barcoded rRNA')
 
 # Input the data ----
 
@@ -78,6 +78,9 @@ forplot_reduced.data <-
   #               .names = "mean_{.col}")
   # )
   
+
+
+
 
 
 # Extra processing ----
@@ -163,7 +166,7 @@ normalized_RNA <-
 # Exponential fit ----
 
 # fitting exponential curves 
-# BUG :: Causing singular gradient error for 16S rRNA ; using purrr::safely() to fix this
+# BUG :: Causing singular gradient error for 16S rRNA / Native rRNA ; using purrr::safely() to fix this
 
 safe_exp_fit <- safely(.f = ~ nls(normalized_Copies_per_ul ~ SSasymp(time, ys, y0, log_alpha), data = .x))
 # use as map(data, ~ safe_exp(.x)); tidied = map(.fit, ~ broom::tidy(.x$result)) 
@@ -258,17 +261,22 @@ plt.normalized_fits <-
 
 
 # Add 16S data that is not fitted
+# graph for fig S8
 
 plt.normalized_fits_extended <- 
   
 {plt.normalized_fits + 
   geom_point(aes(y = normalized_Copies_per_ul),
-             data = filter(normalized_RNA, plasmid == 'Ribo', Target_name == '16S rRNA') %>% 
+             data = filter(normalized_RNA, plasmid == 'Ribo', Target_name == 'Native rRNA') %>% 
                unnest(data)) + 
     
     theme(legend.position = 'top') + # put legend on top
+    
     # change titles and y axis label for consistency
-    ggtitle(NULL, subtitle = NULL) + ylab('Normalized Copies of RNA') + xlab('Time (min)')} %>% 
+    ggtitle(NULL, subtitle = NULL) + ylab('Normalized copies of RNA') + xlab('Time (min)') + 
+    labs(colour = 'RNA species')
+    
+    } %>% 
   
   format_logscale_y() # make logscale
 

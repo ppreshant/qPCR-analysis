@@ -52,3 +52,22 @@ Linregpcr tool analyzes raw qPCR curves and calculates the ~initial fluorescence
 If you want to try it out, the script is called `linregpcr_processing.R`
 
 *[Source](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-04306-1): Untergasser, Andreas, et al. "Web-based LinRegPCR: Application for the visualization and analysis of (RT)-qPCR amplification and melting data." _BMC bioinformatics_ 22.1 (2021): 1-18.)*.
+
+# Copyleft : GPL-3.0-or-later license
+```
+wrappers for automated processing and plotting of bacterial flow cytometry data 
+Copyright (C) 2023  Prashant Kalvapalle
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+```

@@ -90,7 +90,7 @@ clean_up_water_wells <- function(.df, new_sample_category_for_Water = 'control')
               str_detect(Sample_category, 'Water'),  # clean up names for 'Water' samples only
               
               # apply below transformations to only the "Water" rows
-              across(assay_variable, ~ str_replace(., 'spillH4', '11')), # change the name to a number
+              across(assay_variable, ~ str_replace(., 'spillH4', '11')), # change the name to a number -- expt specific
               
               biological_replicates = as.numeric(assay_variable), 
               across(contains('assay_var'), ~ 'water'),

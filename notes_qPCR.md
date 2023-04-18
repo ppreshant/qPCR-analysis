@@ -10,6 +10,7 @@ tags : #notes
 - Currently there is not much advantage to using the new software, just use V1.5.2 till these are changed
 
 ### Streamlining changes
+- [ ] Think of rationalizing some column names : `Well Position` -> well ; `biological_replicates` -> replicate
 - [x] (_implement_) Change the de-limiter from `-` to `_` for every field -- solves problem with negative numbers, decimals. Auto-generate the replicate numbering if not provided by the user. Relates to 1st [[#Bugs]]  
 	- (*too difficult to accomodate the variation at the user's whim, skip for now*) Could we auto-skip the initial primer-pair thing such as `Triplex` for probe reactions where it's not read at all by the code? So the goal is read it if the user enters it, and skip if not. 
 	- Make a conditional to plate layout reader if decimal point should be read vs biological replicates -- or (_alternatively_) Remove the biological replicates section and delimiter `.` from the plate layout. Use automatic inference like in the plate reader scripts? 

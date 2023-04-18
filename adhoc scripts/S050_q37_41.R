@@ -117,3 +117,10 @@ format_logscale_y(plt_flip_fraction)
 
 ggsave(plot_as('q41_S050_79+silents_flipped_fraction'), plt_flip_fraction, width = 4, height = 3)
 
+# presentable plot
+present_flip_fraction <- 
+  plt_flip_fraction + ggtitle(NULL) + # remove title
+  ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs'))
+
+ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 3)
+ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 4, height = 3)

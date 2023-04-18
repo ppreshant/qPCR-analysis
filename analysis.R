@@ -69,6 +69,9 @@ if(experiment_mode == 'assay')
   # Remove Standards to avoid cluttering plots, and translate assay_variables
   forplotting_cq.dat <- polished_cq.dat %>% 
     filter(Sample_category != 'Std') %>%  # remove standards from the plotted data
+    
+    clean_up_water_wells() %>% # changes `Water` to `control` sample_category, assay_var 'water' and numbers-> replicates
+    
     left_join(tbl_assay.vars_translation, by = 'assay_variable') %>%  # attach the assay_var translator
     mutate(assay_var.label = if_else(is.na(assay_var.identifier), # make compound label with translation and original 
                                      assay_variable, # clean up label when no identifier is present 

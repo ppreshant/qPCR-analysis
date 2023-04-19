@@ -7,7 +7,8 @@ plot_dose_response_and_controls <- function(.data = forplotting_cq.dat, # use ra
                                         .target_to_filter = 'flipped', # ignore if plotting fractions
                                         .yvar = 40 - CT, # 40 - CT or flipped_fraction
                                         .xvar_dose = Arabinose, .xlabel = 'Arabinose (uM)',
-                                        .xvar_control = assay_variable) # assay_variable/qPCR ; Samples/plate reader
+                                        .xvar_control = assay_variable, # assay_variable/qPCR ; Samples/plate reader
+                                        output_all_plots = F)
   
 {
   
@@ -63,8 +64,12 @@ plot_dose_response_and_controls <- function(.data = forplotting_cq.dat, # use ra
   library(patchwork)
   
   # attach panels [dose response x 4 + controls x 1 widths]
+  combined_plt <- 
   ara_plt + control_plt + 
     plot_layout(widths = c(4, 1))
+  
+  # output a list of plots if user input asks
+  if(output_all_plots) list(combined_plt, ara_plt, control_plt) else combined_plt
   
 }
 

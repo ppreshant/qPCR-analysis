@@ -40,10 +40,12 @@ ggsave(plot_as(title_name, '-Cq'), plt_flipped, width = 6, height = 5)
 ggplotly(plt_flipped) # only shows the latter plot :(
 
 # plot fraction flipped
-plt_fracflip <- plot_dose_response_and_controls(.data = ratio_data, .yvar = flipped_fraction) %>% print
+plt_fracflip <- plot_dose_response_and_controls(.data = ratio_data, .yvar = flipped_fraction, 
+                                                output_all_plots = T)
+plt_fracflip[[1]]
 ggsave(plot_as(title_name, '-flip_fraction'), width = 6, height = 5)
 
-ggplotly(plt_fracflip)
+ggplotly(plt_fracflip[[2]])
 
 
 # calculations ----

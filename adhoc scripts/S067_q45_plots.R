@@ -3,7 +3,10 @@
 # Prelims -----
 source('./0-general_functions_main.R') # Source the general_functions file before running this
 source('./0.5-user-inputs.R') # source the user inputs from a different script
-title_name <- base_title_name
+
+# override filename and title name from user inputs 
+flnm <- 'q45_S067_top3 till d2_29-3-23'
+title_name <- 'q45_S067_top3'
 
 # Load data ----
 
@@ -21,9 +24,6 @@ forplotting_cq.dat <- get_processed_datasets(flnm) %>%
                   replace_na(0) %>% as.character %>% fct_inorder),   # NA is 0
          across(organism, ~ replace_na(., 'control')),
          across(day, ~ str_replace_all(., c('control' = 'd-1', '^d' = ''))))
-
-# TODO : take ratio of flipped / backbone ; plot ratio in a timecourse ; 
-
 
 # Ratios ----
 
@@ -70,3 +70,37 @@ timeseries <-
 ggplotly(timeseries)
 ggsave(plot_as(title_name, '-timeseries'), width = 5, height = 5)
 
+
+# individual targets ----
+
+plot_timeseries_target <- function(filter_target = 'flipped')
+  {
+    filter(forplotting_cq.dat, organism != 'control', plasmid != '143', # remove empty data
+           Target_name == filter_target) %>% # filter specific target
+      
+      ggplot(aes(day, Copies_proportional, colour = plasmid, shape = `AHL (uM)`)) + 
+      
+      geom_point(size = 2) +
+      # scale_colour_brewer(palette = 'Dark2', direction = -1) + # change the values - orange for uninduced/0
+      scale_shape_manual(values = c(1, 16)) + # shape : open and closed circles
+      scale_alpha_discrete(guide = 'none', range = c(0.5, 1)) + # control line transparency
+      
+      # line connect data
+      geom_line(aes(group = interaction(plasmid, `AHL (uM)`), 
+                    alpha = `AHL (uM)`)) +  
+      
+      facet_wrap(vars(organism), scale = 'free_y') +
+      theme(legend.position = 'top') +
+      
+      # labels
+      ggtitle(str_c('Memory in wastewater : ', filter_target), subtitle = title_name)
+  }
+
+copies_flipped <- plot_timeseries_target() %>% print
+ggsave(plot_as(title_name, '-copy-flip'), copies_flipped, width = 5, height = 5)
+
+copies_bb <- plot_timeseries_target('backbone') %>% print
+ggsave(plot_as(title_name, '-copy-bb'), width = 5, height = 5)
+
+copies_bb <- plot_timeseries_target('chromosome') %>% print
+ggsave(plot_as(title_name, '-copy-chr'), width = 5, height = 5)

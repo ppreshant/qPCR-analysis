@@ -60,7 +60,10 @@ tags : #notes
 ## RDML-linregPCR  
 
 Verdict: **Linregpcr is abandoned for RAM project** due to baseline errors caused by early amplifications in 16s (high abundance) and no plateau for U64 probe assays
-- Could try to use for SYBR dye assays though? (19/5/22) 
+- Could try to use for SYBR dye assays though? (19/5/22) - Used for 5 different Uxx variants - check calibrant data at `qPCR analysis/Standards/linregpcr_calibrants.csv`. 
+
+What about reocmbinase memory? Try on q48a,b - Triplex V2-3 data
+
 
 ### Methodology questions
 
@@ -99,14 +102,18 @@ _tips for RDML:_
 	- Not finding this option in RDML-Ninja
 	- Is an attribute of `dye`, with name `dyeChemistry`. Set it to `"hydrolysis probe"` or `non-saturating DNA binding dye` otherwise. 
 	- [x] More importanly, does this improve the LinregPCR analysis in any way? _rdml-tools help says it does_
-- [ ] (_failed_)Also need to indicate `sample_type` in RDML to be ntc for negative control - this will remove errors about no amplification in those samples. clue: `cl.samples()[x].types()[0]['type']`
+- [ ] (_failed_) Also need to indicate `sample_type` in RDML to be ntc for negative control - this will remove errors about no amplification in those samples. clue: `cl.samples()[x].types()[0]['type']`
 - [ ] (_last try_) Remove melt curve data `mdp` for probe data, if you want to open the file as valid rdml in online version. 
 	-  Melt curve junk data is not exported if there is no SYBR on the plate, ex `q22 triplex` and `q24` but fails for `q25`  -- (I thought wrong -> )_Save rdml from quantstudio using `split items into individual files` option, this will prevent writing junk values to the melt data_
 	- Expt -> run -> react -> data -> mdp. It is hard to locate react data onwards. clue: `_get_all_children(self._node, "react")`
 
 **Problems with rdmlpython** : Is giving baseline error in a few samples, I cannot figure out the reason -- _seems like its better after pulling a recent version_. 
 
-### Amplification analysis
+### Amplification analysis with R/python combination
+Running linregpcr and processing the .csv output using R integrated pipeline in `linregpcr_processing.R`
+- [ ] Fix pipeline when calibrant data is absent for specific target. `mean_Copies..per ul template` is NaN -- might cause error in q48a? `Error in inDL(x, as.logical(local), as.logical(now), ...) : unable to load shared object 'C:/Users/new/AppData/Local/R/win-library/4.2/sass/libs/x64/sass.dll':  LoadLibrary failure:  The specified procedure could not be found.
+``
+
 Works for S019_25-11-19 file (SYBR) and q25_S037_RAM repression_14-2-22 (Probe) with recent changes pulled on _18/2/22_
 > (old, before pulling) Does not work for q25 (TAQMAN) file with `rawFluor[rowCount, cyc] = float(fluor) ; IndexError: index 72 is out of bounds for axis 0 with size 72`
 
@@ -180,7 +187,7 @@ Minor things
 
 
 ### R-python integration
-- Make the test_linregpcr.py into a function and call it using `reticulate::source_python("...py")` [documentation](https://rstudio.github.io/reticulate/#sourcing-python-scripts)
+- [x] (_obsolete?_) Make the test_linregpcr.py into a function and call it using `reticulate::source_python("...py")` [documentation](https://rstudio.github.io/reticulate/#sourcing-python-scripts)
 
 
 ### /obsolete/: RDML-R-attach names-export

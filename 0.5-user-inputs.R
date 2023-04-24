@@ -4,7 +4,7 @@
 
 # File name ----
 
-flnm <- 'q44_S068 best lysis_S057i marine lysate_23-3-23' # mention the file name without the "-linreg" or "-processed" suffixes
+flnm <- 'q48a_S071_22-4-23' # mention the file name without the "-linreg" or "-processed" suffixes
 
 # Options ----
 
@@ -13,7 +13,7 @@ template_source <- 'googlesheet' # googlesheet/excel = parse through a list of t
 # get the template with the matching qxx ID. 'excel' looks for the file 'excel files/Plate layouts.xlsx'
 
 # Linregpcr options
-run_linregpcr <- FALSE
+run_linregpcr <- TRUE
 
 # Traditional Cq analysis - options
 plot_mode <-  'raw_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 
@@ -34,7 +34,7 @@ force.use_default.std <- TRUE # forces the use of default std from google sheet,
 
 
 # error check ----
-if(str_detect(flnm, '-linreg|-processed')) 
+if(stringr::str_detect(flnm, '-linreg|-processed')) 
 {stop('Invalid filename (flnm) in 0.5-user-inputs.R,
   flnm contains suffixes -linreg or -processed')}
 

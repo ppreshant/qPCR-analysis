@@ -62,14 +62,16 @@ tags : #notes
 Verdict: **Linregpcr is abandoned for RAM project** due to baseline errors caused by early amplifications in 16s (high abundance) and no plateau for U64 probe assays
 - Could try to use for SYBR dye assays though? (19/5/22) - Used for 5 different Uxx variants - check calibrant data at `qPCR analysis/Standards/linregpcr_calibrants.csv`. 
 
-What about reocmbinase memory? Try on q48a,b - Triplex V2-3 data
+What about reocmbinase memory? 
+- [x] _failed_: Try on q48a,b - Triplex V2-3 data
+	- 23 / 96 failed (_flipped_) due to basline errors/instable baseline etc. _due to quick amplifications_. Most samples have < 10 Cq (_flipped_) too
 
 
 ### Methodology questions
 
 - When is linregpcr workable?
 	- Plateau present
-	- Not too early amplifications
+	- Not too early amplifications (Cq > 10 ; _gives warning N0 unreliable when < 10_)
 	- Reasonable (?) baseline to plateau distance - [Tuomi, Jari Michael, et al. "Bias in the Cq value observed with hydrolysis probe based quantitative PCR can be corrected with the estimated PCR efficiency value." _Methods_ 50.4 (2010): 313-322.](https://www-sciencedirect-com.ezproxy.rice.edu/science/article/pii/S1046202310000538?via%3Dihub)
 	> An important factor influencing the baseline estimation is the baseline-to-plateau distance (Δ_Rn_) in the raw, i.e. not baseline corrected, data. This distance is determined by intrinsic properties of the fluorescent reporter and on the primer and probe concentrations .. Δ_Rn_ values recorded with hydrolysis probes, however, are reported to be significantly lower due to the use of FRET based chemistries that display inefficient quenching. For these chemistries it is important to choose a reporter/quencher pair that gives the largest baseline-to-plateau difference. This will facilitate the estimation of the correct baseline value and thus reduce the variation in observed PCR efficiency values
 	

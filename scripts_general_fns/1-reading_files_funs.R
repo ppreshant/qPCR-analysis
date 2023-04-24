@@ -107,7 +107,11 @@ get_and_parse_plate_layout <- function(flnm)
       
       # for few samples missing the replicates, puts a blank string ('')
       } else mutate(., across('biological_replicates', ~str_replace_na(., '')) ) 
-    }
+    } %>% 
+    
+    # account for water controls for lysis
+    clean_up_water_wells() # changes `Water` to `control` sample_category, assay_var 'water' and numbers-> replicates
+    
   
   
 }

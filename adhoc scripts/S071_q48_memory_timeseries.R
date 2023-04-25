@@ -43,6 +43,8 @@ processed_data <- get_processed_datasets(flnms) %>% # clean_up_water_wells() %>%
          across(organism, ~ replace_na(., 'control')),
          across(day, ~ str_replace_all(., c('control' = 'd-1', '^d' = ''))))
 
+# TODO : made day numeric for proper plotting
+
 # Ratios ----
 
 # take ratio to backbone
@@ -62,10 +64,10 @@ timeseries <-
       
       ggplot(aes(day, flipped_fraction, colour = plasmid, shape = `AHL (uM)`)) + 
       
-      geom_point(size = 2) +
+      geom_point() +
       # scale_colour_brewer(palette = 'Dark2', direction = -1) + # change the values - orange for uninduced/0
       scale_shape_manual(values = c(1, 16)) + # shape : open and closed circles
-      scale_alpha_discrete(guide = 'none', range = c(0.5, 1)) + # control line transparency
+      scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5)) + # control line transparency
       
       
       # line like a dumbell plot
@@ -82,6 +84,8 @@ timeseries <-
       ggtitle('Memory in wastewater', subtitle = title_name)} %>% 
   
   print()
+
+# TODO : once day is numeric, add ticks only where data is present (from S050_q37_41)
 
 ggplotly(timeseries)
 ggsave(plot_as(title_name, '-fraction'), width = 5, height = 5)

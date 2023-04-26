@@ -9,7 +9,10 @@ source('./0.5-user-inputs.R') # source the user inputs from a different script
 
 # override filename and title name from user inputs 
 title_name <- 'S071_q48_pilot 1'
-flnms <- c('q48a_S071_22-4-23', 'q48b_S071_23-4-23')
+flnms <- c('q48a_S071_22-4-23', 
+           'q48b_S071_23-4-23',
+           'q48c_S071_d2_26-4-23',
+           'q48d_S071_d8_26-4-23')
 
 
 # For S067 use these instead of above
@@ -41,9 +44,9 @@ processed_data <- get_processed_datasets(flnms) %>% # clean_up_water_wells() %>%
                 ~ if_else(str_detect(., 'I'), 10, 0) %>% # Induced = 10, uninduced
                   replace_na(0) %>% as.character %>% fct_inorder),   # NA is 0
          across(organism, ~ replace_na(., 'control')),
-         across(day, ~ str_replace_all(., c('control' = 'd-1', '^d' = ''))))
+         across(day, ~ str_replace_all(., c('control' = 'd-1', '^d' = ''))),
+         across(day, as.numeric)) # convert day to numeric
 
-# TODO : made day numeric for proper plotting
 
 # Ratios ----
 
@@ -54,9 +57,20 @@ ratio_data <- select(processed_data, -CT) %>% # remove the non unique columns
   mutate(plasmid_copy_number = backbone/chromosome,
          flipped_fraction = flipped/backbone)
 
+
+# mean data 
+metadata_columns <- c("plasmid", "organism", "day", "AHL (uM)")
+
+ratio_mean <- select(ratio_data, -biological_replicates) %>% 
+  reframe(.by = all_of(metadata_columns),
+          across(is.numeric, ~ mean(.x, na.rm = T)))
+
+ratio_mean_toplt <- filter(ratio_mean, organism != 'control', plasmid != 'No memory')
+
 # Summary plot ----
 
 # Small multiples-timeseries plot : Modified from plate reader
+xjitter <- position_jitter(width = 0.2, height = 0, seed = 1)
 
 timeseries <- 
   {filter(ratio_data, organism != 'control', plasmid != 'No memory') %>% # remove empty data
@@ -64,15 +78,17 @@ timeseries <-
       
       ggplot(aes(day, flipped_fraction, colour = plasmid, shape = `AHL (uM)`)) + 
       
-      geom_point() +
-      # scale_colour_brewer(palette = 'Dark2', direction = -1) + # change the values - orange for uninduced/0
+      geom_point() + # points with jitter # position = xjitter
+      scale_x_continuous(breaks = c(-1, 0, 2, 5, 8)) + # simplify x axis ticks
       scale_shape_manual(values = c(1, 16)) + # shape : open and closed circles
       scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5)) + # control line transparency
       
       
-      # line like a dumbell plot
-      geom_line(aes(group = interaction(plasmid, `AHL (uM)`, biological_replicates), 
-                    alpha = `AHL (uM)`)) +  
+      # line join means / replicates
+      geom_line(aes(group = interaction(plasmid, `AHL (uM)`, biological_replicates), # join replicates
+                    alpha = `AHL (uM)`)) +
+      # geom_line(aes(alpha = `AHL (uM)`), 
+      #           data = ratio_mean_toplt) + # join means
       
       facet_wrap(vars(organism), scale = 'free_y') +
       
@@ -85,10 +101,10 @@ timeseries <-
   
   print()
 
-# TODO : once day is numeric, add ticks only where data is present (from S050_q37_41)
-
 ggplotly(timeseries)
 ggsave(plot_as(title_name, '-fraction'), width = 5, height = 5)
+# ggsave(plot_as(title_name, '-mean-fraction'), width = 5, height = 5)
+
 
 
 # individual target plot ----

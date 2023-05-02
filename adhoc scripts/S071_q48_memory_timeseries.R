@@ -63,7 +63,7 @@ metadata_columns <- c("plasmid", "organism", "day", "AHL (uM)")
 
 ratio_mean <- select(ratio_data, -biological_replicates) %>% 
   reframe(.by = all_of(metadata_columns),
-          across(is.numeric, ~ mean(.x, na.rm = T)))
+          across(where(is.numeric), ~ mean(.x, na.rm = T)))
 
 ratio_mean_toplt <- filter(ratio_mean, organism != 'control', plasmid != 'No memory')
 
@@ -74,6 +74,7 @@ xjitter <- position_jitter(width = 0.2, height = 0, seed = 1)
 
 timeseries <- 
   {filter(ratio_data, organism != 'control', plasmid != 'No memory') %>% # remove empty data
+      # filter(`AHL (uM)` == 0) %>% # filter uninduced only
       # filter(forplotting_cq.dat, Target_name == 'backbone') %>% 
       
       ggplot(aes(day, flipped_fraction, colour = plasmid, shape = `AHL (uM)`)) + 
@@ -85,12 +86,13 @@ timeseries <-
       
       
       # line join means / replicates
-      geom_line(aes(group = interaction(plasmid, `AHL (uM)`, biological_replicates), # join replicates
-                    alpha = `AHL (uM)`)) +
-      # geom_line(aes(alpha = `AHL (uM)`), 
-      #           data = ratio_mean_toplt) + # join means
+      # geom_line(aes(group = interaction(plasmid, `AHL (uM)`, biological_replicates), # join replicates
+      #               alpha = `AHL (uM)`)) +
+      geom_line(aes(alpha = `AHL (uM)`),
+                data = ratio_mean_toplt) + # join means
       
-      facet_wrap(vars(organism), scale = 'free_y') +
+      # facet_wrap(vars(organism), scale = 'free_y') +
+      facet_grid(vars(organism), vars(plasmid), scale = 'free_y') +
       
       # legend
       theme(legend.position = 'top') +
@@ -102,8 +104,9 @@ timeseries <-
   print()
 
 ggplotly(timeseries)
-ggsave(plot_as(title_name, '-fraction'), width = 5, height = 5)
+ggsave(plot_as(title_name, '-fraction-facets'), width = 7, height = 5)
 # ggsave(plot_as(title_name, '-mean-fraction'), width = 5, height = 5)
+# ggsave(plot_as(title_name, '-fraction-uninduced'), width = 5, height = 5)
 
 
 

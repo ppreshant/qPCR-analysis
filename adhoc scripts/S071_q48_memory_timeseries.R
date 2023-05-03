@@ -27,8 +27,10 @@ plasmid_translation <- c('pPK' = '',
                          '147|150' = 'Frugal',
                          'pSS079|79' = 'Fluorescent')
 
+metadata_columns <- c("plasmid", "organism", "day", "AHL (uM)")
 
 # Load data ----
+
 
 processed_data <- get_processed_datasets(flnms) %>% # clean_up_water_wells() %>% # for q45_S067
   
@@ -47,6 +49,13 @@ processed_data <- get_processed_datasets(flnms) %>% # clean_up_water_wells() %>%
          across(day, ~ str_replace_all(., c('control' = 'd-1', '^d' = ''))),
          across(day, as.numeric)) # convert day to numeric
 
+# take means for plotting : something wrong here, NAs not being ignored
+processed_mean <- 
+  reframe(processed_data,
+          .by = all_of(c(metadata_columns, 'Target_name')),
+          across(where(is.numeric), ~ mean(.x, na.rm = T)))
+
+processed_mean_toplt <- filter(processed_mean, organism != 'control', plasmid != 'No memory')
 
 # Ratios ----
 
@@ -59,13 +68,13 @@ ratio_data <- select(processed_data, -CT) %>% # remove the non unique columns
 
 
 # mean data 
-metadata_columns <- c("plasmid", "organism", "day", "AHL (uM)")
 
 ratio_mean <- select(ratio_data, -biological_replicates) %>% 
   reframe(.by = all_of(metadata_columns),
           across(where(is.numeric), ~ mean(.x, na.rm = T)))
 
 ratio_mean_toplt <- filter(ratio_mean, organism != 'control', plasmid != 'No memory')
+
 
 # Summary plot ----
 
@@ -96,7 +105,7 @@ timeseries <-
       
       # legend
       theme(legend.position = 'top') +
-      guides(shape = guide_legend(nrow = 2)) +
+      # guides(shape = guide_legend(nrow = 2)) + # split into 2 rows
       
       # labels
       ggtitle('Memory in wastewater', subtitle = title_name)} %>% 
@@ -112,9 +121,9 @@ ggsave(plot_as(title_name, '-fraction-facets'), width = 7, height = 5)
 
 # individual target plot ----
 
-plot_timeseries_target <- function(filter_target = 'flipped')
+plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean')
 {
-  filter(forplotting_cq.dat, organism != 'control', plasmid != '143', # remove empty data
+  filter(processed_data, organism != 'control', plasmid != 'No memory', # remove empty data
          Target_name == filter_target) %>% # filter specific target
     
     ggplot(aes(day, Copies_proportional, colour = plasmid, shape = `AHL (uM)`)) + 
@@ -122,25 +131,43 @@ plot_timeseries_target <- function(filter_target = 'flipped')
     geom_point(size = 2) +
     # scale_colour_brewer(palette = 'Dark2', direction = -1) + # change the values - orange for uninduced/0
     scale_shape_manual(values = c(1, 16)) + # shape : open and closed circles
-    scale_alpha_discrete(guide = 'none', range = c(0.5, 1)) + # control line transparency
+    scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5)) + # control line transparency
     
-    # line connect data
-    geom_line(aes(group = interaction(plasmid, `AHL (uM)`), 
-                  alpha = `AHL (uM)`)) +  
+    # line connect data / means
+    {if(.connect == 'mean')
+    {geom_line(aes(alpha = `AHL (uM)`),
+               data = filter(processed_mean_toplt, Target_name == filter_target)) # join means
+    } else 
+    {geom_line(aes(group = interaction(plasmid, `AHL (uM)`, biological_replicates),
+                   alpha = `AHL (uM)`)) }
+      } +
+
     
-    facet_wrap(vars(organism), scale = 'free_y') +
+    
+    # facet_wrap(vars(organism), scale = 'free_y') +
+    facet_grid(vars(organism), vars(plasmid), scale = 'free_y') +
+    
     theme(legend.position = 'top') +
     
     # labels
     ggtitle(str_c('Memory in wastewater : ', filter_target), subtitle = title_name)
 }
 
-copies_flipped <- plot_timeseries_target() %>% print
-ggsave(plot_as(title_name, '-copy-flip'), copies_flipped, width = 5, height = 5)
+copies_flipped <- plot_timeseries_target(.connect = 'ind') %>% print
+ggsave(plot_as(title_name, '-copy-flip'), copies_flipped, width = 7, height = 5)
 
+# join means 
+copies_flipped_mean <- plot_timeseries_target() %>% print #format_logscale_y()
+ggsave(plot_as(title_name, '-copy-flip-mean'), copies_flipped_mean, width = 7, height = 5)
+ggplotly(copies_flipped_mean)
+
+# OTHER TARGETS
 copies_bb <- plot_timeseries_target('backbone') %>% print
 ggsave(plot_as(title_name, '-copy-bb'), width = 5, height = 5)
 
 copies_bb <- plot_timeseries_target('chromosome') %>% print
 ggsave(plot_as(title_name, '-copy-chr'), width = 5, height = 5)
 
+
+# Processed plots ---- 
+copies_flipped_mean %>% format_logscale_y()

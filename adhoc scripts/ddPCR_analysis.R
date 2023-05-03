@@ -4,19 +4,15 @@
 # Prelims ----
 
 source('./0-general_functions_main.R') # Source the general_functions file before running this
+source('./0.5-user-inputs.R') # source the user inputs from a different script
 
-flnm <- 'S072dd_marine 16S tst_26-4-23' # 'S057j_Marine lysate dils touchup_31Mar23'
-
-# create a titlename : appears on the html file name and header of selected plots, change as required
-date_regex <- '[:digit:]*-[:digit:]*-[:digit:]*' # Date regex
-title_name <- stringr::str_remove(flnm, stringr::str_c("_", date_regex))
+title_name <- base_title_name
 
 # Load data + meta ----
 
 get_data <- read_csv(str_c('excel files/', flnm, '.csv'))
 
 # Read the sample names and metadata from google sheet
-template_source <- 'googlesheet' ; 
 plate_template <- get_and_parse_plate_layout(flnm) %>% select(-Target_name) %>% rename(Well = 'Well Position')
 
 
@@ -42,13 +38,15 @@ ratio_data <- processed_data %>%
 # plot copy number
 plot_facetted_assay(.data = ratio_data, 
                     .yvar_plot = copy_number, .xvar_plot = assay_variable, 
-                    .facetvar_plot = NULL)
+                    .facetvar_plot = NULL) + 
+  geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
 
 ggsave(plot_as(title_name, '-ddPCR'), width = 4.2, height = 3)
 
 # plot copies per target
 plot_facetted_assay(.data = filter(processed_data, !str_detect(assay_variable, '1e3')), 
                     .yvar_plot = CopiesPer20uLWell, .xvar_plot = assay_variable, 
-                    .facetvar_plot = Target_name)
+                    .facetvar_plot = Target_name) + 
+  geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
 
 ggsave(plot_as(title_name, '-ddPCR_raw'), width = 4.2, height = 4)

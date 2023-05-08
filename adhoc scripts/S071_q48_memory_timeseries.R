@@ -76,6 +76,41 @@ ratio_mean <- select(ratio_data, -biological_replicates) %>%
 ratio_mean_toplt <- filter(ratio_mean, organism != 'control', plasmid != 'No memory')
 
 
+# Normalizations ----
+
+# divide by mean on d-1..
+
+# verified that flipped and bb are not NaNs on d-1
+# processed_mean %>% filter(is.na(Copies_proportional), day == -1) %>% view
+
+normalized_data <- 
+  processed_data %>% 
+  group_by(across(all_of(c("plasmid", "organism", 'Target_name')))) %>% # all except days, AHL
+  
+  nest() %>% # nest all the other variables : for doing normalization and fitting exponential
+  
+  # bring out the mean and time 0
+  mutate(initial_mean_Copies =  # get copies of no AHL at d-1 to normalize by
+           map_dbl(data, 
+                   ~ filter(., day == -1, `AHL (uM)` == 0) %>% {mean(.$Copies_proportional, na.rm = T)}),
+         
+         # Normalization : within each data frame in the nest
+         data = map(data, 
+                    ~ mutate(., normalized_Copies = 
+                               .$Copies_proportional / initial_mean_Copies) %>%  # divide such that mean starts at 1
+                      
+                      group_by(day, `AHL (uM)`) %>% # group to calculate mean
+                      
+                      # calculating mean of the normalized
+                      mutate(mean_normalized_Copies = mean(normalized_Copies, na.rm = TRUE))
+         ) 
+         
+  ) %>%  
+  
+  unnest(data) # show full data 
+  
+  
+
 # Summary plot ----
 
 # Small multiples-timeseries plot : Modified from plate reader
@@ -121,17 +156,19 @@ ggsave(plot_as(title_name, '-fraction-facets'), width = 7, height = 5)
 
 # individual target plot ----
 
-plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean')
+plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean',
+                                   .data = processed_data, .yvar = Copies_proportional)
 {
-  filter(processed_data, organism != 'control', plasmid != 'No memory', # remove empty data
+  filter(.data, organism != 'control', plasmid != 'No memory', # remove empty data
          Target_name == filter_target) %>% # filter specific target
     
-    ggplot(aes(day, Copies_proportional, colour = plasmid, shape = `AHL (uM)`)) + 
+    ggplot(aes(day, {{.yvar}}, colour = plasmid, shape = `AHL (uM)`)) + 
     
     geom_point(size = 2) +
     # scale_colour_brewer(palette = 'Dark2', direction = -1) + # change the values - orange for uninduced/0
     scale_shape_manual(values = c(1, 16)) + # shape : open and closed circles
     scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5)) + # control line transparency
+    scale_x_continuous(breaks = c(-1, 0, 2, 5, 8)) + # simplify x axis ticks
     
     # line connect data / means
     {if(.connect == 'mean')
@@ -145,7 +182,7 @@ plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean')
     
     
     # facet_wrap(vars(organism), scale = 'free_y') +
-    facet_grid(vars(organism), vars(plasmid), scale = 'free_y') +
+    facet_grid(vars(organism), vars(plasmid), scale = 'free') +
     
     theme(legend.position = 'top') +
     
@@ -163,11 +200,22 @@ ggplotly(copies_flipped_mean)
 
 # OTHER TARGETS
 copies_bb <- plot_timeseries_target('backbone') %>% print
-ggsave(plot_as(title_name, '-copy-bb'), width = 5, height = 5)
+ggsave(plot_as(title_name, '-copy-bb'), width = 7, height = 5)
 
-copies_bb <- plot_timeseries_target('chromosome') %>% print
-ggsave(plot_as(title_name, '-copy-chr'), width = 5, height = 5)
-
+copies_chr <- plot_timeseries_target('chromosome') %>% print
+ggsave(plot_as(title_name, '-copy-chr'), width = 7, height = 5)
+ggplotly(copies_chr)
 
 # Processed plots ---- 
 copies_flipped_mean %>% format_logscale_y()
+
+# Normalized plot ----
+
+plt_normalized <- plot_timeseries_target(.connect = 'ind', 
+                                         .data = normalized_data, .yvar = normalized_Copies) %>% print
+
+normal_zoom <- {plt_normalized + facet_wrap(vars(plasmid, organism), scales = 'free')} %>% print
+ggsave(plot_as(title_name, '-flipped_normalized'), width = 8, height = 7)
+
+# interactive
+ggplotly(plt_normalized, dynamicTicks = T)

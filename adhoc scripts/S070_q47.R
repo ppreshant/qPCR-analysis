@@ -5,8 +5,9 @@
 source('./0-general_functions_main.R') # Source the general_functions file before running this
 
 # Source user inputs  ----
-source('./0.5-user-inputs.R') # source the user inputs from a different script
-title_name <- base_title_name
+source('./0.5-user-inputs.R') # source the user inputs from a different script / override below
+flnm <- 'q47y_S070_Ara 4_14-4-23'
+title_name <- 'q47y_S070_Ara'
 
 # Load data ----
 
@@ -44,6 +45,9 @@ plt_fracflip <- plot_dose_response_and_controls(.data = ratio_data, .yvar = flip
                                                 output_all_plots = T)
 plt_fracflip[[1]]
 ggsave(plot_as(title_name, '-flip_fraction'), width = 6, height = 5)
+
+# save to PDF for paper 
+ggsave(str_c('qPCR analysis/', title_name, '.pdf'), width = 5, height = 4)
 
 ggplotly(plt_fracflip[[2]])
 

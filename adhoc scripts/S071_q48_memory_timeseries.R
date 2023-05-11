@@ -207,7 +207,23 @@ ggsave(plot_as(title_name, '-copy-chr'), width = 7, height = 5)
 ggplotly(copies_chr)
 
 # Processed plots ---- 
+
+# logscale
 copies_flipped_mean %>% format_logscale_y()
+
+# plotting only uninduced
+copies_flipped_unind <- filter(processed_data, `AHL (uM)` == 0) %>% 
+  {plot_timeseries_target(.data = ., .connect = 'ind')} %>% print
+
+format_logscale_y(copies_flipped_unind) # logscale
+ggplotly(copies_flipped_unind, dynamicTicks = T) # interactive
+
+ggsave(plot_as(title_name, '-copy-flip-unind'), width = 7, height = 5)
+
+# backbone, only uninduced
+copies_bb_unind <- filter(processed_data, `AHL (uM)` == 0) %>% 
+  {plot_timeseries_target('backbone', .data = ., .connect = 'ind')} %>% print
+
 
 # Normalized plot ----
 

@@ -47,15 +47,11 @@ processed_data <- get_processed_datasets(flnms) %>% # clean_up_water_wells() %>%
                   replace_na(0) %>% as.character %>% fct_inorder),   # NA is 0
          across(organism, ~ replace_na(., 'control')),
          across(day, ~ str_replace_all(., c('control' = 'd-1', '^d' = ''))),
-         across(day, as.numeric)) # convert day to numeric
+         across(day, as.numeric)) %>%  # convert day to numeric
+  
+  # change order for plotting
+  mutate(across(plasmid, ~ fct_relevel(.x, c('Fluorescent', 'Silent', 'Frugal'))))
 
-# take means for plotting : something wrong here, NAs not being ignored
-processed_mean <- 
-  reframe(processed_data,
-          .by = all_of(c(metadata_columns, 'Target_name')),
-          across(where(is.numeric), ~ mean(.x, na.rm = T)))
-
-processed_mean_toplt <- filter(processed_mean, organism != 'control', plasmid != 'No memory')
 
 # Ratios ----
 
@@ -65,15 +61,6 @@ ratio_data <- select(processed_data, -CT) %>% # remove the non unique columns
   
   mutate(plasmid_copy_number = backbone/chromosome,
          flipped_fraction = flipped/backbone)
-
-
-# mean data 
-
-ratio_mean <- select(ratio_data, -biological_replicates) %>% 
-  reframe(.by = all_of(metadata_columns),
-          across(where(is.numeric), ~ mean(.x, na.rm = T)))
-
-ratio_mean_toplt <- filter(ratio_mean, organism != 'control', plasmid != 'No memory')
 
 
 # Normalizations ----
@@ -108,59 +95,22 @@ normalized_data <-
   ) %>%  
   
   unnest(data) # show full data 
+
   
-  
-
-# Summary plot ----
-
-# Small multiples-timeseries plot : Modified from plate reader
-xjitter <- position_jitter(width = 0.2, height = 0, seed = 1)
-
-timeseries <- 
-  {filter(ratio_data, organism != 'control', plasmid != 'No memory') %>% # remove empty data
-      # filter(`AHL (uM)` == 0) %>% # filter uninduced only
-      # filter(forplotting_cq.dat, Target_name == 'backbone') %>% 
-      
-      ggplot(aes(day, flipped_fraction, colour = plasmid, shape = `AHL (uM)`)) + 
-      
-      geom_point() + # points with jitter # position = xjitter
-      scale_x_continuous(breaks = c(-1, 0, 2, 5, 8)) + # simplify x axis ticks
-      scale_shape_manual(values = c(1, 16)) + # shape : open and closed circles
-      scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5)) + # control line transparency
-      
-      
-      # line join means / replicates
-      # geom_line(aes(group = interaction(plasmid, `AHL (uM)`, biological_replicates), # join replicates
-      #               alpha = `AHL (uM)`)) +
-      geom_line(aes(alpha = `AHL (uM)`),
-                data = ratio_mean_toplt) + # join means
-      
-      # facet_wrap(vars(organism), scale = 'free_y') +
-      facet_grid(vars(organism), vars(plasmid), scale = 'free_y') +
-      
-      # legend
-      theme(legend.position = 'top') +
-      # guides(shape = guide_legend(nrow = 2)) + # split into 2 rows
-      
-      # labels
-      ggtitle('Memory in wastewater', subtitle = title_name)} %>% 
-  
-  print()
-
-ggplotly(timeseries)
-ggsave(plot_as(title_name, '-fraction-facets'), width = 7, height = 5)
-# ggsave(plot_as(title_name, '-mean-fraction'), width = 5, height = 5)
-# ggsave(plot_as(title_name, '-fraction-uninduced'), width = 5, height = 5)
-
-
-
-# individual target plot ----
+# timeseries plotting function ---- 
 
 plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean',
                                    .data = processed_data, .yvar = Copies_proportional)
 {
-  filter(.data, organism != 'control', plasmid != 'No memory', # remove empty data
-         Target_name == filter_target) %>% # filter specific target
+  data_to_plot <- filter(.data, organism != 'control', plasmid != 'No memory', # remove empty data
+         if_any(matches('Target_name'), ~ .x == filter_target)) 
+  
+  
+  mean_data <- reframe(data_to_plot,
+                       .by = any_of(c(metadata_columns, 'Target_name')),
+                       across(where(is.numeric), ~ mean(.x, na.rm = T)))
+  
+  data_to_plot %>% # filter specific target
     
     ggplot(aes(day, {{.yvar}}, colour = plasmid, shape = `AHL (uM)`)) + 
     
@@ -173,7 +123,8 @@ plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean',
     # line connect data / means
     {if(.connect == 'mean')
     {geom_line(aes(alpha = `AHL (uM)`),
-               data = filter(processed_mean_toplt, Target_name == filter_target)) # join means
+               data = mean_data) # join means
+               # data = filter(processed_mean_toplt, Target_name == filter_target)) # join means
     } else 
     {geom_line(aes(group = interaction(plasmid, `AHL (uM)`, biological_replicates),
                    alpha = `AHL (uM)`)) }
@@ -189,6 +140,9 @@ plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean',
     # labels
     ggtitle(str_c('Memory in wastewater : ', filter_target), subtitle = title_name)
 }
+
+
+# individual target plot ----
 
 copies_flipped <- plot_timeseries_target(.connect = 'ind') %>% print
 ggsave(plot_as(title_name, '-copy-flip'), copies_flipped, width = 7, height = 5)
@@ -206,7 +160,15 @@ copies_chr <- plot_timeseries_target('chromosome') %>% print
 ggsave(plot_as(title_name, '-copy-chr'), width = 7, height = 5)
 ggplotly(copies_chr)
 
-# Processed plots ---- 
+
+# Ratio plot ----
+
+plt_ratio_mean <- plot_timeseries_target(.data = ratio_data, .yvar = flipped_fraction,
+                                         filter_target = 'ratio') %>% print
+ggsave(plot_as(title_name, '-fraction-facets'), width = 7, height = 5)
+
+
+# More plots ---- 
 
 # logscale
 copies_flipped_mean %>% format_logscale_y()
@@ -223,6 +185,21 @@ ggsave(plot_as(title_name, '-copy-flip-unind'), width = 7, height = 5)
 # backbone, only uninduced
 copies_bb_unind <- filter(processed_data, `AHL (uM)` == 0) %>% 
   {plot_timeseries_target('backbone', .data = ., .connect = 'ind')} %>% print
+
+
+# selected samples ----
+
+copies_flipped_sel <- filter(processed_data, str_detect(organism, 'Ec|w4')) %>% 
+  {plot_timeseries_target(.data = ., .connect = 'ind')} %>% print
+
+# ggsave(plot_as(title_name, '-copy-flip-selected'), width = 7, height = 3)
+
+ratio_sel <- filter(ratio_data, str_detect(organism, 'Ec|w4')) %>% 
+  {plot_timeseries_target(.data = ., .yvar = flipped_fraction,
+                          filter_target = 'ratio')} %>% print
+  
+ggsave(plot_as(title_name, '-ratio-selected'), width = 7, height = 4)
+
 
 
 # Normalized plot ----

@@ -11,6 +11,7 @@
 
 process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
 { # note: Quantity of copies/well must be written in the template sheet for the standards
+  library(magrittr) # load package to use %<>%
   
   # Preliminary naming ----
   
@@ -44,8 +45,13 @@ process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
     # optional filtering to remove low concentration points in standard curve
     filter(Quantity > 1| Quantity == 0) %>%  # filtering only standard curve with realistic quantity
     
+    group_by(Target_name) %>% 
+    
     # # Remove the bottom x dilutions by user input : to fine tune the std curve
-    remove_last_n_dilutions(dilutions_to_truncate = dilutions_to_truncate)
+    {if(dilutions_to_truncate > 0)
+      {remove_last_n_dilutions(., dilutions_to_truncate = dilutions_to_truncate) 
+      } else .}
+    
   
   # plotting ----
   
@@ -68,7 +74,7 @@ process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
        dat = .[1,] ) # "do" applies functions to each group of the data
   
   # unnest might work here?
-  std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes htem lists
+  std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes them lists
   std_table$dat %<>% bind_rows()  
   
   std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - 2 * seq_along(std_table$Target_name) + 2 # manual numbering for neat labelling with geom_text

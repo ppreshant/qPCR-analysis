@@ -131,10 +131,14 @@ if(experiment_mode == 'assay')
     
     # Std curve params ---- 
     
+    std_to_retrieve <- str_extract(flnm, 'Std[:alnum:]*') # Find the Std id to retrieve
+    
+    
+    
+    
     if(skip.std.curves_already.exist)
     { # if Std curve already exists in sheet, read from google sheet
       
-      std_to_retrieve <- str_extract(flnm, 'Std[:alnum:]*') # Find the Std id to retrieve
       std_to_retrieve <- 
         if(force.use_default.std || # if forced to use the default or if Std isn't in the file
            is.na(std_to_retrieve)) default_std.to.retrieve else std_to_retrieve # Resort to default if file holds no Std
@@ -148,6 +152,12 @@ if(experiment_mode == 'assay')
       filter(str_detect(ID, std_to_retrieve ))
     
       } else {
+        
+        # fill missing Std curve ID (Stdxx) with the run number (From qxx)
+        if(is.na(std_to_retrieve)) 
+          {std_to_retrieve <- str_c('Std', str_match(flnm, 'q([:alnum:]*)')[2])
+          print(glue::glue('No Stdxx ID detected in the filename, using : "{str_to_retrieve}"'))}
+        
         
         std_par <- NULL # initialize a dummy std_par
         
@@ -171,7 +181,7 @@ if(experiment_mode == 'assay')
                               .xaxis.label.custom = axislabel.assay_variable) + 
           theme(plot.title = element_text(hjust = 0.5), 
                 axis.text.x = element_text(angle = 90, hjust = 1, vjust = .3)) # Axis labels vertical
-        }
+        } 
     
       }
     

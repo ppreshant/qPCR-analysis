@@ -77,7 +77,7 @@ process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
   std_table$params %<>% bind_rows() # Convert parameters and data into tibbles : "do" function makes them lists
   std_table$dat %<>% bind_rows()  
   
-  std_table$dat$CT <- max(standard_curve_vars$CT, na.rm = T) - 2 * seq_along(std_table$Target_name) + 2 # manual numbering for neat labelling with geom_text
+  std_table$dat$CT <- max(std_results$CT, na.rm = T) - 2 * seq_along(std_table$Target_name) + 2 # manual numbering for neat labelling with geom_text
   
   # Add labels to plot - linear regression equation
   plt.with.eqn <- plt + geom_text(data = std_table$dat, label = std_table$equation, parse = TRUE, show.legend = F, hjust = 'inward', nudge_x = 0, force = 10)
@@ -126,10 +126,10 @@ process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
   # Writing data : google sheet or excel file 
   
   if(template_source == 'googlesheet') # Add parameters to standard curves
-    sheet_append(sheeturls$plate_layouts_PK, efficiency_table, sheet = 'qPCR Std curves') else { # into google sheet
-      write_csv(efficiency_table, path = 'qPCR analysis/Standards/qPCR_Std_curve_parameters.csv', append = TRUE)} # into excel file
+    googlesheets4::sheet_append(sheeturls$plate_layouts_PK, efficiency_table, sheet = 'qPCR Std curves') else { # into google sheet
+      write_csv(efficiency_table, path = 'qPCR analysis/Standards/qPCR_Std_curve_parameters.csv', append = TRUE)} # into csv file
 
-  write_csv(clean_std_data, 'qPCR analysis/Standards/all_std_data_points.csv',append = TRUE) # Writing full std data for archive
+  write_csv(clean_std_data, 'qPCR analysis/Standards/all_std_data_points.csv', append = TRUE) # Writing full std data for archive
   
   # return the table with std curve parameters
   return(efficiency_table)

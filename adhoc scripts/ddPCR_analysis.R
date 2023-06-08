@@ -62,5 +62,5 @@ ggplotly(copies_all_targets)
 
 # custom plotting
 
-copies_all_targets + ylim(c(0, 4300))
+copies_all_targets #+ ylim(c(0, 4300))
 ggsave(plot_as(title_name, '-ddPCR_raw'), width = 4.2, height = 4)

@@ -12,8 +12,7 @@ primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped',
 # function to back-calculate CT using standard curve parameters
 absolute_backcalc <- function(.df, .target_current, std_par)
 {
-  # .target_current <- df$Target_name %>% unique()
-  std_current <- std_par %>% filter(str_detect(Target_name, .target_current))
+  std_current <- std_par %>% filter(Target_name == .target_current)
   
   if(!plyr::empty(std_current)) { # if data for the current target exists
     # Back-calculate the unknown Copies from the CT using the linear standard curve

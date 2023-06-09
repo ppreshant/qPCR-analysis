@@ -20,8 +20,9 @@ plot_dose_response_and_controls <- function(.data = forplotting_cq.dat, # use ra
   
   # y-axis limits ----
   yrange <- reframe(data_subset, range({{.yvar}}, na.rm = T))
-  ymin <- floor(yrange[[1,1]])
-  ymax <- ceiling(yrange[[2,1]])
+  ymin <- floor(yrange[[1,1]]) # round down
+  ymax <- yrange[[2,1]] * 1.05 # count up by 5% ; 
+    # old: ceiling(yrange[[2,1]]) ; plyr::round_any(., 0.5, f = ceiling) # round up to nearest 0.4
   
   # TODO : remove ceiling with user input?
   

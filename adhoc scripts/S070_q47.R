@@ -9,8 +9,13 @@ source('./0.5-user-inputs.R') # source the user inputs from a different script /
 flnm <- 'q47y_S070_Ara 4_14-4-23'
 title_name <- 'q47y_S070_Ara'
 
-
+# select the column name to use for copies -- extrapolated as 2^ (40-Cq) vs absolute quantification
 column_for_copies <- quo(Copies.per.ul.template)  # or Copies_proportional for uncalibrated data
+
+# specify targets - as expressions
+flipped <- expr(`flipped-v0`)
+backbone <- expr(`backbone-v0`)
+chromosome <- expr(`chromosome-v0`)
 
 # Load data ----
 
@@ -22,23 +27,19 @@ forplotting_cq.dat <- get_processed_datasets(flnm) %>%
 
 
 # pivot and make ratios ----
-ratio_data <- select(forplotting_cq.dat, -CT, 
-                     -any_of(c('mean_Copies.per.ul.template', 'std_curve equation'))) %>% # remove the non unique columns
-  pivot_wider(names_from = Target_name, values_from = !!column_for_copies) %>% 
+
+grouping_vars_for_ratio <- c('assay_variable', 'Sample_category') # to group after pivoting by target, to take medians etc.
+
+source('scripts_general_fns/22-memory_wrappers_ratio.R')
+ratio_data <- calculate_memory_ratios(forplotting_cq.dat)
   
-  mutate(plasmid_copy_number = `backbone-v0`/`chromosome-v0`,
-         flipped_fraction = `flipped-v0`/`backbone-v0`) %>% 
-  
-  group_by(assay_variable, Sample_category) %>% 
-  mutate(median_flipped_fraction = median(flipped_fraction, na.rm = T), # median to secure from outliers?
-         median_copy_number = median(plasmid_copy_number, na.rm = T))
 
 # Plotting ----
 
 source('scripts_general_fns/20-plot_dose_response_and_controls.R') # source the plotter
 
 # plot flipped signal in Cq
-plt_flipped <- plot_dose_response_and_controls() %>% print
+plt_flipped <- plot_dose_response_and_controls(.target_to_filter = as_name(flipped)) %>% print
 
 ggsave(plot_as(title_name, '-Cq'), plt_flipped, width = 6, height = 5)
 
@@ -93,28 +94,28 @@ pull(flip_summary, 2) %>%
 # extra ----
 
 # chromosome
-plt_chromosome <- plot_dose_response_and_controls(.target_to_filter = 'chromosome-v0')
+plt_chromosome <- plot_dose_response_and_controls(.target_to_filter = as_name(chromosome))
 
 ggsave(plot_as(title_name, '-chromosome'), width = 6, height = 5)
 
-plt_chromosome_copies <- plot_dose_response_and_controls(.target_to_filter = 'chromosome-v0', .yvar = !!column_for_copies) %>% print
+plt_chromosome_copies <- plot_dose_response_and_controls(.target_to_filter = as_name(chromosome), .yvar = !!column_for_copies) %>% print
 plt_chromosome_copies
 
-# `backbone-v0`
-plt_bb <- plot_dose_response_and_controls(.target_to_filter = 'backbone-v0')
+# backbone, Cq
+plt_bb <- plot_dose_response_and_controls(.target_to_filter = as_name(backbone))
 ggsave(plot_as(title_name, '-backbone'), width = 6, height = 5)
 
-# copy number
+# plasmid copy number
 plt_copynum <- plot_dose_response_and_controls(.data = ratio_data, .yvar = plasmid_copy_number) %>% print
 ggsave(plot_as(title_name, '-copy-num'), width = 6, height = 5)
 
 
 # Copies : flipped
-plt_flipcopy <- plot_dose_response_and_controls(.target_to_filter = 'flipped-v0', 
+plt_flipcopy <- plot_dose_response_and_controls(.target_to_filter = as_name(flipped), 
                                                 .yvar = !!column_for_copies) %>% print
 ggsave(plot_as(title_name, '-flip_copies'), width = 6, height = 5)
 
-# !!column_for_copies : backbone
-plt_bbcopy <- plot_dose_response_and_controls(.target_to_filter = 'backbone-v0', 
+# Copies : backbone
+plt_bbcopy <- plot_dose_response_and_controls(.target_to_filter = as_name(backbone), 
                                               .yvar = !!column_for_copies) %>% print
 ggsave(plot_as(title_name, '-bb_copies'), width = 6, height = 5)

@@ -1,6 +1,8 @@
 # run analysis.R first or run the prelim to load data sections below
 # this makes the plots relevant for memory
 
+# TODO : generalize this with any Copies vector and Target_name as in S070_q47.R
+
 
 # Prelim ----
 

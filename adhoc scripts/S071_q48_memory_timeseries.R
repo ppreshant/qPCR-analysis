@@ -99,6 +99,7 @@ normalized_data <-
   
 # timeseries plotting function ---- 
 
+#' plots timeseries (by day) of signal for memory constructs
 plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean',
                                    .data = processed_data, .yvar = Copies_proportional)
 {

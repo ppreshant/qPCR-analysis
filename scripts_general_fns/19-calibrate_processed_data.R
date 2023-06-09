@@ -44,7 +44,14 @@ plt.copies_w.mean <- plot_facetted_assay(.data = absolute_dat,
 
 ggsave(plot_as(title_name, '-calibrated'), width = 14, height = 4)
 
+
 # Save data ----
+
+# save backup of uncalibrated data
+write_csv(cq.dat,
+          str_c('excel files/processed_data/uncalibrated/', flnm, '-processed.csv', sep = ''),
+          na = '')
+
 
 # overwrites existing data
 write_csv(absolute_dat,

@@ -9,9 +9,13 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 source('./0.5-user-inputs.R') # source the user inputs from a different script
 title_name <- base_title_name
 
+axislabel.assay_variable <- 'Template name' # printed on the x axis of the graph
 
 # Load data ----
 cq.dat <- get_processed_datasets(flnm)
+
+# change version of target (-v0 ; for fGFP)
+# cq.dat <- cq.dat %>% mutate(across(Target_name, ~ str_c(.x, '-v0')))
 
 
 # Get std curve ----
@@ -38,7 +42,7 @@ plt.copies_w.mean <- plot_facetted_assay(.data = absolute_dat,
                                          points_plt.style = 'jitter', flipped_plot = F) + 
   geom_boxplot(aes(y = mean_Copies.per.ul.template), show.legend = FALSE)
 
-plt.copies_w.mean
+ggsave(plot_as(title_name, '-calibrated'), width = 14, height = 4)
 
 # Save data ----
 

@@ -9,6 +9,9 @@ source('./0.5-user-inputs.R') # source the user inputs from a different script /
 flnm <- 'q47y_S070_Ara 4_14-4-23'
 title_name <- 'q47y_S070_Ara'
 
+
+column_for_copies <- quo(Copies.per.ul.template)  # or Copies_proportional for uncalibrated data
+
 # Load data ----
 
 forplotting_cq.dat <- get_processed_datasets(flnm) %>% 
@@ -19,11 +22,12 @@ forplotting_cq.dat <- get_processed_datasets(flnm) %>%
 
 
 # pivot and make ratios ----
-ratio_data <- select(forplotting_cq.dat, -CT) %>% # remove the non unique columns
-  pivot_wider(names_from = Target_name, values_from = Copies_proportional) %>% 
+ratio_data <- select(forplotting_cq.dat, -CT, 
+                     -any_of(c('mean_Copies.per.ul.template', 'std_curve equation'))) %>% # remove the non unique columns
+  pivot_wider(names_from = Target_name, values_from = !!column_for_copies) %>% 
   
-  mutate(plasmid_copy_number = backbone/chromosome,
-         flipped_fraction = flipped/backbone) %>% 
+  mutate(plasmid_copy_number = `backbone-v0`/`chromosome-v0`,
+         flipped_fraction = `flipped-v0`/`backbone-v0`) %>% 
   
   group_by(assay_variable, Sample_category) %>% 
   mutate(median_flipped_fraction = median(flipped_fraction, na.rm = T), # median to secure from outliers?
@@ -33,7 +37,7 @@ ratio_data <- select(forplotting_cq.dat, -CT) %>% # remove the non unique column
 
 source('scripts_general_fns/20-plot_dose_response_and_controls.R') # source the plotter
 
-# plot flipped fraction in Cq
+# plot flipped signal in Cq
 plt_flipped <- plot_dose_response_and_controls() %>% print
 
 ggsave(plot_as(title_name, '-Cq'), plt_flipped, width = 6, height = 5)
@@ -71,15 +75,17 @@ summary_flipfraction$median_flipped_fraction %>% #min(., na.rm = T)
 # calculation of flipped copies
 flip_summary <- 
   reframe(forplotting_cq.dat, .by = assay_variable,
-          median(Copies_proportional, na.rm = T)) %>% 
+          median(!!column_for_copies, na.rm = T)) %>% 
   unique %>% print
 
+
+# adhoc --
 # dynamic range ON / glu min
-flip_summary$`median(Copies_proportional, na.rm = T)` %>% 
+pull(flip_summary, 2) %>% 
   {.[13] / .[4]}
 
 # dynamic range 1e2 (max) / glu min
-flip_summary$`median(Copies_proportional, na.rm = T)` %>% 
+pull(flip_summary, 2) %>% 
   {max(., na.rm = T) / .[4]}
 
 
@@ -87,28 +93,28 @@ flip_summary$`median(Copies_proportional, na.rm = T)` %>%
 # extra ----
 
 # chromosome
-plt_chromosome <- plot_dose_response_and_controls(.target_to_filter = 'chromosome')
+plt_chromosome <- plot_dose_response_and_controls(.target_to_filter = 'chromosome-v0')
 
 ggsave(plot_as(title_name, '-chromosome'), width = 6, height = 5)
 
-plt_chromosome_copies <- plot_dose_response_and_controls(.target_to_filter = 'chromosome', .yvar = Copies_proportional) %>% print
+plt_chromosome_copies <- plot_dose_response_and_controls(.target_to_filter = 'chromosome-v0', .yvar = !!column_for_copies) %>% print
 plt_chromosome_copies
 
-# backbone
-plt_bb <- plot_dose_response_and_controls(.target_to_filter = 'backbone')
+# `backbone-v0`
+plt_bb <- plot_dose_response_and_controls(.target_to_filter = 'backbone-v0')
 ggsave(plot_as(title_name, '-backbone'), width = 6, height = 5)
 
 # copy number
 plt_copynum <- plot_dose_response_and_controls(.data = ratio_data, .yvar = plasmid_copy_number) %>% print
-ggsave(plot_as(title_name, '-copies'), width = 6, height = 5)
+ggsave(plot_as(title_name, '-copy-num'), width = 6, height = 5)
 
 
-# Copies_proportional : flipped
-plt_flipcopy <- plot_dose_response_and_controls(.target_to_filter = 'flipped', 
-                                                .yvar = Copies_proportional) %>% print
+# Copies : flipped
+plt_flipcopy <- plot_dose_response_and_controls(.target_to_filter = 'flipped-v0', 
+                                                .yvar = !!column_for_copies) %>% print
 ggsave(plot_as(title_name, '-flip_copies'), width = 6, height = 5)
 
-# Copies_proportional : backbone
-plt_bbcopy <- plot_dose_response_and_controls(.target_to_filter = 'backbone', 
-                                              .yvar = Copies_proportional) %>% print
+# !!column_for_copies : backbone
+plt_bbcopy <- plot_dose_response_and_controls(.target_to_filter = 'backbone-v0', 
+                                              .yvar = !!column_for_copies) %>% print
 ggsave(plot_as(title_name, '-bb_copies'), width = 6, height = 5)

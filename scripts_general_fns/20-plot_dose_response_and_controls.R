@@ -4,7 +4,7 @@
 
 # dose_response plot / flipped
 plot_dose_response_and_controls <- function(.data = forplotting_cq.dat, # use ratio_data for fractions
-                                        .target_to_filter = 'flipped', # ignore if plotting fractions
+                                        .target_to_filter = 'flipped-v0', # ignore if plotting fractions
                                         .yvar = 40 - CT, # 40 - CT or flipped_fraction
                                         .xvar_dose = Arabinose, .xlabel = 'Arabinose (uM)',
                                         .xvar_control = assay_variable, # assay_variable/qPCR ; Samples/plate reader

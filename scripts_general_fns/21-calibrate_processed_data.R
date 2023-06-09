@@ -78,4 +78,4 @@ load_procesessed_data_and_calibrate <- function(flnm, make_plot = FALSE)
 load_procesessed_data_and_calibrate(flnm, make_plot = T)
 
 # vectorized call : store all files to calibrate in flnms
-all_absolute_data <- map(flnms, ~ load_procesessed_data_and_calibrate(., make_plot = FALSE))
+# all_absolute_data <- map(flnms, ~ load_procesessed_data_and_calibrate(., make_plot = FALSE))

@@ -4,8 +4,16 @@ source('./0-general_functions_main.R') # Source the general_functions file befor
 source('./0.5-user-inputs.R') # source the user inputs from a different script
 title_name <- 'Fluorescent vs burdenless memory: S050'
 
-
+# user inputs  ----
 flnms <- c('q37_S050_pilot-2_4-10-22', 'q41_S050_pilot-3_pSS079_1-11-22')
+
+# select the column name to use for copies -- extrapolated as 2^ (40-Cq) vs absolute quantification
+column_for_copies <- quo(Copies.per.ul.template)  # or Copies_proportional for uncalibrated data
+
+# specify targets - as expressions : required for calculate_memory_ratios()
+flipped <- expr(flipped)
+backbone <- expr(backbone)
+chromosome <- expr(chromosome)
 
 # translate plasmid names (assay_variable) into meaningful names
 assay_variable_translation <- c('pPK' = '',
@@ -14,6 +22,7 @@ assay_variable_translation <- c('pPK' = '',
                                 'pSS079' = 'Fluorescent')
 
 
+# processing ----
 processed_data <- get_processed_datasets(flnms) %>% 
   
   # process day from sample_category
@@ -26,21 +35,24 @@ processed_data <- get_processed_datasets(flnms) %>%
                   as.numeric)) %>% 
   
   # translate assay_variable for presentation plot
-  mutate(across(assay_variable, ~ str_replace_all(.x, assay_variable_translation)))
+  mutate(across(assay_variable, ~ str_replace_all(.x, assay_variable_translation))) %>% 
+  
+  # change order for plotting
+  mutate(across(assay_variable, ~ fct_relevel(.x, c('Fluorescent', 'Silent', 'Frugal'))))
+
   
 
+# ratios ----
+
+grouping_vars_for_ratio <- c('assay_variable', 'Induction', 'day') # to group after pivoting by target, to take medians etc.
+
 # take ratio to backbone
-ratio_data <- select(processed_data, -CT) %>% # remove the non unique columns
-  pivot_wider(names_from = Target_name, values_from = Copies_proportional) %>% 
-  
-  mutate(plasmid_copy_number = backbone/chromosome,
-         flipped_fraction = flipped/backbone)
-  
+ratio_data <- calculate_memory_ratios(processed_data)
 
 
 # plots ----
 
-# plot all data (except NTC)
+# plot Cq : all data (except NTC)
 ggplot(filter(processed_data, assay_variable != 'ntc'),
        aes(day, 40 - CT, colour = assay_variable, shape = Induction, # 40-CT
            label = biological_replicates)) + 
@@ -95,9 +107,10 @@ plt_copy_number <- {ggplot(filter(ratio_data, assay_variable != 'ntc'),
   format_logscale_y()
 
 
-# plot ratio -- flip fraction
+# Ratio plot ----
+# flip fraction
 
-plt_flip_fraction <- {ggplot(filter(ratio_data, assay_variable != 'ntc'),
+plt_flip_fraction <- {ggplot(filter(ratio_data, Induction != 'Control'), # !str_detect(assay_variable, 'ntc|MG1655')
                            aes(day, flipped_fraction, colour = assay_variable, shape = Induction, 
                                label = biological_replicates)) + 
     geom_point() + 
@@ -105,22 +118,24 @@ plt_flip_fraction <- {ggplot(filter(ratio_data, assay_variable != 'ntc'),
                   alpha = if_else(str_detect(Induction, 'Induced'), 1, 0.5) # emphasize data
                   )) +
     
-    scale_shape_manual(values = c(4, 19, 1)) + # determine shapes
+    scale_shape_manual(values = c(19, 1)) + # determine shapes # c(4, 19, 1)
     scale_x_continuous(breaks = c(-1, 0, 1, 7, 8)) + # simplify x axis ticks
     scale_alpha_continuous(guide = 'none', range = c(0.5, 1)) + # control line transparency
+    
+    # induction window
+    annotate('rect', xmin = -1, ymin = 0, xmax = 0, ymax = Inf, alpha = .2) +
     
     ggtitle(title_name)} %>% 
   
   print 
 
 format_logscale_y(plt_flip_fraction)
-
 ggsave(plot_as('q41_S050_79+silents_flipped_fraction'), plt_flip_fraction, width = 4, height = 3)
 
 # presentable plot
 present_flip_fraction <- 
-  plt_flip_fraction + ggtitle(NULL) + # remove title
-  ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs'))
+  {plt_flip_fraction + ggtitle(NULL) + # remove title
+  ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs'))} %>% print
 
 ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 3)
 ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 4, height = 3)

@@ -1,4 +1,4 @@
-# 19-calibrate_processed_data.R
+# 21-calibrate_processed_data.R
 #' Load processed data, retrieve default std curve parameters and calculate absolute copies
 
 source('./0-general_functions_main.R') # Source the general_functions file before running this

@@ -195,20 +195,7 @@ if(experiment_mode == 'assay')
     # calculate absolute copies ----
     
     # Use the std curve parameters to back-calculate the absolute copies
-    absolute_dat <- forplotting_cq.dat %>%
-      select(-Copies_proportional) %>% # remove the dummy copies data
-      
-      group_by(Target_name) %>%
-      nest() %>% # create a new column with data frames for each target
-      
-      # calculate copy number for each dataset, and the mean for replicates
-      summarize(w.copy.data = map2(data, Target_name,  
-                                    ~ absolute_backcalc(.x, .y, std_par) ) 
-      ) %>% 
-      unnest(cols = c(w.copy.data)) %>%  # expand the absolute copy number data list
-      
-      # append the ID of the std curve and equation used
-      mutate('std_curve id' = std_to_retrieve)
+    absolute_dat <- calculate_absolute_quant(forplotting_cq.dat, std_par)
     
     
     # plot absolute copies ----

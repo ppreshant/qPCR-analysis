@@ -9,8 +9,29 @@ primer_table <- c('q1-3' = 'Flipped', 'q4-5' = 'Flipped',
 
 
 
+#' Calculate absolute copies with qPCR data and standard curve parameters
+calculate_absolute_quant <- function(.df = forplotting_cq.dat, std_parameters = std_par)
+{
+  .df %>%
+    select(-Copies_proportional) %>% # remove the dummy copies data
+    
+    group_by(Target_name) %>%
+    nest() %>% # create a new column with data frames for each target
+    
+    # calculate copy number for each dataset, and the mean for replicates
+    summarize(w.copy.data = map2(data, Target_name,  
+                                 ~ absolute_calculation_within_target(.x, .y, std_parameters) ) 
+    ) %>% 
+    unnest(cols = c(w.copy.data)) %>%  # expand the absolute copy number data list
+    
+    # append the ID of the std curve and equation used
+    mutate('std_curve id' = std_to_retrieve)
+  
+}
+
+
 # function to back-calculate CT using standard curve parameters
-absolute_backcalc <- function(.df, .target_current, std_par)
+absolute_calculation_within_target <- function(.df, .target_current, std_par)
 {
   std_current <- std_par %>% filter(Target_name == .target_current)
   

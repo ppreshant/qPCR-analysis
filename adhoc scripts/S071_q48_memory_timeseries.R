@@ -85,7 +85,7 @@ ratio_data <- calculate_memory_ratios(processed_data)
 # timeseries plotting function ---- 
 
 #' plots timeseries (by day) of signal for memory constructs
-plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean',
+plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean', point_style = 'straight',
                                    .data = processed_data, .yvar = Copies_proportional)
 {
   data_to_plot <- filter(.data, organism != 'control', plasmid != 'No memory', # remove empty data
@@ -98,11 +98,18 @@ plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean',
                        .by = any_of(c(metadata_columns, 'Target_name')),
                        across(where(is.numeric), ~ mean(.x, na.rm = T)))
   
+  # points jitter
+  if(point_style == 'jitter')
+  {pos_random <- position_jitter(width = 0.3, height = 0, seed = 1)
+  
+  } else pos_random <- position_identity()
+  
+  
   data_to_plot %>% # filter specific target
     
     ggplot(aes(day, {{.yvar}}, colour = plasmid, shape = `AHL (uM)`)) + 
     
-    geom_point(size = 2) +
+    geom_point(size = .7, position = pos_random) +
     # scale_colour_brewer(palette = 'Dark2', direction = -1) + # change the values - orange for uninduced/0
     scale_shape_manual(values = c(1, 16)) + # shape : open and closed circles
     scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5)) + # control line transparency
@@ -111,7 +118,8 @@ plot_timeseries_target <- function(filter_target = 'flipped', .connect = 'mean',
     # line connect data / means
     {if(.connect == 'mean')
     {geom_line(aes(alpha = `AHL (uM)`),
-               data = mean_data) # join means
+               data = mean_data, # join means
+               position = pos_random)
                # data = filter(processed_mean_toplt, Target_name == filter_target)) # join means
     } else 
     {geom_line(aes(group = interaction(plasmid, `AHL (uM)`, biological_replicates),
@@ -146,9 +154,15 @@ ratio_sel <- filter(ratio_data, str_detect(organism, 'Ec|w4')) %>%
 
 
 # presentable plot - clean up
+
+# colours for memory picked by SS : coolors.co/
+SS_colourscheme <- c('#9E2A2B', '#73956F', '#003844', '#F3C677', '#003844') # 'red', light green, light yellow, blue, magenta
+
 present_flip_fraction <- 
   {ratio_sel + ggtitle(NULL, subtitle = NULL) + # remove title
-      ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs'))} %>% print
+      ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs')) + 
+      scale_colour_manual(values = SS_colourscheme)
+      } %>% print
 
 ggsave(plot_as(title_name, '-flip_fraction'), width = 7, height = 4)
 # ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 7, height = 4)

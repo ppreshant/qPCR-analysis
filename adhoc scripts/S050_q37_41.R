@@ -21,13 +21,16 @@ assay_variable_translation <- c('pPK' = '',
                                 '147|150' = 'Frugal',
                                 'pSS079' = 'Fluorescent')
 
+# inducer translation : placeholders 
+inducer_translation <- c('Induced' = 'I',
+                         'Uninduced' = '0')
 
 # processing ----
 processed_data <- get_processed_datasets(flnms) %>% 
   
   # process day from sample_category
-  separate(Sample_category, # separate induction and day
-           into = c('Induction', 'day')) %>% 
+  separate(Sample_category, # separate Inducer and day
+           into = c('Inducer', 'day')) %>% 
   
   mutate(across(day, # convert day column into number
                 ~ str_replace_all(.x, c('minus' = '-', 'd' = '')) %>%
@@ -35,18 +38,23 @@ processed_data <- get_processed_datasets(flnms) %>%
                   as.numeric)) %>% 
   
   # translate assay_variable for presentation plot
-  mutate(across(assay_variable, ~ str_replace_all(.x, assay_variable_translation))) %>% 
+  mutate(across(assay_variable, 
+                ~ str_replace_all(.x, assay_variable_translation) %>% 
+                  fct_relevel(c('Fluorescent', 'Silent', 'Frugal'))  # change order for plotting
+                  )) %>% 
   
-  # change order for plotting
-  mutate(across(assay_variable, ~ fct_relevel(.x, c('Fluorescent', 'Silent', 'Frugal'))))
-
+  # rename Inducers with shorter placeholders
+  mutate(across(Inducer, ~ str_replace_all(.x, inducer_translation) %>% 
+                  fct_relevel('0', 'I') # reorder
+                  ))
   
 
 # ratios ----
 
-grouping_vars_for_ratio <- c('assay_variable', 'Induction', 'day') # to group after pivoting by target, to take medians etc.
+grouping_vars_for_ratio <- c('assay_variable', 'Inducer', 'day') # to group after pivoting by target, to take medians etc.
 
 # take ratio to backbone
+source('scripts_general_fns/22-memory_wrappers_ratio.R')
 ratio_data <- calculate_memory_ratios(processed_data)
 
 
@@ -54,11 +62,11 @@ ratio_data <- calculate_memory_ratios(processed_data)
 
 # plot Cq : all data (except NTC)
 ggplot(filter(processed_data, assay_variable != 'ntc'),
-       aes(day, 40 - CT, colour = assay_variable, shape = Induction, # 40-CT
+       aes(day, 40 - CT, colour = assay_variable, shape = Inducer, # 40-CT
            label = biological_replicates)) + 
   geom_point() + 
-  geom_line(aes(group = interaction(assay_variable, Induction, biological_replicates),
-                alpha = if_else(str_detect(Induction, 'Induced'), 1, 0.5) # emphasize data
+  geom_line(aes(group = interaction(assay_variable, Inducer, biological_replicates),
+                alpha = if_else(str_detect(Inducer, 'Induced'), 1, 0.5) # emphasize data
                 )) + 
   
   scale_shape_manual(values = c(4, 19, 1)) + # determine shapes
@@ -77,10 +85,10 @@ ggsave(plot_as('q41_S050_79+silents'), width = 5, height = 3)
 # plot only flipped data (except NTC)
 plt_flip <- ggplot(filter(processed_data, assay_variable != 'ntc', 
                                   Target_name == 'flipped'),
-       aes(day, 40 - CT, colour = assay_variable, shape = Induction, # 40-CT
+       aes(day, 40 - CT, colour = assay_variable, shape = Inducer, # 40-CT
            label = biological_replicates)) + 
   geom_point() + 
-  geom_line(aes(group = interaction(assay_variable, Induction, biological_replicates))) + 
+  geom_line(aes(group = interaction(assay_variable, Inducer, biological_replicates))) + 
   
   scale_shape_manual(values = c(4, 19, 1)) + # determine shapes
   scale_x_continuous(breaks = c(-1, 0, 1, 7, 8)) + # simplify x axis ticks
@@ -94,10 +102,10 @@ ggsave(plot_as('q41_S050_79+silents_flipped'), plt_flip, width = 4, height = 3)
 # Plot ratios -- copy number
 
 plt_copy_number <- {ggplot(filter(ratio_data, assay_variable != 'ntc'),
-                   aes(day, plasmid_copy_number, colour = assay_variable, shape = Induction, 
+                   aes(day, plasmid_copy_number, colour = assay_variable, shape = Inducer, 
                        label = biological_replicates)) + 
   geom_point() + 
-  geom_line(aes(group = interaction(assay_variable, Induction, biological_replicates))) + 
+  geom_line(aes(group = interaction(assay_variable, Inducer, biological_replicates))) + 
   
   scale_shape_manual(values = c(4, 19, 1)) + # determine shapes
   scale_x_continuous(breaks = c(-1, 0, 1, 7, 8)) + # simplify x axis ticks
@@ -110,17 +118,18 @@ plt_copy_number <- {ggplot(filter(ratio_data, assay_variable != 'ntc'),
 # Ratio plot ----
 # flip fraction
 
-plt_flip_fraction <- {ggplot(filter(ratio_data, Induction != 'Control'), # !str_detect(assay_variable, 'ntc|MG1655')
-                           aes(day, flipped_fraction, colour = assay_variable, shape = Induction, 
+plt_flip_fraction <- {ggplot(filter(ratio_data, Inducer != 'Control'), # !str_detect(assay_variable, 'ntc|MG1655')
+                           aes(day, flipped_fraction, colour = assay_variable, shape = Inducer, 
                                label = biological_replicates)) + 
     geom_point() + 
-    geom_line(aes(group = interaction(assay_variable, Induction, biological_replicates),
-                  alpha = if_else(str_detect(Induction, 'Induced'), 1, 0.5) # emphasize data
+    geom_line(aes(group = interaction(assay_variable, Inducer, biological_replicates),
+                  # alpha = if_else(str_detect(Inducer, 'Induced'), 1, 0.5) # emphasize data
+                  alpha = Inducer
                   )) +
     
-    scale_shape_manual(values = c(19, 1)) + # determine shapes # c(4, 19, 1)
+    scale_shape_manual(values = c(1, 16)) + # determine shapes # c(4, 19, 1)
     scale_x_continuous(breaks = c(-1, 0, 1, 7, 8)) + # simplify x axis ticks
-    scale_alpha_continuous(guide = 'none', range = c(0.5, 1)) + # control line transparency
+    scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5)) + # control line transparency
     
     # induction window
     annotate('rect', xmin = -1, ymin = 0, xmax = 0, ymax = Inf, alpha = .2) +
@@ -133,9 +142,16 @@ format_logscale_y(plt_flip_fraction)
 ggsave(plot_as('q41_S050_79+silents_flipped_fraction'), plt_flip_fraction, width = 4, height = 3)
 
 # presentable plot
+
+# colours for memory picked by SS : coolors.co/
+SS_colourscheme <- c('#9E2A2B', '#73956F', '#003844', '#F3C677', '#003844') # 'red', light green, light yellow, blue
+
 present_flip_fraction <- 
   {plt_flip_fraction + ggtitle(NULL) + # remove title
-  ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs'))} %>% print
+      ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs')) + 
+      scale_color_manual(values = SS_colourscheme)} %>% print
 
 ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 3)
 ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 4, height = 3)
+
+

@@ -127,6 +127,7 @@ plt_flip_fraction <- {ggplot(filter(ratio_data, Inducer != 'Control'), # !str_de
                   alpha = Inducer
                   )) +
     
+    # Aesthetics
     scale_shape_manual(values = c(1, 16)) + # determine shapes # c(4, 19, 1)
     scale_x_continuous(breaks = c(-1, 0, 1, 7, 8)) + # simplify x axis ticks
     scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5)) + # control line transparency
@@ -134,6 +135,11 @@ plt_flip_fraction <- {ggplot(filter(ratio_data, Inducer != 'Control'), # !str_de
     # induction window
     annotate('rect', xmin = -1, ymin = 0, xmax = 0, ymax = Inf, alpha = .2) +
     
+    # Layout : legend position
+    theme(legend.position = 'top', 
+          legend.box = 'vertical', # Split into 2 lines
+          legend.spacing = unit(0, 'mm'), # minimize spacing
+          legend.box.just = 'left') + # left justified
     ggtitle(title_name)} %>% 
   
   print 
@@ -151,7 +157,7 @@ present_flip_fraction <-
       ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs')) + 
       scale_color_manual(values = SS_colourscheme)} %>% print
 
-ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 3)
-ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 4, height = 3)
+ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 5)
+ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 4, height = 5)
 
 

@@ -144,6 +144,14 @@ plt_ratio_mean <- plot_timeseries_target(.data = ratio_data, .yvar = flipped_fra
                                          filter_target = 'ratio') %>% print
 ggsave(plot_as(title_name, '-fraction-facets'), width = 7, height = 5)
 
+present_ratio_mean <- 
+  {plt_ratio_mean + ggtitle(NULL, subtitle = NULL) + # remove title
+      ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs')) + 
+      scale_colour_manual(values = SS_colourscheme)
+  } %>% print
+
+ggsave('qPCR analysis/q48_S071_-all_flip_fraction.pdf', width = 6, height = 8)
+
 
 # selected samples ----
 

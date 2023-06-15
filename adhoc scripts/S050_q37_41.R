@@ -145,24 +145,10 @@ plt_copies_log <-
 ggsave(plot_as('q41,37_S050-log copies'), plt_copies_log, width = 6, height = 5)
 ggsave('qPCR analysis/Archive/q41,37_S050-log copies.pdf', plt_copies_log, width = 6, height = 5)
 
-# Plot ratios -- copy number
-
-plt_copy_number <- {ggplot(filter(ratio_data, assay_variable != 'ntc'),
-                   aes(day, plasmid_copy_number, colour = assay_variable, shape = Inducer, 
-                       label = biological_replicates)) + 
-  geom_point() + 
-  geom_line(aes(group = interaction(assay_variable, Inducer, biological_replicates))) + 
-  
-  scale_shape_manual(values = c(4, 19, 1)) + # determine shapes
-  scale_x_continuous(breaks = c(-1, 0, 1, 7, 8)) + # simplify x axis ticks
-  
-  ggtitle(title_name)} %>% 
-  
-  format_logscale_y()
-
 
 # Ratio plot ----
-# flip fraction
+
+# flipped fraction
 
 plt_flip_fraction <- {ggplot(filter(ratio_data, Inducer != 'Control'), # !str_detect(assay_variable, 'ntc|MG1655')
                            aes(day, flipped_fraction, colour = assay_variable, shape = Inducer, 
@@ -193,6 +179,7 @@ plt_flip_fraction <- {ggplot(filter(ratio_data, Inducer != 'Control'), # !str_de
 format_logscale_y(plt_flip_fraction)
 ggsave(plot_as('q41_S050_79+silents_flipped_fraction'), plt_flip_fraction, width = 4, height = 3)
 
+
 # presentable plot
 
 # colours for memory picked by SS : coolors.co/
@@ -206,4 +193,21 @@ present_flip_fraction <-
 ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 5)
 ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 4, height = 5)
 
+
+# plasmid copy number ----
+
+# Plot ratios -- copy number
+
+plt_copy_number <- {ggplot(filter(ratio_data, assay_variable != 'ntc'),
+                           aes(day, plasmid_copy_number, colour = assay_variable, shape = Inducer, 
+                               label = biological_replicates)) + 
+    geom_point() + 
+    geom_line(aes(group = interaction(assay_variable, Inducer, biological_replicates))) + 
+    
+    scale_shape_manual(values = c(4, 19, 1)) + # determine shapes
+    scale_x_continuous(breaks = c(-1, 0, 1, 7, 8)) + # simplify x axis ticks
+    
+    ggtitle(title_name)} %>% print
+
+format_logscale_y(plt_copy_number)
 

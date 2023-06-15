@@ -1,4 +1,4 @@
-# S050_q37 processing
+# S050_q37_41 processing
 
 source('./0-general_functions_main.R') # Source the general_functions file before running this
 source('./0.5-user-inputs.R') # source the user inputs from a different script
@@ -58,7 +58,7 @@ source('scripts_general_fns/22-memory_wrappers_ratio.R')
 ratio_data <- calculate_memory_ratios(processed_data)
 
 
-# plots ----
+# Cq plots ----
 
 # plot Cq : all data (except NTC)
 ggplot(filter(processed_data, assay_variable != 'ntc'),
@@ -98,6 +98,52 @@ plt_flip <- ggplot(filter(processed_data, assay_variable != 'ntc',
 
 ggsave(plot_as('q41_S050_79+silents_flipped'), plt_flip, width = 4, height = 3)
 
+
+# Copies plots ----
+
+# plotting Copies of all targets -- potential S10 fig
+
+plt_copies_all <- 
+  {ggplot(
+    mutate(processed_data, across(Target_name, ~ fct_relevel(.x, c('flipped', 'backbone', 'chromosome')))),
+    
+          #filter(processed_data, Inducer != 'Control'), # !str_detect(assay_variable, 'ntc|MG1655')
+          
+          aes(day, !!column_for_copies, colour = assay_variable, shape = Inducer, 
+              label = biological_replicates)) + 
+      geom_point() + 
+      geom_line(aes(group = interaction(assay_variable, Inducer, biological_replicates),
+                    # alpha = if_else(str_detect(Inducer, 'Induced'), 1, 0.5) # emphasize data
+                    alpha = Inducer
+      )) +
+      
+      # Aesthetics
+      scale_shape_manual(values = c(1, 16, 6)) + # determine shapes # c(4, 19, 1)
+      scale_x_continuous(breaks = c(-1, 0, 1, 7, 8)) + # simplify x axis ticks
+      scale_alpha_discrete(guide = 'none', range = c(0.2, 0.5, 0.2)) + # control line transparency
+      
+      # induction window
+      annotate('rect', xmin = -1, ymin = 0, xmax = 0, ymax = Inf, alpha = .2) +
+      
+      # Layout : legend position
+      theme(legend.position = 'top', 
+            legend.box = 'vertical', # Split into 2 lines
+            legend.spacing = unit(0, 'mm'), # minimize spacing
+            legend.box.just = 'left') + # left justified
+      
+      facet_grid(rows = vars(Target_name), scales = 'free') +
+      ggtitle(title_name)} %>% 
+  
+  print 
+
+ggsave(plot_as('q41,37_S050-all copies'), width = 6, height = 8)
+
+# logscale - different orientation
+plt_copies_log <- 
+  {plt_copies_all + facet_grid(cols = vars(Target_name)) + ggtitle(NULL)} %>% format_logscale_y()
+
+ggsave(plot_as('q41,37_S050-log copies'), plt_copies_log, width = 6, height = 5)
+ggsave('qPCR analysis/Archive/q41,37_S050-log copies.pdf', plt_copies_log, width = 6, height = 5)
 
 # Plot ratios -- copy number
 

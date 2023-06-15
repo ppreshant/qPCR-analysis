@@ -22,7 +22,7 @@ chromosome <- expr(`chromosome-v0`)
 forplotting_cq.dat <- get_processed_datasets(flnm) %>% 
   
   # processing for dose_response (from plate_reader : S070_Ara) / forgot MG1655 in controls..
-  mutate(sample_type = if_else(str_detect(assay_variable, 'glu|OFF|ON|water'), 'Controls', 'Induction'), # mark controls
+  mutate(sample_type = if_else(str_detect(assay_variable, 'glu|OFF|ON|MG1655|water'), 'Controls', 'Induction'), # mark controls
        Arabinose = as.numeric(assay_variable), .after = assay_variable) # convert to numeric for plotting properly
 
 
@@ -112,10 +112,28 @@ ggsave(plot_as(title_name, '-copy-num'), width = 6, height = 5)
 
 # Copies : flipped
 plt_flipcopy <- plot_dose_response_and_controls(.target_to_filter = as_name(flipped), 
-                                                .yvar = !!column_for_copies) %>% print
+                                                .yvar = !!column_for_copies, layout_widths = c(3,1)) %>% print
 ggsave(plot_as(title_name, '-flip_copies'), width = 6, height = 5)
 
 # Copies : backbone
 plt_bbcopy <- plot_dose_response_and_controls(.target_to_filter = as_name(backbone), 
-                                              .yvar = !!column_for_copies) %>% print
+                                              .yvar = !!column_for_copies, layout_widths = c(3,1)) %>% print
 ggsave(plot_as(title_name, '-bb_copies'), width = 6, height = 5)
+
+# Copies : chromosome
+plt_chrcopy <- plot_dose_response_and_controls(.target_to_filter = as_name(chromosome), 
+                                              .yvar = !!column_for_copies, layout_widths = c(3,1)) %>% print
+ggsave(plot_as(title_name, '-chr_copies'), width = 6, height = 5)
+
+# plot copies of all targets : fig S2
+remove_title <- function(pltid) pltid & ggtitle(NULL, subtitle = NULL)
+
+plt_s2 <- 
+  (remove_title(plt_flipcopy) + ggtitle('ON state')) / 
+  (remove_title(plt_bbcopy) + ggtitle('Total plasmid')) + 
+  (remove_title(plt_chrcopy) + ggtitle('Chromosome')) 
+
+# order_assay_variable <- c('OFF', 'ON', 'glu', '0', '1e-1', '1e0', '1e1', '1e2', '1e3', '1e4')
+plt_s2
+
+ggsave(str_c('qPCR_analysis/', title_name, '-all copies', '.pdf'), width = 7, height = 7)

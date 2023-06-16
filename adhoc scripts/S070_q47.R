@@ -64,8 +64,13 @@ summary_flipfraction <-
 reframe(ratio_data, #.by = assay_variable,
         median_flipped_fraction) %>% unique
 
-# dynamic range : 1e3 / glu
-summary_flipfraction$median_flipped_fraction %>% {.[6] / .[13]}
+# dynamic range : 1e3 / glu.d0
+map_dbl(c('1e3', 'glu'),
+      ~ filter(summary_flipfraction, Sample_category == 'd0', 
+                      assay_variable == .x) %>% pull(median_flipped_fraction)
+      ) %>% 
+  {.[1] / .[2]}
+      
 
 # dynamic range : ON / OFF
 summary_flipfraction$median_flipped_fraction %>% #min(., na.rm = T)

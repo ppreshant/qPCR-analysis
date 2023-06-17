@@ -191,7 +191,7 @@ present_flip_fraction <-
       scale_color_manual(values = SS_colourscheme)} %>% print
 
 ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 5)
-ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 4, height = 5)
+ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 3, height = 4)
 
 
 # plasmid copy number ----

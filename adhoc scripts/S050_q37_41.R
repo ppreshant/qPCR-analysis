@@ -191,7 +191,22 @@ present_flip_fraction <-
       scale_color_manual(values = SS_colourscheme)} %>% print
 
 ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 5)
-ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 3, height = 4)
+ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 3, height = 3)
+
+
+# Calculations / stats
+
+end_points <- filter(ratio_data, 
+                     day == 1 | day == 8, Inducer =='I') %>% # select end points / induced only
+  select(median_flipped_fraction) %>% unique %>% # only the summary value
+  pivot_wider(names_from = day, values_from = median_flipped_fraction, # move each day to a column
+              names_prefix = 'frac_d') %>% 
+  mutate(differ_from_d1 = (frac_d1 - frac_d8)/frac_d1, # percent change from d1 to d8
+         fold_from_d1 = frac_d1 / frac_d8) %>% # fold change from d1 to d8
+  view
+
+# t.test for d1 d8 differences? -- paired data
+# t.test(frac_d1, frac_d8, data = ..)
 
 
 # plasmid copy number ----

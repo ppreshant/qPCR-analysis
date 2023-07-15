@@ -194,21 +194,49 @@ ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 5
 ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 3, height = 3)
 
 
-# Calculations / stats
+# Calculations / stats ---- 
 
+# show the fold changes and % differences from d1 to d8
 end_points <- filter(ratio_data, 
                      day == 1 | day == 8, Inducer =='I') %>% # select end points / induced only
   select(median_flipped_fraction) %>% unique %>% # only the summary value
+  
   pivot_wider(names_from = day, values_from = median_flipped_fraction, # move each day to a column
               names_prefix = 'frac_d') %>% 
   mutate(differ_from_d1 = (frac_d1 - frac_d8)/frac_d1, # percent change from d1 to d8
-         fold_from_d1 = frac_d1 / frac_d8) %>% # fold change from d1 to d8
+         fold_from_d1 = frac_d1 / frac_d8) %>%  # fold change from d1 to d8
+  print
+# Conclusion : Silent and frugal change by < .2 fold or 30%
+
+
+# T tests
+
+# make nested data
+condensed_data <- ratio_data %>% 
+  group_by(assay_variable, Inducer) %>% 
+  filter(str_detect(day, '^1|8')) %>% # select only d1 (first day measured for sil, fli) and d8
+  nest() %>% 
   view
+
+
+stat_data <- 
+  mutate(condensed_data, 
+    ttest = map(data, 
+                ~ t.test(flipped_fraction ~ day, alternative = 'greater', paired = T,
+                         data = .x)),
+    
+    pval = map(ttest, ~ .x$p.value)
+    
+    ) %>% view
+
+stat_data$ttest[[6]]
 
 # t.test for d1 d8 differences? -- paired data
 # t.test(frac_d1, frac_d8, data = ..)
 
-
+# testing subset
+cs <- condensed_data$data[[2]]
+t.test(flipped_fraction ~ day, alternative = 'less', paired = T, data = cs)
 # plasmid copy number ----
 
 # Plot ratios -- copy number

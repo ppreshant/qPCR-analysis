@@ -185,6 +185,29 @@ copies_flipped_sel <- filter(processed_data, str_detect(organism, 'Ec|w4')) %>%
 # ggsave(plot_as(title_name, '-copy-flip-selected'), width = 7, height = 3)
 
 
+
+# Statistics -----
+
+# gp_noahl <- metadata_columns[!str_detect(metadata_columns, 'AHL')]
+                             
+condensed_data <- ratio_data %>% 
+  group_by(across(all_of(metadata_columns[!str_detect(metadata_columns, 'AHL')]))) %>% 
+  filter(str_detect(day, '^1|8'), str_detect(plasmid, 'Frugal'), str_detect(organism, 'Ec|w4')) %>% # select only d1 (first day measured for sil, fli) and d8
+  nest() %>% print
+  # view
+
+stat_data <- 
+  mutate(condensed_data, 
+         ttest = map(data, 
+                     ~ t.test(flipped_fraction ~ `AHL (uM)`, alternative = 'greater', paired = T,
+                              data = .x)),
+         
+         pval = map_dbl(ttest, ~ .x$p.value)
+         
+  ) %>% print
+
+
+
 # individual target plot ----
 
 copies_flipped <- plot_timeseries_target(.connect = 'ind') %>% print

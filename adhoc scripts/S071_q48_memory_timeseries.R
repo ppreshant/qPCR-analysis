@@ -188,24 +188,61 @@ copies_flipped_sel <- filter(processed_data, str_detect(organism, 'Ec|w4')) %>%
 
 # Statistics -----
 
-# gp_noahl <- metadata_columns[!str_detect(metadata_columns, 'AHL')]
+# paired sample t.test for AHL/10 != AHL/0 : across all days 
+
                              
 condensed_data <- ratio_data %>% 
   group_by(across(all_of(metadata_columns[!str_detect(metadata_columns, 'AHL')]))) %>% 
-  filter(str_detect(day, '^1|8'), str_detect(plasmid, 'Frugal'), str_detect(organism, 'Ec|w4')) %>% # select only d1 (first day measured for sil, fli) and d8
-  nest() %>% print
+  filter(str_detect(organism, 'Ec|w4'), day != -1) %>% # select E. coli and W4 ; except d-1
+  # str_detect(day, '^1|8'), str_detect(plasmid, 'Frugal'),  # more filtering
+  nest() %>% 
+  arrange(organism, plasmid, day) # arrange for easy visualization
   # view
+
+
+# safe statistics : will proceed even if some things fail
+safe_ttest <- safely(t.test)
+
 
 stat_data <- 
   mutate(condensed_data, 
          ttest = map(data, 
-                     ~ t.test(flipped_fraction ~ `AHL (uM)`, alternative = 'greater', paired = T,
+                     ~ safe_ttest(flipped_fraction ~ `AHL (uM)`, 
+                              # alternative = 'greater',  # two tailed t.test
+                              paired = T,
+                              
                               data = .x)),
          
-         pval = map_dbl(ttest, ~ .x$p.value)
+         # extract p.value from $result ; replace NULL with NA (need a numeric output for map_dbl)
+         pval = map_dbl(ttest, ~ .x$result$p.value %>% {if(is.null(.)) NA else .}),
+         significance = pval < 0.05 # check significance 
          
-  ) %>% print
+  ) #%>% print
 
+
+
+# paired plots/stats -----
+
+# Plotting the difference of paired replicates (induced - uninduced) - to check for pairing effects 
+# for statistics done above (samples seem too correlated within pairs, it's uncanny!)
+# indication = high t score => low s / sigma in the difference data
+
+diff_data <- ratio_data %>% 
+  group_by(across(all_of(metadata_columns[!str_detect(metadata_columns, 'AHL')]))) %>% 
+  filter(day != -1, # remove d-1 -- no paired induced one!
+         # str_detect(organism, 'Ec|w4') # select E. coli and W4 ;
+         ) %>% 
+  
+  select(`AHL (uM)`, biological_replicates, flipped_fraction) %>% # select only varying / metadata cols
+  pivot_wider(names_from = `AHL (uM)`, names_prefix = 'AHL_', values_from = flipped_fraction) %>% # diff cols by AHL
+  
+  mutate(diff_flipped_fraction = AHL_0 - AHL_10, # make difference column 
+         'AHL (uM)' = as_factor(10), # make a mock column
+         .keep = 'unused')
+
+plt_diff <- 
+  plot_timeseries_target(.data = diff_data, .yvar = diff_flipped_fraction, filter_target = 'ratio') %>% 
+  print
 
 
 # individual target plot ----

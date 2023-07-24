@@ -208,7 +208,7 @@ stat_data <-
   mutate(condensed_data, 
          ttest = map(data, 
                      ~ safe_ttest(flipped_fraction ~ `AHL (uM)`, 
-                              # alternative = 'greater',  # default = two tailed t.test
+                              alternative = 'less',  # one-tailed test 0 < 10 uM AHL
                               paired = T,
                               
                               data = .x)),
@@ -219,6 +219,58 @@ stat_data <-
          
   ) #%>% print
 
+
+# visually check Ec/Silent data with NDs
+ratio_data %>% 
+  filter(plasmid == 'Silent', organism == 'Ec') %>% 
+  group_by(across(all_of(c(metadata_columns, 'biological_replicates')))) %>% 
+  select(flipped_fraction) %>% 
+  
+  pivot_wider(names_from = `AHL (uM)`, values_from = flipped_fraction) %>% 
+  
+  # view()
+  drop_na(any_of(c('0', '10'))) # retain non NA values for quick visual check
+
+
+
+
+# Testing stats for increasing w4/Frugal/Uninduced
+
+stat_w4 <-
+  ratio_data %>% 
+  filter(str_detect(organism, 'w4'), plasmid == 'Frugal', `AHL (uM)` == 0) %>% # select W4
+  
+  select(biological_replicates, flipped_fraction) %>% 
+  ungroup() %>% 
+  arrange(day) #%>%
+  
+
+# to make repeated groups for pairwise comparisions : make a dummy tibble for left_join
+# tibble(grp = 1,1,2,2,.. , indx = 1,2,2,3,3,4,4,5) -> this will make the correct repetitions
+
+
+# compare d-1 to all other days
+stat_w4 %>% 
+  group_by(day) %>% 
+  nest() %>% 
+  
+  mutate(ttest = map(data,
+                     ~ t.test(filter(stat_w4, day == -1) %>% {.$flipped_fraction}, # d-1
+                              .x$flipped_fraction,  
+                              paired = T, alternative = 'less')
+                     ),
+         
+         # extract p.value from $result ; replace NULL with NA (need a numeric output for map_dbl)
+         pval = map_dbl(ttest, ~ .x$p.value %>% {if(is.null(.)) NA else .}),
+         significance = pval < 0.05 # check significance 
+         
+         ) #%>% view
+
+
+# compare d-1 to d8
+stat_w4 %>% 
+  filter(day == -1 | day == 8) %>% 
+  {t.test(flipped_fraction ~ day, paired = T, alternative = 'less', data = .)}
 
 
 # paired plots/stats -----
@@ -253,9 +305,16 @@ plt_diff <-
 source('scripts_general_fns/5-mathematical_fitting_funs.R') # source scripts for fitting
 
 fit_data <- 
-  unnest(condensed_data, cols = data) %>%
+  
+  ratio_data %>% 
+  filter(str_detect(organism, 'Ec|w4'), day != -1) %>% # select E. coli and W4 ; except d-1
+  # str_detect(day, '^1|8'), str_detect(plasmid, 'Frugal'),  # more filtering
+  arrange(organism, plasmid, day) %>%  # arrange for easy visualization
+    
   ungroup() %>% 
-  filter(`AHL (uM)` == 10, plasmid == 'Fluorescent') %>% # select fluor, induced data for fitting
+  filter(`AHL (uM)` == 10, # select fluor, induced data for fitting
+         plasmid == 'Fluorescent'
+  ) %>%
   
   nest(.by = c(plasmid, organism)) %>% 
   
@@ -273,11 +332,51 @@ aug_fits <- unnest(fit_w_thalf, augmented) %>%
   mutate(fit_flipped_fraction = exp(.fitted), # fitted data
          'AHL (uM)' = as_factor(10)) # make dummy for plotting
 
+
+
+# linear fit for uninduced/W4/Frugal : to show increasing trend
+fit_w4_ui <- 
+  ratio_data %>% 
+  filter(str_detect(organism, 'w4'), # select W4
+         `AHL (uM)` == 0, # select fluor, induced data for fitting
+         plasmid == 'Frugal'
+  ) %>%
+  
+  ungroup() %>% 
+  nest(.by = c(plasmid, organism, `AHL (uM)`)) %>% 
+  
+  # fitting
+  mutate(.fit = map(data,
+                    ~ lm(flipped_fraction ~ day, data = .x)),
+         tidied = map(.fit, broom::tidy), # get model parameters
+         augmented = map(.fit, broom::augment), # extrapolate model for plotting
+         .keep = 'unused' # remove used columns
+  ) %>% 
+  
+  # get out model parametrs
+  unnest(tidied) %>% 
+  
+  # arrange the parameter estimate, std. error and other stuff for each paramameter in each column
+  pivot_wider(names_from = term,
+              values_from = c(estimate, std.error, statistic, p.value)) %>% 
+  
+  unnest(cols = augmented) %>% 
+  mutate(fit_flipped_fraction = .fitted) # get into same colomn name as above exp fits
+  
+  
+aug_fits2 <- 
+  aug_fits %>% bind_rows(fit_w4_ui)
+
+
+# Overlay fits on the original plots
+
 present_flip_fraction + 
-  geom_line(aes(y = fit_flipped_fraction), data = aug_fits, linetype = 2)
+  geom_line(aes(y = fit_flipped_fraction), data = aug_fits2, linetype = 2) + # add line
+  geom_text(aes(x = 5, y = exp(`estimate_(Intercept)`)/2, 
+                label = t.half.text), data = aug_fits, show.legend = F)
 
 
-ggsave('qPCR analysis/q48_S071_-expfit_flip_fraction.pdf', width = 6, height = 8)
+ggsave('qPCR analysis/q48_S071_-expfit_flip_fraction.pdf', width = 7, height = 4)
 
 # Thalfs nls : Fluor/Ec : 0.86 +/- .1  
 # Thalfs lm : Fluor/Ec : 1.0 +/- .06  ; Fluor/W4 : 3.58 +/- 0.8 days

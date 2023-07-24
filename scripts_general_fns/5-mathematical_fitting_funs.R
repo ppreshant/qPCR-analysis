@@ -99,7 +99,7 @@ get_t_half_from_lm_exp_fits <- function(.df)
     
     # produce t1/2 estimates
     mutate(t.half = -log(2)/ estimate_day, 
-           std.error_t.half = -t.half / estimate_day * std.error_day,
+           std.error_t.half = -t.half / estimate_day * std.error_day, # error propagation
            
            t.half.text = str_c( format(t.half, digits = 2), 
                                 '+/-', 

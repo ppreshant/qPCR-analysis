@@ -176,7 +176,7 @@ ggsave(plot_as(title_name, '-flip_fraction'), width = 7, height = 4)
 # ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 7, height = 4)
 ggsave('qPCR analysis/q48_S071_flip_fraction.pdf', width = 7, height = 4)
 
-
+ggplotly(present_flip_fraction, dynamicTicks = T) # interactive
 
 # plotting copies of flipped, maybe for suppl.?
 copies_flipped_sel <- filter(processed_data, str_detect(organism, 'Ec|w4')) %>% 
@@ -208,7 +208,7 @@ stat_data <-
   mutate(condensed_data, 
          ttest = map(data, 
                      ~ safe_ttest(flipped_fraction ~ `AHL (uM)`, 
-                              # alternative = 'greater',  # two tailed t.test
+                              # alternative = 'greater',  # default = two tailed t.test
                               paired = T,
                               
                               data = .x)),
@@ -244,6 +244,74 @@ plt_diff <-
   plot_timeseries_target(.data = diff_data, .yvar = diff_flipped_fraction, filter_target = 'ratio') %>% 
   print
 
+
+
+# Fitting stats ----
+
+# fit exponential curve on fluor samples
+
+source('scripts_general_fns/5-mathematical_fitting_funs.R') # source scripts for fitting
+
+fit_data <- 
+  unnest(condensed_data, cols = data) %>%
+  ungroup() %>% 
+  filter(`AHL (uM)` == 10, plasmid == 'Fluorescent') %>% # select fluor, induced data for fitting
+  
+  nest(.by = c(plasmid, organism)) %>% 
+  
+  # fitting
+  mutate(.fit = map(data,
+                    ~ lm(log(flipped_fraction) ~ day, data = .x)))  # safe_expfit - for more general fitting
+  
+# get half life
+fit_w_thalf <- get_t_half_from_lm_exp_fits(fit_data)
+
+
+# check fits with plot
+
+aug_fits <- unnest(fit_w_thalf, augmented) %>% 
+  mutate(fit_flipped_fraction = exp(.fitted), # fitted data
+         'AHL (uM)' = as_factor(10)) # make dummy for plotting
+
+present_flip_fraction + 
+  geom_line(aes(y = fit_flipped_fraction), data = aug_fits, linetype = 2)
+
+
+ggsave('qPCR analysis/q48_S071_-expfit_flip_fraction.pdf', width = 6, height = 8)
+
+# Thalfs nls : Fluor/Ec : 0.86 +/- .1  
+# Thalfs lm : Fluor/Ec : 1.0 +/- .06  ; Fluor/W4 : 3.58 +/- 0.8 days
+
+
+
+# II : fitting approx growth rate data from S073 for fun 
+# delta growth rate = 2.4/d ; initial ON fraction = 0.5(fig 5B/Fluor/Ec)
+# f = 1 / (1 + (1/f0 + 1)e ^ (delta gr * t)) for competition calc by hand -- using above parameters
+# f (fraction of ON) = 1/ (1 + e ^ (2.4 t))
+
+# actual data
+ecfl <- fit_data$data[[1]]
+
+# predicted data
+pred_t <- 
+  tibble(
+    t_d = 0:8, # days
+    f = 1/ (1 + exp(2.4 * t_d)),
+    f_better = 1/ (1 + exp(1.1 * t_d))
+  )
+
+# overlay plot
+ggplot(ecfl, aes(day, flipped_fraction)) + geom_point() +
+  geom_line(aes(t_d, f), data = pred_t, linetype = 2) + 
+  geom_line(aes(t_d, f_better), data = pred_t, linetype = 1, size = 0.5, colour = 'blue') + 
+  
+  ggtitle('Fitting Fluor/Ec memory loss with S073 growth rates', 
+          subtitle = 'delta alpha = 2.4/d ; initial ON fraction ~ 0.5 ; 
+  f = 1 / (1 + (1/f0 - 1)e ^ (delta gr * t)).
+          
+  Better fit in blue with delta gr = 1.1/d')
+
+ggsave(plot_as('S071-fit_S073'), width = 4, height = 4)
 
 # individual target plot ----
 

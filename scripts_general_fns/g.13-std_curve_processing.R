@@ -102,7 +102,10 @@ process_standard_curve <- function(flnm, .dat_pol, dilutions_to_truncate = 0)
   
   
   # Save plot
-  ggsave(str_c('qPCR analysis/Standards/', fl_namer , '.png'), width = 5, height = 4)
+  ggsave(str_c('qPCR analysis/Standards/', fl_namer , '.png'), width = 5, height = 4) # png
+  
+  # save PDF -- for publication / suppl.
+  ggsave(str_c('qPCR analysis/Standards/pdf std curve/', fl_namer , '.pdf'), width = 5, height = 4)
   
   # Data output ----
   

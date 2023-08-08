@@ -187,7 +187,7 @@ SS_colourscheme <- c('#9E2A2B', '#73956F', '#003844', '#F3C677', '#003844') # 'r
 
 present_flip_fraction <- 
   {plt_flip_fraction + ggtitle(NULL) + # remove title
-      ylab('ON state fraction of plasmid') + guides(colour = "none") + # guide_legend('Designs')
+      ylab('ON state plasmid fraction') + guides(colour = "none") + # guide_legend('Designs')
       scale_color_manual(values = SS_colourscheme)} %>% print
 
 ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 5)

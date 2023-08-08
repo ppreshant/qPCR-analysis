@@ -168,7 +168,7 @@ SS_colourscheme <- c('#9E2A2B', '#73956F', '#003844', '#F3C677', '#003844') # 'r
 
 present_flip_fraction <- 
   {ratio_sel + ggtitle(NULL, subtitle = NULL) + # remove title
-      ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs')) + 
+      ylab('ON state plasmid fraction') + guides(colour = guide_legend('Designs')) + 
       scale_colour_manual(values = SS_colourscheme)
       } %>% print
 

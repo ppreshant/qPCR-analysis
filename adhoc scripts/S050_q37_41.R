@@ -187,11 +187,11 @@ SS_colourscheme <- c('#9E2A2B', '#73956F', '#003844', '#F3C677', '#003844') # 'r
 
 present_flip_fraction <- 
   {plt_flip_fraction + ggtitle(NULL) + # remove title
-      ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs')) + 
+      ylab('ON state fraction of plasmid') + guides(colour = "none") + # guide_legend('Designs')
       scale_color_manual(values = SS_colourscheme)} %>% print
 
 ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 4, height = 5)
-ggsave('qPCR analysis/q41_S050_flip_fraction.pdf', width = 3, height = 3)
+ggsave('qPCR analysis/q41_S050_flip_fraction-v2.1.pdf', width = 3, height = 3)
 
 
 # Calculations / stats ---- 
@@ -235,8 +235,8 @@ stat_data$ttest[[6]]
 # t.test(frac_d1, frac_d8, data = ..)
 
 # testing subset
-cs <- condensed_data$data[[2]]
-t.test(flipped_fraction ~ day, alternative = 'less', paired = T, data = cs)
+cs <- condensed_data$data[[6]]
+t.test(flipped_fraction ~ day, alternative = 'greater', paired = T, data = cs)
 # plasmid copy number ----
 
 # Plot ratios -- copy number

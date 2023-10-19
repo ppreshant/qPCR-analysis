@@ -85,6 +85,25 @@ flip_summary <-
   unique %>% print
 
 
+# calculation of copy number reduction at highest Ara concs. : 1e3, 1e4 / 1e2
+filter(ratio_data, Arabinose > 1e1) %>% # select the top 3 Ara
+  arrange(Arabinose) %>% # order the data for visualization
+  select(assay_variable, biological_replicates, plasmid_copy_number) %>% # select only useful cols
+  
+  pivot_wider(names_from = assay_variable, values_from = plasmid_copy_number, names_prefix = 'PCN_') %>% # make assay_vars into cols
+  mutate('1e4-PCN_burden' = PCN_1e2/PCN_1e4, 
+         '1e3-PCN_burden' = PCN_1e2/PCN_1e3) %>% 
+  mutate(across(contains('burden'), mean, .names = '{.col}_mean')) %>% 
+  view
+
+map_dbl(c('1e3', 'glu'),
+        ~ filter(summary_flipfraction, Sample_category == 'd0', 
+                 assay_variable == .x) %>% pull(median_flipped_fraction)
+) %>% 
+  {.[1] / .[2]}
+
+
+
 # adhoc --
 # dynamic range ON / glu min
 pull(flip_summary, 2) %>% 

@@ -144,6 +144,11 @@ plt_ratio_mean <- plot_timeseries_target(.data = ratio_data, .yvar = flipped_fra
                                          filter_target = 'ratio') %>% print
 ggsave(plot_as(title_name, '-fraction-facets'), width = 7, height = 5)
 
+
+# colours for memory picked by SS : coolors.co/
+SS_colourscheme <- c('#9E2A2B', '#73956F', '#003844', '#F3C677', '#003844') # 'red', light green, light yellow, blue, magenta
+
+
 present_ratio_mean <- 
   {plt_ratio_mean + ggtitle(NULL, subtitle = NULL) + # remove title
       ylab('ON state fraction of plasmid') + guides(colour = guide_legend('Designs')) + 
@@ -163,18 +168,20 @@ ratio_sel <- filter(ratio_data, str_detect(organism, 'Ec|w4')) %>%
 
 # presentable plot - clean up
 
-# colours for memory picked by SS : coolors.co/
-SS_colourscheme <- c('#9E2A2B', '#73956F', '#003844', '#F3C677', '#003844') # 'red', light green, light yellow, blue, magenta
-
 present_flip_fraction <- 
   {ratio_sel + ggtitle(NULL, subtitle = NULL) + # remove title
-      ylab('ON state plasmid fraction') + guides(colour = guide_legend('Designs')) + 
-      scale_colour_manual(values = SS_colourscheme)
-      } %>% print
+      ylab('ON state plasmid fraction') + theme(legend.position = 'none') + # remove legend ; doing shape manual inkscape
+      # + guides(colour = guide_legend('Designs')) + # change the name of the colour legend
+      scale_colour_manual(values = SS_colourscheme) + # add manual colourscheme
+      
+      facet_grid(vars(organism), vars(plasmid)) +  # re-make facets with fixed x and y axis scale
+      theme(panel.spacing.y = unit(1, 'cm')) # add space between top and bottom facets for easy distinguish
+    
+  } %>% print
 
-ggsave(plot_as(title_name, '-flip_fraction'), width = 7, height = 4)
+ggsave(plot_as(title_name, '-flip_fraction-v2'), width = 7, height = 4)
 # ggsave('qPCR analysis/Archive/q41_S050_flip_fraction.png', width = 7, height = 4)
-ggsave('qPCR analysis/q48_S071_flip_fraction.pdf', width = 7, height = 4)
+ggsave('qPCR analysis/q48_S071_flip_fraction-v2.pdf', width = 7, height = 4)
 
 ggplotly(present_flip_fraction, dynamicTicks = T) # interactive
 

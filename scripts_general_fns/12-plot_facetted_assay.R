@@ -27,11 +27,12 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
   # check missing variables ----
   if(is.null(enquo(.yvar_plot))) stop('Missing y axis variable for plot in plot_facetted_assay() call')  
   
-  .yvar_string <- quo_name(enquo(.yvar_plot)) # get the .y variable as a string
-  if(!.yvar_string %in% colnames(.data)) {
-    print(glue::glue('No column with name : "{.yvar_string}" found in the data, skipping the plot'))
-    return() # stop the plotting function
-    }
+  # Skip plotting if column not present in data : BUG : fails for 40 - CT ! 
+  # .yvar_string <- quo_name(enquo(.yvar_plot)) # get the .y variable as a string
+  # if(!.yvar_string %in% colnames(.data)) {
+  #   print(glue::glue('No column with name : "{.yvar_string}" found in the data, skipping the plot'))
+  #   return() # stop the plotting function
+  #   }
   
   # make labels ----
   # Get plot subtitle (translated from the table if entry exists)

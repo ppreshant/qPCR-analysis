@@ -195,11 +195,11 @@ copies_flipped_sel <- filter(processed_data, str_detect(organism, 'Ec|w4')) %>%
 
 # Statistics -----
 
-# paired sample t.test for AHL/10 != AHL/0 : across all days 
+# paired sample t.test for AHL/0 < AHL/10 : across all days 
 
                              
 condensed_data <- ratio_data %>% 
-  group_by(across(all_of(metadata_columns[!str_detect(metadata_columns, 'AHL')]))) %>% 
+  group_by(across(all_of(metadata_columns[!str_detect(metadata_columns, 'AHL')]))) %>% # keep AHL within nested data 
   filter(str_detect(organism, 'Ec|w4'), day != -1) %>% # select E. coli and W4 ; except d-1
   # str_detect(day, '^1|8'), str_detect(plasmid, 'Frugal'),  # more filtering
   nest() %>% 
@@ -228,6 +228,8 @@ stat_data <-
 
 
 # visually check Ec/Silent data with NDs
+# Note : stats only worked for d2 since all replicates in 0 AHL were detected ; d8 only 1 replicate..
+
 ratio_data %>% 
   filter(plasmid == 'Silent', organism == 'Ec') %>% 
   group_by(across(all_of(c(metadata_columns, 'biological_replicates')))) %>% 
@@ -239,8 +241,37 @@ ratio_data %>%
   drop_na(any_of(c('0', '10'))) # retain non NA values for quick visual check
 
 
+# pooled stats all days/Silent ----
+  
+# LS suggested pooling all days for both silent and frugal (reviewer said day choice was ad-hoc)
+
+pool_day_data <- ratio_data %>% 
+  group_by(plasmid, organism) %>% # independent comparisons for each of these categories 
+  filter(str_detect(organism, 'Ec|w4')) %>% # select E. coli and W4 ; [incl d-1 here]
+  # str_detect(day, '^1|8'), str_detect(plasmid, 'Frugal'),  # more filtering 
+  nest() %>% 
+  arrange(organism, plasmid)  
+
+# unpaired t-test
+pooled_day_stats <- 
+  mutate(pool_day_data, 
+         ttest = map(data, 
+                     ~ safe_ttest(flipped_fraction ~ `AHL (uM)`, 
+                                  alternative = 'less',  # one-tailed test 0 < 10 uM AHL
+                                  var.equal = F, # unequal variances => welch t.test // check for unequal var later var.test()
+                                  
+                                  data = .x)),
+         
+         # extract p.value from $result ; replace NULL with NA (need a numeric output for map_dbl)
+         pval = map_dbl(ttest, ~ .x$result$p.value %>% {if(is.null(.)) NA else .}),
+         significance = pval < 0.05 # check significance 
+         
+  ) #%>% print
 
 
+
+# Stats w4 baseline inc ----
+  
 # Testing stats for increasing w4/Frugal/Uninduced
 
 stat_w4 <-

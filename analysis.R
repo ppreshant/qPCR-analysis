@@ -132,7 +132,7 @@ if(experiment_mode == 'assay')
     # Std curve params ---- 
     
     std_to_retrieve <- str_extract(flnm, 'Std[:alnum:]*') # Find the Std id to retrieve
-    
+    if(is.na(std_to_retrieve))
     
     
     
@@ -151,12 +151,12 @@ if(experiment_mode == 'assay')
         
       filter(str_detect(ID, std_to_retrieve ))
     
-      } else {
+      } else { # standard curves don't already exist ..
         
         # fill missing Std curve ID (Stdxx) with the run number (From qxx)
         if(is.na(std_to_retrieve)) 
           {std_to_retrieve <- str_c('Std', str_match(flnm, 'q([:alnum:]*)')[2])
-          print(glue::glue('No Stdxx ID detected in the filename, using : "{str_to_retrieve}"'))}
+          print(glue::glue('No Stdxx ID detected in the filename, using : "{std_to_retrieve}"'))}
         
         
         std_par <- NULL # initialize a dummy std_par

@@ -26,17 +26,14 @@ Sample names are written in a google sheet (contact me for access to see the tem
 - samplecategory could stand for test, positive, negative (controls) or NoRT control etc. _This will be used to colour data in the plot_
 - templatename = name of the DNA or RNA sample loaded as the template. _this appears on the x/y axes of the plot_
 - biologicalreplicatenumber = 1,2,3 .. _If not provided, the code makes it in a rowwise order. This is useful to plot all replicates in the same template location and plot averages of the replicates_
-Examples: old16sU64-Test_295.1,	old16sU64-NoRT_89.1
-
-![image](https://user-images.githubusercontent.com/14856479/113488074-6cae8200-9481-11eb-9d82-e97033b72e2e.png)
+Examples: _16S_negative_MG1655_ or _16S_Maximal_AOS109_	
+![image](https://github.com/ppreshant/qPCR-analysis/assets/14856479/6d3de51c-4ad7-484b-8f0b-5dde0ae1bd9f)
 
 The output image looks like this
 - `targetname` becomes facets or panels (boxes on the top); 
 - samplecategory as colour (named as `Sample_name`)
 - `templatename` on the x axis (named `assay_variable` in the code) and 
-<img src = 'https://user-images.githubusercontent.com/14856479/113488826-1859d100-9486-11eb-8384-1ad17afea737.png' width = "600">
-
-
+<img src = '[https://user-images.githubusercontent.com/14856479/113488826-1859d100-9486-11eb-8384-1ad17afea737.png](https://github.com/ppreshant/qPCR-analysis/assets/14856479/7b9f7c72-7357-4ab5-984f-2252b7b47379)' width = "600">
 
 **Code organization**
 

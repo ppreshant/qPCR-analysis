@@ -33,7 +33,9 @@ The output image looks like this
 - `targetname` becomes facets or panels (boxes on the top); 
 - samplecategory as colour (named as `Sample_name`)
 - `templatename` on the x axis (named `assay_variable` in the code) and 
-<img src = '[https://user-images.githubusercontent.com/14856479/113488826-1859d100-9486-11eb-8384-1ad17afea737.png](https://github.com/ppreshant/qPCR-analysis/assets/14856479/7b9f7c72-7357-4ab5-984f-2252b7b47379)' width = "600">
+
+<img src = "./qPCR analysis/q50_S080_RAM.png" width='600'>
+![[q50_S080_RAM.png|600]]
 
 **Code organization**
 

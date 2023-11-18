@@ -35,7 +35,6 @@ The output image looks like this
 - `templatename` on the x axis (named `assay_variable` in the code) and 
 
 <img src = "./qPCR analysis/q50_S080_RAM.png" width='600'>
-![[q50_S080_RAM.png|600]]
 
 **Code organization**
 
@@ -49,6 +48,13 @@ The output image looks like this
 Linregpcr tool analyzes raw qPCR curves and calculates the ~initial fluorescence which can be converted into initial concentration using calibration standards (6 replicates of the same concentration known standard). I have made a wrapper to run their python version of LinRegPCR through R, but the portability and documentation is in progress.
 
 If you want to try it out, the script is called `linregpcr_processing.R`
+
+## How does LinRegPCR work?
+![image](https://github.com/ppreshant/qPCR-analysis/assets/14856479/81d2ed0f-2d1d-4077-b0b0-c0434e05d07c)
+<img src='https://github-production-user-asset-6210df.s3.amazonaws.com/14856479/283978174-ae7aa20b-71e7-422f-b2b5-9472e68cb8c5.png' width = '500'>
+
+**Summary**: The linregPCR method is more robust and open source compared to proprietary methods used by vendor software. This works with curves that have a reasonable baseline and plateau region with good plateau intensity above baseline. This could be problematic for probe based data, or samples with very high (ex: 16S) or very low quantifications, so iterate and decide for yourself if this is right for you. 
+- LinRegPCR outputs both efficiency and Cq values which are used for quantification. Absolute quantification can be done using calibration with a single concentration of known concentration sample x 6 replicates
 
 *[Source](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-04306-1): Untergasser, Andreas, et al. "Web-based LinRegPCR: Application for the visualization and analysis of (RT)-qPCR amplification and melting data." _BMC bioinformatics_ 22.1 (2021): 1-18.)*.
 

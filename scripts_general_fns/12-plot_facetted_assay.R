@@ -4,6 +4,8 @@
 # Will start with certain specific features. 
 # More hard-coded variables can be user-input as use cases arrive
 
+# TODO : add a "not detected" text if no points are present for a particular category? - issues with multi cat placement, colours
+
 plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tibble
                                 
                                 # required variable .yvar_plot

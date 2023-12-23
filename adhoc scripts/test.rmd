@@ -1,0 +1,144 @@
+---
+author: "Prashant Kalvapalle"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output: 
+  html_document:
+    theme: flatly
+    toc: TRUE
+    toc_float: TRUE
+---
+
+---
+title: `r str_c('test--', title_name)`
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = F) #, fig.width = 10, fig.height = 5)
+```
+
+## Goal of the analysis
+
+Analyzing qPCR data. Using Cq values from quantstudio application. Convert to absolute quantification using standard curves  
+
+``` {r stdcurvename}
+if(exists('std_to_retrieve')) str_c('Using Standard curve : ', std_to_retrieve)
+
+```
+
+## Cq Plots
+
+``` {r cq_plt}
+# Horizontal orientation : for label readability
+print(horz.cq)
+
+# interactive plots : ggplotly
+plotly::ggplotly(horz.cq)
+
+# plotly::ggplotly(plt.cq) # enable if vertical plot is required
+
+if(exists('plt.cq_w.std')) print(plt.cq_w.std)
+
+```
+
+## Copies plot
+
+``` {r copies1, warning = FALSE}
+
+if(plot_mode != 'absolute_quantification') {"### plotting `2^40-Cq` as an estimate : not representative copy number"}
+
+
+if(exists('plt.copies_w.mean')) 
+{
+  # Horizontal orientation - logscale : for label readability
+  print(horz.copies_w.mean)
+  
+  # interactive plots : ggplotly
+  plotly::ggplotly(horz.copies_w.mean)
+  
+  } else {
+
+    # plot plain copies without mean
+    if(exists('plt.copies')) 
+    {
+      print(plt.copies) # this is vertical version ; didn't see the point of this anyway
+      
+      format_logscale_y(plt.copies)
+    }
+  }
+
+
+```
+
+<!-- ```{R condn, eval = exists('horz.copies_w.mean')} -->
+<!-- {"### plotting inside the `if() loop"} -->
+
+<!--   # Horizontal orientation - logscale : for label readability -->
+<!--   horz.copies_w.mean -->
+
+<!--   # interactive plots : ggplotly -->
+<!--   plotly::ggplotly(horz.copies_w.mean) -->
+<!-- ``` -->
+
+## Melting temp
+
+### Tm1
+
+Largest melting temperature peak
+```{r tm1}
+
+if(exists('plt.tm1'))
+{
+  plt.tm1
+  
+  plotly::ggplotly(plt.tm1)
+}
+
+if(exists('plt.tm1_w.std')) plt.tm1_w.std
+
+```
+
+### All Tm peaks
+
+All peaks of melting temperature
+```{r alltm}
+if(exists('plt.alltm')) plt.alltm
+
+if(exists('plt.alltm_2')) plt.alltm_2
+
+```
+
+## Data output
+
+```{r datadisplay}
+
+if(exists('absolute_dat')) # Prints output only if absolute_dat exists
+  {absolute_dat %>% 
+  
+  # Select only mean copies
+  select(Target_name, assay_var.label, mean_Copies.per.ul.template, Sample_category) %>% 
+    distinct() %>% # Remove replicates
+  mutate(across(assay_var.label, ~ str_replace(., '\n', ' '))) %>% # replace new lines with space
+  mutate_if(is.numeric, format, digits = 3, scientific = T) %>% # format scientific with 2 decimal plates
+kable(., caption = 'Mean data') # format table for clean output
+}
+
+```
+
+
+## Vertically oriented plots
+for legacy use if someone prefers these. _labels are not very readable_
+
+```{r vertplots}
+# vertical orientation : for legacy use
+plt.cq
+
+if(exists('plt.copies_w.mean')) 
+{
+  # regular plot
+  plt.copies_w.mean %>% print()
+  # logscale
+  log.copies_w.mean <- format_logscale_y(plt.copies_w.mean)
+}
+
+```

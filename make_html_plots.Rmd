@@ -28,25 +28,22 @@ if(exists('std_to_retrieve')) str_c('Using Standard curve : ', std_to_retrieve)
 
 ## Cq Plots
 
-``` {r cq_plt}
+```{r cq_plt, warning=FALSE}
 # Horizontal orientation : for label readability
-horz.cq
-
-# vertical orientation : for legacy use
-plt.cq
+print(horz.cq)
 
 # interactive plots : ggplotly
 plotly::ggplotly(horz.cq)
 
-plotly::ggplotly(plt.cq)
+# plotly::ggplotly(plt.cq) # enable if vertical plot is required
 
-if(exists('plt.cq_w.std')) plt.cq_w.std
+if(exists('plt.cq_w.std')) print(plt.cq_w.std)
 
 ```
 
 ## Copies plot
 
-``` {r copies1, warning = FALSE}
+```{r copies1, warning = FALSE}
 
 if(plot_mode != 'absolute_quantification') {"### plotting `2^40-Cq` as an estimate : not representative copy number"}
 
@@ -57,24 +54,18 @@ if(exists('plt.copies_w.mean'))
   print(horz.copies_w.mean)
   
   # interactive plots : ggplotly
-  plotly::ggplotly(horz.copies_w.mean) %>% print
-  
-  # regular plot
-  plt.copies_w.mean %>% print()
-  # logscale
-  log.copies_w.mean <- format_logscale_y(plt.copies_w.mean)
+  plotly::ggplotly(horz.copies_w.mean)
   
   } else {
 
     # plot plain copies without mean
     if(exists('plt.copies')) 
     {
-      print(plt.copies)
+      print(plt.copies) # this is vertical version ; didn't see the point of this anyway
       
       format_logscale_y(plt.copies)
     }
   }
-
 
 ```
 
@@ -119,6 +110,24 @@ if(exists('absolute_dat')) # Prints output only if absolute_dat exists
   mutate(across(assay_var.label, ~ str_replace(., '\n', ' '))) %>% # replace new lines with space
   mutate_if(is.numeric, format, digits = 3, scientific = T) %>% # format scientific with 2 decimal plates
 kable(., caption = 'Mean data') # format table for clean output
+}
+
+```
+
+
+## Vertically oriented plots
+for legacy use if someone prefers these. _labels are not very readable_
+
+```{r vertplots}
+# vertical orientation : for legacy use
+plt.cq
+
+if(exists('plt.copies_w.mean')) 
+{
+  # regular plot
+  plt.copies_w.mean %>% print()
+  # logscale
+  log.copies_w.mean <- format_logscale_y(plt.copies_w.mean)
 }
 
 ```

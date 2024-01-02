@@ -52,11 +52,13 @@ presentation.dat <- filter(forplotting_cq.dat,
   
   # arrange for plotting
   mutate(across(Sample_category, ~ fct_relevel(.x, 'Repressed', 'negative', 'Maximal'))) %>%  # set the order of the colours r, b, g
-  mutate(across(assay_var.label, ~ fct_reorder(.x, Copies.per.ul.template))) %>%  # descending order of copies
+  mutate(across(assay_var.label, ~ fct_reorder(.x, Copies.per.ul.template, .na_rm = FALSE))) %>%  # descending order of copies
   mutate(across(assay_var.label, ~ fct_relevel(.x, 'ntc'))) # Take ntc to the end -- first factor is being plotted closes to origin..
 
 only_u64_nontc <- presentation.dat %>% 
   filter(str_detect(Target_name, 'U64'))
+
+
 # Plot - presentation ----
 
 plt.copy_ppt <-
@@ -141,6 +143,13 @@ plt.fold_repression <-
 
 # interactive plot
 ggplotly(plt.fold_repression)
+
+
+# Save data ----
+
+write_csv(presentation.dat, 
+          file = str_c('excel files/paper_data/conjug_ram_facs/', 'S1B', '-q52.csv', sep = ''),
+          na = '')
 
 
 # Extra analysis ----

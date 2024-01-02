@@ -99,15 +99,43 @@ plt.fold_repression <-
                       .yvar_plot = repression_fold)
 
 
-# Cq plots for D19 only ----
+# Metaanalysis ---- 
+
+# compare Cqs with q25, q28 data
+
+# get q25,28, 28b data
+old_fusions <- read_csv(str_c('excel files/paper_data/conjug_ram_facs/', 
+                              'S1B-q52.csv'))
+
+combined_data <- bind_rows(old_fusions, d19) %>%  # combine old fusions with D19 data
+  select(-c(assay_variable, assay_var.horz_label, assay_var.identifier))
+  
+# Cq plots all fusions (S044 and D19) ----
 
 # purpose : to compare head to head with S044_q28 data (pPK077, 79 fusion variants) : is leak significant?
-plt_d19_cq <- {plot_facetted_assay(.data = d19, 
-                                .xvar_plot = assay_var.horz_label, 
+plt_combined <- {plot_facetted_assay(.data = combined_data, 
+                                .xvar_plot = assay_var.label, 
                                 .xaxis.label.custom = axislabel.assay_variable,
                                 .yvar_plot = 40 - CT, 
                                 points_plt.style = 'jitter') +
     
-    ggtitle('q52_D19_new RAM fusions_repression')} 
+    ggtitle('q25,28,52_old and new RAM fusions_repression')} 
 
-ggsave(plot_as('q52_D19_Cq'), plt_d19_cq, width = 5, height = 5)
+ggsave(plot_as('q25,28,52_fusions_Cq'), plt_combined, width = 5, height = 6)
+
+
+## processing ----
+
+# calculate the ratios
+comb_target_ratio <- calc_ram_ratios(combined_data) # ratio between targets
+
+# BUG : ERROR : pivoting fails because q028b repeats the same repressed replicates 1:3
+# SOlutions : remove q028b? or rename replicates t0 4:6 instead?
+
+
+comb_fold_repression <- calc_repression_ratios(comb_target_ratio) # ratio between max/repressed
+
+## plotting ----
+plt.fold_repression <-
+  plot_facetted_assay(.data = fold_repression %>% filter(str_detect(Target_name, 'U64')) %>% drop_na(repression_fold), 
+                      .yvar_plot = repression_fold)

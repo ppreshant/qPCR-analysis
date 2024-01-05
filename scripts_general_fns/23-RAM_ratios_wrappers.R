@@ -34,8 +34,8 @@ calc_ram_ratios <- function(.df = absolute_dat)
            # c(U64, gfpbarcode, `16s`, # choose each raw column
            #      U64_per_16S, gfpbarcode_per_16S, U64_per_gfpbarcode), # and each ratio
            
-           lst(mean), # and get the mean across biological replicates
-           .names = '{.fn}_{.col}'), # name columns as mean_..
+           ~ mean(.x, na.rm = TRUE), # and get the mean across biological replicates / remove NAs for robustness
+           .names = 'mean_{.col}'), # name columns as mean_..
   
            .by = c(Sample_category, Target_name, matches('assay_var')))  # for each category and sample
   

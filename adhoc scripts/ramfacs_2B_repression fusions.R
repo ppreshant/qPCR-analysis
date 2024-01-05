@@ -29,7 +29,8 @@ assay_var_translation <- c('76' = 'Ribozyme',    # 'current name' = 'new name' f
 
 sample_category_cleaner <- c('test' = 'Repressed', # clean up redundant names
                              'repressed' = 'Repressed',
-                             'positive' = 'Maximal')
+                             'positive' = 'Maximal',
+                             'negative' = 'Negative')
 
 
 # Input the data ----

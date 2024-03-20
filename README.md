@@ -15,7 +15,10 @@ _standard curve_ : Include Stdxx (xx = numbering) in the excel file name to proc
 3. *Set metadata sheets*: Default option is to add your plate layout in the `excel files/Plate layout.xlsx` file. Make sure the `template_source` variable is set to *'excel'* in `0.5-user-inputs.R` file.
 	- If you would prefer a cloud option, then make a googlesheet with sheets named `qPCR plate layouts` and `qPCR Std curves` following the template from [my sheet](https://docs.google.com/spreadsheets/d/1RffyflHCQ_GzlRHbeH3bAkiYo4zNlnFWx4FXo7xkUt8/edit#gid=0)
 	- Copy the url of your googlesheet and replace the one in `sheeturls = list(plate_layouts_PK = ..` in the script `0-general_functions_main.R`
-5. Open `0.5-user-inputs.R` script. Change the `flnm` and `title_name` variables. and other options by following the comments in the file
+	
+## Day to day running for new datasets 
+1. Enter your sample name details into the `Plate layouts` sheet in a format of your choice (_excel / googlesheets_)
+5. Open `0.5-user-inputs.R` script. Change only the `flnm` variable (_for simple runs_). and other options by following the comments in the file
 6. You can try running the template file `q50_S080_RAM 80a_mjd61 repression_new barcode` within the `excel files/` folder. Metadata for this is provided in the `Plate layouts.xlsx` sheet in the same folder, and this should be read by changing the `template_source <-` to `'excel'` in the user settings file `0.5-user_inputs.R`. _Side note: I read this from a google sheet that enables me to setup qPCRs by looking at this sheet on my phone :). Here is [my google sheet](https://docs.google.com/spreadsheets/d/1RffyflHCQ_GzlRHbeH3bAkiYo4zNlnFWx4FXo7xkUt8/edit#gid=0) with the metadata.
 7. Open `analysis.R` script and source it to analyze the data.
 

@@ -248,6 +248,8 @@ plt.expression_ratio_ribozyme <- {plot_facetted_assay(.data = wider_reduced.dat,
   print()
 
 
+## Correlation w expression ----
+
 # Correlation between ribozyme expression and splicing : Ensure that non amplified samples are visible
 plt.expression_splicing_correlation <- 
 {ggplot(filter(replace_na(wider_reduced.dat, list(`Copies_barcoded 16S rRNA` = 0)), assay_variable != 'NTC'), 

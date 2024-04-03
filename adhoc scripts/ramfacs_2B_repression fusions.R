@@ -33,6 +33,12 @@ sample_category_cleaner <- c('test' = 'Repressed', # clean up redundant names
                              'negative' = 'Negative')
 
 
+# used only for presentation stuff (extra analysis)
+target_translator <- c('16s' = '16S',
+                       'gfpbarcode' = 'Ribozyme',
+                       'U64' = 'Spliced')
+
+
 # Input the data ----
 
 # reading in files and merge : along with the run ID
@@ -155,6 +161,74 @@ write_csv(presentation.dat,
 
 # Extra analysis ----
 
-# compare 328 to 76 (since 328 is removed from the all encopassing plot)
+# compare 328 to 76 (since 328 is removed from the all encompassing plot)
 .df %>% filter(str_detect(assay_variable, '328|76'), str_detect(Target_name, 'U64')) %>% 
   select(1:3, contains('mean')) %>% unique
+
+
+## 51 only -----
+
+# plot only 51-maximal for presentation (lab meeting: 3/Apr/24)
+
+sel_51 <- 
+  filter(presentation.dat, assay_variable == '51') %>% 
+  
+  # rename target for ease
+  mutate(across(Target_name, ~ str_replace_all(.x, target_translator)))
+
+# print a summary for presentation
+summ_sel_51 <- 
+  summarise(sel_51, 
+            mean_copies = mean(Copies.per.ul.template), 
+            
+            mean_label = scales::label_scientific(digits = 1)(mean_copies),
+            y_position = if_else(mean_copies > 1e4, mean_copies/10, mean_copies * 10),
+              
+            .by = c(Target_name, assay_variable, Sample_category)) %>% 
+  print()
+
+plt.51 <- 
+  {plot_facetted_assay(.data = sel_51, 
+                      flipped_plot = F, .xvar_plot = assay_variable, 
+                      .xaxis.label.custom = 'plasmid', 
+                      .yvar_plot = Copies.per.ul.template) + 
+      
+      # label values
+      geom_text(aes(y = y_position, label = mean_label), colour = 'black',
+                alpha = 0.5,
+                data = summ_sel_51) + 
+      
+      ggtitle('Reactants vs spliced product') + 
+      theme(legend.position = 'none') # remove legend
+      
+      } %>% 
+  format_logscale_y() # make logscale on quantity on x-axis (says y since plot is coord_flipped)
+
+ggsave(plot_as('q25_51-maximal'), plot = plt.51, width = 3, height = 4)
+
+
+## Ratios to 16S ----
+
+# work in progress!
+
+# Modified code from 2H_all_organisms.R script of RAM
+# Calculating spliced fraction of the Ribozyme/16s
+wider_reduced.dat <- 
+  
+  forplot_reduced.data %>% 
+  # mutate(across(Copies.per.ul.template, ~ coalesce(.x, Copies.per.ul.template))) %>%  # take inferred copies into Copies.per.ul.template
+  
+  select(Target_name, organism, Copies.per.ul.template, assay_variable, assay_var.label, biological_replicates) %>%  # select only required columns
+  
+  pivot_wider(names_from = Target_name, values_from = Copies.per.ul.template, names_prefix = 'Copies_') %>%  # each target to a col
+  
+  # calculate ratios of each targets per replicate
+  mutate(Spliced_fraction_CatRNA = `Copies_barcoded 16S rRNA` / `Copies_unspliced CatRNA`,
+         Spliced_fraction_16s = `Copies_barcoded 16S rRNA` / `Copies_16S rRNA`, 
+         expression_ratio = `Copies_unspliced CatRNA` / `Copies_16S rRNA`) %>% 
+  
+  # find the mean across biological replicates for all numeric cols
+  group_by(assay_variable) %>% 
+  mutate(across(where(is.numeric), 
+                mean, ignore.na = TRUE,
+                .names = "mean_{.col}")) 

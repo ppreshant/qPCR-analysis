@@ -26,10 +26,19 @@ processed_data <- get_data %>%
   
   mutate(across(Sample_category, ~ fct_relevel(.x, 'C-', 'ntc', 'control', after = Inf))) # bring controls to the end
 
+## custom processing ----
+
+# custom analysis for Swetha's marine ddPCR data
 ratio_data <- processed_data %>% 
   select(Sample_category, assay_variable, Well, Target_name, Concentration) %>% 
   pivot_wider(names_from = Target_name, values_from = Concentration) %>% 
   mutate(copy_number = Plasmid / Chromosome)
+
+
+# Save data ----
+
+# save processed data
+write_csv(processed_data, str_c('excel files/processed_data/', flnm, '-ddPCR-processed.csv'), na = '')
 
 # temp save
 # ratio_data %>% filter(Sample_category == 'Rd', str_detect(assay_variable, 'gDNA')) %>% write_csv('S057j_tst.csv')

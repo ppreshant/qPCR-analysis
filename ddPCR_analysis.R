@@ -65,11 +65,21 @@ processed_data <- get_data %>%
   rename(Target_name = Target) %>% # rename target to qPCR format
   # separate(Sample, into = c('Sample_category', 'assay_variable'), sep = '_') # new columns for S057j
   
+  # control column types and order
   mutate(across(Concentration, as.numeric)) %>%  # force conc to be numeric
   
-  mutate(across(Sample_category, ~ fct_relevel(.x, 'C-', 'ntc', 'control', after = Inf))) # bring controls to the end
+  
+  mutate(across(Sample_category, ~ fct_relevel(.x, 'C-', 'ntc', 'Negative', after = Inf))) %>%  # bring controls to the end
+  
+  ## custom processing ordering data ----
+  # highly customized for S091
+  mutate(across(assay_variable, ~ fct_relevel(.x, 'J23100', 
+                                              'high', 'med', 'low',
+                                              'WT', 
+                                              'blank', 'NTC'))) # order the assay variables
+  # TODO: Consider putting this in the user inputs (make a ddPCR specific section?)
 
-## custom processing ----
+## custom/ratios ----
 
 # custom analysis for Swetha's marine ddPCR data
 ratio_data <- processed_data %>% 

@@ -35,8 +35,10 @@ raw_ddpcr_renamer <- function(.df)
     mutate(across(any_of('Concentration'), as.numeric)) %>%  # Remove the NO CALLS and make it numeric column  
     
     mutate(across(matches('Total|Poisson|Mean|Ch|Ratio|Abundance|Linkage|CNV|Copies|Det'), as.numeric)) %>%  # convert ambiguous columns into numeric
-    mutate(across(where(is.list), as.character)) # convert any stray lists into character
+    mutate(across(where(is.list), as.character)) %>%  # convert any stray lists into character
   
+    # remove leading 0 (zero) from A01..A09..H01..H09
+    mutate(across('Well', ~ str_replace(., '(?<=[:alpha:])0(?=[:digit:])', '') )) 
   
 }
 

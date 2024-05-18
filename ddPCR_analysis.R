@@ -1,6 +1,16 @@
 # ddPCR_analysis.R
 # S057j ; S072 ..
 
+# user-inputs ----
+
+# TODO: add user inputs for custom processing for the particula dataset
+# 1. assay_variable ordering
+# 2. Wells to remove (flag manually looking at clusters)
+# 3. ?
+
+
+
+
 # Prelims ----
 
 source('./0-general_functions_main.R') # Source the general_functions file before running this
@@ -91,12 +101,15 @@ ratio_data <- processed_data %>%
 # Save data ----
 
 # save processed data
-write_csv(processed_data, str_c('excel files/processed_data/', flnm, '-ddPCR-processed.csv'), na = '')
+write_csv(processed_data, 
+          str_c('excel files/processed_data/', flnm, '-ddPCR-processed.csv'), 
+          na = '')
 
 # temp save
 # ratio_data %>% filter(Sample_category == 'Rd', str_detect(assay_variable, 'gDNA')) %>% write_csv('S057j_tst.csv')
 
-# plot ----
+
+# Plotting ----
 
 # plot copy number
 copy_num <- 

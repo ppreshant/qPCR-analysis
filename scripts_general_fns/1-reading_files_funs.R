@@ -81,19 +81,24 @@ get_template_for <- function(bait, sheet_url = sheeturls$plate_layouts_PK)
 
 
 
-# gets plate layout from 96 well format and parse it into individual columns
-get_and_parse_plate_layout <- function(flnm)
+#' gets plate layout from 96 well format and parse it into individual columns
+#' @param flnm filename to get the plate layout from
+#' @param read_target_name logical, whether to read the target name column
+#' @return a tibble with the plate layout in long format (each well in a row)
+get_and_parse_plate_layout <- function(flnm, read_target_name = TRUE)
 {
   
   plate_template <- get_template_for(flnm, sheeturls$plate_layouts_PK) %>% # read sample names from googlesheets
     
     # Parsing sample names from the google sheet table  
-    separate(`Sample_name_bulk`, # Split the components of the sample name bulk by delimiter ('_')
-             c('Target_name', 
-               'Sample_category',
-               'assay_variable',
-               'biological_replicates'),
-             sep = '_', fill = 'right') %>% # fill missing values starting from the right (replicates)
+    separate_wider_delim(
+      cols = `Sample_name_bulk`, # Split the components of the sample name bulk by delimiter ('_')
+      delim = '_', 
+      names = c(if(read_target_name) 'Target_name', # if target name is to be read, else NULL
+                'Sample_category',
+                'assay_variable',
+                'biological_replicates'),
+      too_few = 'align_start') %>% # fill missing values starting from the right (replicates)
     
     
     mutate(across('assay_variable', as.character)) %>% # useful when plasmid numbers are provided, will convert to text

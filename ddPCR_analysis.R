@@ -45,8 +45,10 @@ raw_ddpcr_renamer <- function(.df)
 get_data <- read_csv(str_c('excel files/', flnm, '.csv'))
 
 # Read the sample names and metadata from google sheet
-plate_template <- get_and_parse_plate_layout(flnm) %>% select(-Target_name) %>% rename(Well = 'Well Position')
-# TODO : set a function argument to ignore target_name column?
+plate_template <- get_and_parse_plate_layout(flnm, read_target_name = FALSE) %>% 
+  
+  rename(Well = 'Well Position') # rename well position to match the data and to be consise
+
 
 # Process data ----
 

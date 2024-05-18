@@ -8,18 +8,53 @@ source('./0.5-user-inputs.R') # source the user inputs from a different script
 
 title_name <- base_title_name
 
+
+# pre-processing function ----
+
+
+#' Renames colnames from Quantasoft analysis Pro to match the Quantasoft run data (typical)
+#' source: wastewater covid data analysis pipeline/g.10-sheet_columns_renaming_funs.R
+#' @param .df dataframe to rename
+#' @return dataframe with renamed columns
+ 
+raw_ddpcr_renamer <- function(.df)
+{
+  .df %>% 
+    
+    rename(PositiveDroplets = Positives) %>%  # rename to be more meaningful
+    
+    # rename the column names - if exported from Quantasoft analysis Pro
+    rename(CopiesPer20uLWell = matches('Copies/20.*LWell'),
+           Concentration = matches('Conc\\(copies/.*L)'),
+           AcceptedDroplets = any_of('Accepted Droplets'),
+           Threshold = any_of('Threshold1'),
+           MeanAmplitudeofPositives = any_of('MeanAmplitudeOfPositives'),  # 'Of' to 'of'
+           MeanAmplitudeofNegatives = any_of('MeanAmplitudeOfNegatives')) %>%  # rename the column name - if exported from Quantasoft analysis Pro
+    
+    
+    mutate(across(any_of('Concentration'), as.numeric)) %>%  # Remove the NO CALLS and make it numeric column  
+    
+    mutate(across(matches('Total|Poisson|Mean|Ch|Ratio|Abundance|Linkage|CNV|Copies|Det'), as.numeric)) %>%  # convert ambiguous columns into numeric
+    mutate(across(where(is.list), as.character)) # convert any stray lists into character
+  
+  
+}
+
 # Load data + meta ----
 
 get_data <- read_csv(str_c('excel files/', flnm, '.csv'))
 
 # Read the sample names and metadata from google sheet
 plate_template <- get_and_parse_plate_layout(flnm) %>% select(-Target_name) %>% rename(Well = 'Well Position')
-
+# TODO : set a function argument to ignore target_name column?
 
 # Process data ----
 
 processed_data <- get_data %>% 
   left_join(plate_template) %>%  # join template
+  
+  raw_ddpcr_renamer %>% # rename columns (for quantasoft analysis pro exported data)
+  
   rename(Target_name = Target) %>% # rename target to qPCR format
   # separate(Sample, into = c('Sample_category', 'assay_variable'), sep = '_') # new columns for S057j
   mutate(across(Concentration, as.numeric)) %>%  # force conc to be numeric
@@ -73,3 +108,5 @@ ggplotly(copies_all_targets)
 
 copies_all_targets #+ ylim(c(0, 4300))
 ggsave(plot_as(title_name, '-ddPCR_raw'), width = 4.2, height = 4)
+
+

@@ -54,13 +54,17 @@ plate_template <- get_and_parse_plate_layout(flnm, read_target_name = FALSE) %>%
 
 # Process data ----
 
-processed_data <- get_data %>% 
-  left_join(plate_template) %>%  # join template
+processed_data <- get_data %>%
   
   raw_ddpcr_renamer %>% # rename columns (for quantasoft analysis pro exported data)
   
+  # join the plate layout/template
+  left_join(plate_template) %>%  
+  relocate(colnames(plate_template)) %>% # move the columns to the front
+  
   rename(Target_name = Target) %>% # rename target to qPCR format
   # separate(Sample, into = c('Sample_category', 'assay_variable'), sep = '_') # new columns for S057j
+  
   mutate(across(Concentration, as.numeric)) %>%  # force conc to be numeric
   
   mutate(across(Sample_category, ~ fct_relevel(.x, 'C-', 'ntc', 'control', after = Inf))) # bring controls to the end

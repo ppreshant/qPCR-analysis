@@ -1,16 +1,6 @@
 # ddPCR_analysis.R
 # S057j ; S072 ..
 
-# user-inputs ----
-
-# TODO: add user inputs for custom processing for the particula dataset
-# 1. assay_variable ordering
-# 2. Wells to remove (flag manually looking at clusters)
-# 3. ?
-
-
-
-
 # Prelims ----
 
 source('./0-general_functions_main.R') # Source the general_functions file before running this
@@ -73,26 +63,30 @@ processed_data <- get_data %>%
   relocate(colnames(plate_template)) %>% # move the columns to the front
   
   rename(Target_name = Target) %>% # rename target to qPCR format
-  # separate(Sample, into = c('Sample_category', 'assay_variable'), sep = '_') # new columns for S057j
+  
+  # flag wells to remove from analysis (keeps them in the data output for transparency)
+  # remove before doing ratios!
+  mutate(flag_wells_to_remove = str_detect(Well, wells_to_remove), .after = Well) %>% # flag wells to remove
   
   # control column types and order
   mutate(across(Concentration, as.numeric)) %>%  # force conc to be numeric
   
-  
-  mutate(across(Sample_category, ~ fct_relevel(.x, 'C-', 'ntc', 'Negative', after = Inf))) %>%  # bring controls to the end
+  # bring controls to the end
+  mutate(across(Sample_category, ~ fct_relevel(.x, 'C-', 'ntc', 'Negative', after = Inf))) %>%
   
   ## custom processing ordering data ----
-  # highly customized for S091
-  mutate(across(assay_variable, ~ fct_relevel(.x, 'J23100', 
-                                              'high', 'med', 'low',
-                                              'WT', 
-                                              'blank', 'NTC'))) # order the assay variables
-  # TODO: Consider putting this in the user inputs (make a ddPCR specific section?)
+  mutate(across(assay_variable, ~ fct_relevel(.x, assay_var_order))) # order the assay variables
+  
 
 ## custom/ratios ----
 
 # custom analysis for Swetha's marine ddPCR data
 ratio_data <- processed_data %>% 
+  
+  # remove flagged wells
+  filter(!str_detect(Well, wells_to_remove)) %>%
+  
+  # calculate copy number : ratio of plasmid to chromosome
   select(Sample_category, assay_variable, Well, Target_name, Concentration) %>% 
   pivot_wider(names_from = Target_name, values_from = Concentration) %>% 
   mutate(copy_number = Plasmid / Chromosome)

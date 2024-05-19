@@ -4,7 +4,7 @@
 
 # File name ----
 
-flnm <- 'q50_S080_RAM 80a_mjd61 repression_new barcode' # mention the file name without the "-linreg" or "-processed" suffixes
+flnm <- 'S091-marine-withsort-5-5-24' # mention the file name without the "-linreg" or "-processed" suffixes
 
 # Default standards : When using same standards for multiple plates (not considered best practice..but I do it anyways)
 default_std.to.retrieve <-  'Std30' # if the file name doesn't hold any std curve, it will default to this (Std30 for RAM)
@@ -15,6 +15,9 @@ skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data fr
 # get templates from google sheet or from data excel file
 template_source <- 'googlesheet' # googlesheet/excel = parse through a list of templates in the respective formats and
 # get the template with the matching qxx ID. 'excel' looks for the file 'excel files/Plate layouts.xlsx'
+
+
+## qPCR options ----
 
 # Linregpcr options
 run_linregpcr <- TRUE
@@ -33,6 +36,37 @@ dilutions_to_truncate <- 3 # indicate the last n dilutions to be trimmed away be
 
 # Options for default standards
 force.use_default.std <- TRUE # forces the use of default std from google sheet, if skip.std.curves_already.exist is TRUE
+
+
+## ddPCR options ----
+
+
+# TODO: add user inputs for custom processing for the particula dataset
+# 1. assay_variable ordering
+# 2. Wells to remove (flag manually looking at clusters)
+# 3. ?
+
+# flag wells to remove from analysis
+wells_to_remove <- 
+  c('A1', 'B1', 'A2', 'B2', 'H2', 'D4', 'H4', # wells with no chromosome amplification
+                     'F2') %>%  # wonky plasmid 
+  
+  paste(., '$', sep = '') %>%  # add end of line anchors
+  
+  # collapse into a single regex string
+  str_c(collapse = '|') # regex to remove flagged wells
+  
+
+# TODO: add a LOD calculation (positive droplets) and remove stuff below it
+
+
+# custom options 
+
+# highly customized for S091
+assay_var_order <- c('J23100', 
+                 'high', 'med', 'low',
+                 'WT', 
+                 'blank', 'NTC') # order the assay variables
 
 
 # error check ----

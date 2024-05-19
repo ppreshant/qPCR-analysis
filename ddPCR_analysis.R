@@ -29,12 +29,14 @@ raw_ddpcr_renamer <- function(.df)
            AcceptedDroplets = any_of('Accepted Droplets'),
            Threshold = any_of('Threshold1'),
            MeanAmplitudeofPositives = any_of('MeanAmplitudeOfPositives'),  # 'Of' to 'of'
-           MeanAmplitudeofNegatives = any_of('MeanAmplitudeOfNegatives')) %>%  # rename the column name - if exported from Quantasoft analysis Pro
+           MeanAmplitudeofNegatives = any_of('MeanAmplitudeOfNegatives')) %>%  
+    # rename the column name - if exported from Quantasoft analysis Pro
     
     
     mutate(across(any_of('Concentration'), as.numeric)) %>%  # Remove the NO CALLS and make it numeric column  
     
-    mutate(across(matches('Total|Poisson|Mean|Ch|Ratio|Abundance|Linkage|CNV|Copies|Det'), as.numeric)) %>%  # convert ambiguous columns into numeric
+    # convert ambiguous columns into numeric
+    mutate(across(matches('Total|Poisson|Mean|Ch|Ratio|Abundance|Linkage|CNV|Copies|Det'), as.numeric)) %>% 
     mutate(across(where(is.list), as.character)) %>%  # convert any stray lists into character
   
     # remove leading 0 (zero) from A01..A09..H01..H09
@@ -99,37 +101,54 @@ write_csv(processed_data,
           str_c('excel files/processed_data/', flnm, '-ddPCR-processed.csv'), 
           na = '')
 
-# temp save
-# ratio_data %>% filter(Sample_category == 'Rd', str_detect(assay_variable, 'gDNA')) %>% write_csv('S057j_tst.csv')
-
+# Save ratio data
+write_csv(ratio_data, 
+          str_c('excel files/processed_data/', flnm, '-ddPCR-ratio.csv'), 
+          na = '')
 
 # Plotting ----
 
-# plot copy number
-copy_num <- 
-  plot_facetted_assay(.data = ratio_data, 
-                    .yvar_plot = copy_number, .xvar_plot = assay_variable, 
-                    .facetvar_plot = NULL) 
-
-copy_num + 
-  geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
-
-ggsave(plot_as(title_name, '-ddPCR'), width = 4.2, height = 3)
-
-ggplotly(copy_num)
+## copies by target ----
 
 # plot copies per target
 copies_all_targets <- 
-plot_facetted_assay(.data = filter(processed_data, !str_detect(assay_variable, '1e3')), 
+  plot_facetted_assay(.data = 
+                      filter(processed_data, !flag_wells_to_remove), 
+                    
                     .yvar_plot = CopiesPer20uLWell, .xvar_plot = assay_variable, 
+                    .label.var = Well,
                     .facetvar_plot = Target_name) + 
+  
   geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
 
-ggsave(plot_as(title_name, '-ddPCR_raw'), width = 4.2, height = 4)
+# save the plot
+ggsave(plot_as(title_name, '-ddPCR_raw'), plot = copies_all_targets,
+       width = 4.2, height = 4)
 
+# interactive plot
 ggplotly(copies_all_targets)
 
-# custom plotting
+
+## plasmid copy number (ratio) ----
+
+copy_num <- 
+  plot_facetted_assay(.data = ratio_data, 
+                      .yvar_plot = copy_number, .xvar_plot = assay_variable, 
+                      .label.var = Well,
+                      .facetvar_plot = NULL) 
+
+# copy_num + 
+#   geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
+
+# save the plot
+ggsave(plot_as(title_name, '-ddPCR'), plot = copy_num, 
+       width = 4.2, height = 3)
+
+# interactive plot
+ggplotly(copy_num)
+
+
+## custom ----
 
 copies_all_targets #+ ylim(c(0, 4300))
 ggsave(plot_as(title_name, '-ddPCR_raw'), width = 4.2, height = 4)

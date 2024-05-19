@@ -8,13 +8,18 @@
 
 plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tibble
                                 
-                                # required variable .yvar_plot
+                                # required variables
+                                
+                                # variable for y axis
                                 .yvar_plot, .xvar_plot = assay_var.label, # variables within the dataframe (not string, use raw name)
                                 
-                                .colourvar_plot = Sample_category,
+                                .colourvar_plot = Sample_category, # variable for colour
                                 .filter_colourvar = '.*', # wrapper for plotting a subset of colours
                                 
                                 .facetvar_plot = Target_name, # facets align along the x axis, cannot be NULL as of now
+                                
+                                # optional variables
+                                .label.var = NULL, # variable for labels on the plot (for ggplotly interactive)
   
                                 .xaxis.label.custom = NULL, # pass in plot_assay_variable if needed
                                 .subtitle.plot = NULL, # 'y axis label' supplied as a string to .subtitle.plot
@@ -47,7 +52,8 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
   {ggplot(filter(.data, # prefilter data for specific colours -- typically sample_categories
                  str_detect({{.colourvar_plot}}, .filter_colourvar)), 
           
-          aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}})) +
+          aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}},
+              label = {{.label.var}})) + # label for ggplotly hover
       
       {if(points_plt.style == 'jitter') {geom_jitter(height = 0, width = jitter_width) # plot points in 'jitter' or normal fashion
       } else geom_point() } +

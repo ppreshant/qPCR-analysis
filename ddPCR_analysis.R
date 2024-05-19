@@ -86,7 +86,8 @@ processed_data <- get_data %>%
 ratio_data <- processed_data %>% 
   
   # remove flagged wells
-  filter(!str_detect(Well, wells_to_remove)) %>%
+  filter(!str_detect(Well, wells_to_remove), 
+         !str_detect(Sample_category, 'Negative')) %>% # remove negatives with junk values
   
   # calculate copy number : ratio of plasmid to chromosome
   select(Sample_category, assay_variable, Well, Target_name, Concentration) %>% 
@@ -141,7 +142,7 @@ copy_num <-
 #   geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
 
 # save the plot
-ggsave(plot_as(title_name, '-ddPCR'), plot = copy_num, 
+ggsave(plot_as(title_name, '-ddPCR_plasmid-copies'), plot = copy_num, 
        width = 4.2, height = 3)
 
 # interactive plot

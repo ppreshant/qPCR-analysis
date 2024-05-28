@@ -66,10 +66,6 @@ processed_data <- get_data %>%
   
   rename(Target_name = Target) %>% # rename target to qPCR format
   
-  # flag wells to remove from analysis (keeps them in the data output for transparency)
-  # remove before doing ratios!
-  mutate(flag_wells_to_remove = str_detect(Well, wells_to_remove), .after = Well) %>% # flag wells to remove
-  
   # control column types and order
   mutate(across(Concentration, as.numeric)) %>%  # force conc to be numeric
   
@@ -77,7 +73,31 @@ processed_data <- get_data %>%
   mutate(across(Sample_category, ~ fct_relevel(.x, 'C-', 'ntc', 'Negative', after = Inf))) %>%
   
   ## custom processing ordering data ----
-  mutate(across(assay_variable, ~ fct_relevel(.x, assay_var_order))) # order the assay variables
+  mutate(across(assay_variable, ~ fct_relevel(.x, assay_var_order))) %>% # order the assay variables
+
+  ## Flag data to remove ----
+  # flag wells to remove from analysis (keeps them in the data output for transparency)
+  # remove before doing ratios!
+  mutate(flag_wells_to_remove = 
+           str_detect(Well, wells_to_remove) | # flag wells to remove or 
+           str_detect(Sample_category, categories_to_remove), # categories to remove
+         
+         .after = Well) # keep the flag next to the well
+
+
+## get LOD ----
+# TODO: future feature - add a flag to values with positives < LOD (max of negatives)
+
+LOD <- 
+  filter(processed_data, Sample_category == 'Negative', 
+       !str_detect(Well, wells_to_remove)) %>% # remove flagged wells if any negatives were flagged manually
+  
+  # get the LOD for each target
+  reframe(.by = Target_name, 
+          max_copieswell = max(CopiesPer20uLWell, na.rm = T),
+          mean_copieswell = mean(CopiesPer20uLWell, na.rm = T),
+          max_pos_droplets = max(PositiveDroplets, na.rm = T)
+                   )
   
 
 ## custom/ratios ----
@@ -86,7 +106,7 @@ processed_data <- get_data %>%
 ratio_data <- processed_data %>% 
   
   # remove flagged wells
-  filter(!str_detect(Well, wells_to_remove), 
+  filter(!flag_wells_to_remove,  # remove manually flagged wells
          !str_detect(Sample_category, 'Negative')) %>% # remove negatives with junk values
   
   # calculate copy number : ratio of plasmid to chromosome
@@ -177,3 +197,4 @@ if(0)
     geom_hline(data = LOD, aes(yintercept = max_copieswell), linetype = 'dashed', color = 'red')
 
   ggplotly(copies_w_lod)  
+}

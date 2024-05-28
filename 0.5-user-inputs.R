@@ -4,7 +4,7 @@
 
 # File name ----
 
-flnm <- 'S091-marine-withsort-5-5-24' # mention the file name without the "-linreg" or "-processed" suffixes
+flnm <- 'S091b-marine-higher conc' # mention the file name without the "-linreg" or "-processed" suffixes
 
 # Default standards : When using same standards for multiple plates (not considered best practice..but I do it anyways)
 default_std.to.retrieve <-  'Std30' # if the file name doesn't hold any std curve, it will default to this (Std30 for RAM)
@@ -41,20 +41,25 @@ force.use_default.std <- TRUE # forces the use of default std from google sheet,
 ## ddPCR options ----
 
 
-# TODO: add user inputs for custom processing for the particula dataset
-# 1. assay_variable ordering
-# 2. Wells to remove (flag manually looking at clusters)
-# 3. ?
-
 # flag wells to remove from analysis
-wells_to_remove <- 
-  c('A1', 'B1', 'A2', 'B2', 'H2', 'D4', 'H4', # wells with no chromosome amplification
-                     'F2') %>%  # wonky plasmid 
-  
+# wells_to_remove <- 'none' # 'none' or a regex of well names to remove
+
+# ENABLE BELOW TO MAKE A REGEX STRING FOR WELLS TO REMOVE
+wells_to_remove <-
+  c(
+    # 'A1', 'B1', 'A2', 'B2', 'H2', 'D4', 'H4', # wells with no chromosome amplification
+    'B6', 'G8', 'F9', 'F10', # wells with no chromosome amplification (outliers ~ Rd)
+    'F12' # wonky plasmid
+
+    ) %>%
+
   paste(., '$', sep = '') %>%  # add end of line anchors
-  
+
   # collapse into a single regex string
   str_c(collapse = '|') # regex to remove flagged wells
+
+# flag categories to remove from analysis
+categories_to_remove <- '^Ec' # 'none' or a regex of categories to remove
   
 
 # TODO: add a LOD calculation (positive droplets) and remove stuff below it
@@ -62,9 +67,10 @@ wells_to_remove <-
 
 # custom options 
 
-# highly customized for S091
+# highly customized for S091b-marine-higher conc
 assay_var_order <- c('J23100', 
                  'high', 'med', 'low',
+                 'high-growth', 'med-growth', 'low-growth',
                  'WT', 
                  'blank', 'NTC') # order the assay variables
 

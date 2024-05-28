@@ -149,9 +149,31 @@ ggsave(plot_as(title_name, '-ddPCR_plasmid-copies'), plot = copy_num,
 ggplotly(copy_num)
 
 
-## custom ----
+# Custom analysis ----
 
-copies_all_targets #+ ylim(c(0, 4300))
-ggsave(plot_as(title_name, '-ddPCR_raw'), width = 4.2, height = 4)
+# run line by line to see the outputs
+if(0)
+{
+  # zoom in
+  copies_all_targets #+ ylim(c(0, 4300))
+  ggsave(plot_as(title_name, '-ddPCR_raw'), width = 4.2, height = 4)
+  
+  
+   # reorder columns for visual inspection
+  relocate(processed_data, 1, 3, 4, 7, PositiveDroplets) %>% 
+    # filter(Sample_category == 'Negative') %>%
+    view
+ 
+  # plot positive droplets by target (dot plot)
+  ggplot(data = processed_data %>% filter(!flag_wells_to_remove), 
+         aes(x = PositiveDroplets)) +
+    geom_dotplot() + 
+    facet_wrap(~Target_name, scales = 'free')
+  
+  # show LOD on raw copies plot
+  copies_w_lod <- 
+    copies_all_targets + 
+    geom_hline(data = LOD, aes(yintercept = mean_copieswell), linetype = 'dashed', color = 'gray') +
+    geom_hline(data = LOD, aes(yintercept = max_copieswell), linetype = 'dashed', color = 'red')
 
-
+  ggplotly(copies_w_lod)  

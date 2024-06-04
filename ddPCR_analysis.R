@@ -56,7 +56,11 @@ plate_template <- get_and_parse_plate_layout(flnm, read_target_name = FALSE) %>%
 
 # Process data ----
 
-processed_data <- get_data %>%
+## attach metadata ----
+ 
+# attach metadata, flag manual removals
+compiled_w_metadata <-
+  get_data %>%
   
   raw_ddpcr_renamer %>% # rename columns (for quantasoft analysis pro exported data)
   
@@ -75,39 +79,64 @@ processed_data <- get_data %>%
   ## custom processing ordering data ----
   mutate(across(assay_variable, ~ fct_relevel(.x, assay_var_order))) %>% # order the assay variables
 
-  ## Flag data to remove ----
+  ## Flag data to remove/manual ----
   # flag wells to remove from analysis (keeps them in the data output for transparency)
   # remove before doing ratios!
-  mutate(flag_wells_to_remove = 
-           str_detect(Well, wells_to_remove) | # flag wells to remove or 
-           str_detect(Sample_category, categories_to_remove), # categories to remove
-         
+  mutate(flag_wells = 
+           # str_detect(Well, wells_to_remove) | # flag wells to remove or 
+           (Well %in% wells_to_remove | # flag wells to remove or
+           str_detect(Sample_category, categories_to_remove)) %>% # categories to remove
+           if_else(., 'Manual', ''), # flag manually removed samples
+          
          .after = Well) # keep the flag next to the well
 
 
 ## get LOD ----
-# TODO: future feature - add a flag to values with positives < LOD (max of negatives)
+
+# more details on LOD in WW-CoV2-project g.7 file
+
 
 LOD <- 
-  filter(processed_data, Sample_category == 'Negative', 
-       !str_detect(Well, wells_to_remove)) %>% # remove flagged wells if any negatives were flagged manually
+  filter(compiled_w_metadata, Sample_category == 'Negative', 
+       !flag_wells == 'Manual') %>% # remove flagged wells if any negatives were flagged manually
   
   # get the LOD for each target
   reframe(.by = Target_name, 
-          max_copieswell = max(CopiesPer20uLWell, na.rm = T),
-          mean_copieswell = mean(CopiesPer20uLWell, na.rm = T),
-          max_pos_droplets = max(PositiveDroplets, na.rm = T)
-                   )
+          
+          # LOD in copies per 20uL well
+          LOD_max_copieswell = max(CopiesPer20uLWell, na.rm = T),
+          LOD_mean_copieswell = mean(CopiesPer20uLWell, na.rm = T),
+          
+          # LOD in number of positive droplets ; minimum 3 if blanks are clean
+          LOD_max_pos_droplets = max(3, PositiveDroplets, na.rm = T)
+          )
+
+
+## flag wells below LOD -----
+processed_data <- compiled_w_metadata %>%
+  
+  # join the LOD values
+  left_join(LOD) %>% 
+  
+  # flag wells with positive droplets below LOD
+  mutate(flag_wells = 
+           if_else(flag_wells == 'Manual', 'Manual', # keep manually flagged wells
+                   if_else(PositiveDroplets < LOD_max_pos_droplets, 'Below LOD', flag_wells))
+         )
   
 
-## custom/ratios ----
+## Custom/ratios ----
 
 # custom analysis for Swetha's marine ddPCR data
 ratio_data <- processed_data %>% 
   
   # remove flagged wells
-  filter(!flag_wells_to_remove,  # remove manually flagged wells
-         !str_detect(Sample_category, 'Negative')) %>% # remove negatives with junk values
+  filter(!flag_wells == 'Manual',  # remove manually flagged wells
+         
+         # remove wells below LOD for chromosome
+         !(flag_wells == 'Below LOD' &  Target_name == 'Chromosome'), 
+         
+         !str_detect(Sample_category, 'Negative')) %>% # remove negatives [junk ratios]
   
   # calculate copy number : ratio of plasmid to chromosome
   select(Sample_category, assay_variable, Well, Target_name, Concentration) %>% 
@@ -134,13 +163,17 @@ write_csv(ratio_data,
 # plot copies per target
 copies_all_targets <- 
   plot_facetted_assay(.data = 
-                      filter(processed_data, !flag_wells_to_remove), 
+                      filter(processed_data, !flag_wells == 'Manual'), # removed flagged wells
                     
                     .yvar_plot = CopiesPer20uLWell, .xvar_plot = assay_variable, 
                     .label.var = Well,
                     .facetvar_plot = Target_name) + 
   
-  geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
+  # add LOD line
+  geom_hline(data = LOD, aes(yintercept = LOD_max_copieswell), linetype = 'dashed', color = 'red') +
+  geom_hline(data = LOD, aes(yintercept = LOD_mean_copieswell), linetype = 'dashed', color = 'gray')
+  
+  # geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
 
 # save the plot
 ggsave(plot_as(title_name, '-ddPCR_raw'), plot = copies_all_targets,
@@ -185,16 +218,9 @@ if(0)
     view
  
   # plot positive droplets by target (dot plot)
-  ggplot(data = processed_data %>% filter(!flag_wells_to_remove), 
+  ggplot(data = processed_data %>% filter(!flag_wells), 
          aes(x = PositiveDroplets)) +
     geom_dotplot() + 
     facet_wrap(~Target_name, scales = 'free')
-  
-  # show LOD on raw copies plot
-  copies_w_lod <- 
-    copies_all_targets + 
-    geom_hline(data = LOD, aes(yintercept = mean_copieswell), linetype = 'dashed', color = 'gray') +
-    geom_hline(data = LOD, aes(yintercept = max_copieswell), linetype = 'dashed', color = 'red')
 
-  ggplotly(copies_w_lod)  
 }

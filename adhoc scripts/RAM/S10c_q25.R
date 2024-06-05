@@ -103,3 +103,36 @@ ggsave(plot_as(title_name), width = 6, height = 3) # save plot as png
 
 ggsave(filename = str_c('qPCR analysis/', title_name, '.pdf'), 
        dpi = 300, width = 4, height = 2.5)
+
+
+# Save data ------------------------------
+
+write.csv(processed_data, str_c('excel files/paper_data/', title_name, '.csv')) # save data as csv
+
+# save clean data for paper
+clean_data <- 
+  select(processed_data, Target_name, Sample_category, 
+         Copies.per.ul.template, mean_Copies.per.ul.template) %>%
+  
+  # change names to match figure
+  mutate(across(Sample_category, ~ str_replace_all(.x, 'Maximal', 'Constitutive')))
+
+
+output_path <- '../../Writing/RAM paper outputs/Archive'
+
+write.csv(clean_data, str_c(output_path, '/', title_name, '.csv')) # save data as csv
+
+
+# Statistics ------------------------------
+
+# t-test for repressed vs constitutive
+t_test_results <-
+
+filter(processed_data, Target_name == 'cat-RNA') %>%
+
+  t.test(Copies.per.ul.template ~ Sample_category,
+         data = .,
+         alternative = 'greater') %>% # one-tailed test
+  print()
+
+t_test_results$p.value %>% fancy_scientific() # format p-value

@@ -16,7 +16,9 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
                                 .colourvar_plot = Sample_category, # variable for colour
                                 .filter_colourvar = '.*', # wrapper for plotting a subset of colours
                                 
+                                # facetting
                                 .facetvar_plot = Target_name, # facets align along the x axis, cannot be NULL as of now
+                                facet_scale_constraint = 'free_x', # 'free_x' or 'free_y' or 'free' or 'fixed'
                                 
                                 # optional variables
                                 .label.var = NULL, # variable for labels on the plot (for ggplotly interactive)
@@ -47,10 +49,17 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
   if(is.na(.subtitle.plot)) .subtitle.plot <- deparse(enexpr(.yvar_plot)) # use full text if not in the translation table
   
   
+  # prefilter data for specific colours -- typically sample_categories
+  quo_colourvar <- enquo(.colourvar_plot) # get the colour variable as a quosure
+  
+  if(quo_is_null(quo_colourvar) | .filter_colourvar == '.*')
+      filtered_data <- .data # no filtering needed (since there is no variable to colour by / no filter)
+  
+  else filtered_data <- filter(.data, str_detect({{.colourvar_plot}}, .filter_colourvar)) # prefilter data for specific colours -- typically sample_categories
+  
   
   # plotting ----
-  {ggplot(filter(.data, # prefilter data for specific colours -- typically sample_categories
-                 str_detect({{.colourvar_plot}}, .filter_colourvar)), 
+  {ggplot(filtered_data, 
           
           aes(x = {{.xvar_plot}}, y = {{.yvar_plot}}, colour = {{.colourvar_plot}},
               label = {{.label.var}})) + # label for ggplotly hover
@@ -61,13 +70,19 @@ plot_facetted_assay <- function(.data = forplotting_cq.dat,  # data.frame or tib
       # formatting for flipped plots : Warning x and y still refer to the original orientation (not flipped)
       {if(flipped_plot) {list(
         coord_flip(), 
-        facet_grid(rows = vars({{.facetvar_plot}}), scales = 'free_y', space = 'free_y'), # flipped facets
+        
+        facet_grid(rows = vars({{.facetvar_plot}}), 
+                   scales = facet_scale_constraint, space = facet_scale_constraint), # flipped facets
+        
         theme(legend.position = 'top'), # put legend on the top
         xlab(''))
         
         # facetting and ylab for regular plots
-                        } else list(
-        facet_grid(cols = vars({{.facetvar_plot}}), scales = 'free_x', space = 'free_x'), # facets regular
+      } else list(
+        
+        facet_grid(cols = vars({{.facetvar_plot}}), 
+                   scales = facet_scale_constraint, space = facet_scale_constraint), # facets regular
+        
         {if(!is.na(.subtitle.plot)) ylab('')}, # remove y axis label if a subtitle is provided which is more readable
         {if(!is.null(.xaxis.label.custom)) xlab(.xaxis.label.custom)}) # custom label for X axis if specified
       } + 

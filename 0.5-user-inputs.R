@@ -4,7 +4,7 @@
 
 # File name ----
 
-flnm <- 'S091b-marine-higher conc' # mention the file name without the "-linreg" or "-processed" suffixes
+flnm <- 'S091-marine-withsort-5-5-24' # mention the file name without the "-linreg" or "-processed" suffixes
 
 # Default standards : When using same standards for multiple plates (not considered best practice..but I do it anyways)
 default_std.to.retrieve <-  'Std30' # if the file name doesn't hold any std curve, it will default to this (Std30 for RAM)
@@ -44,19 +44,22 @@ force.use_default.std <- TRUE # forces the use of default std from google sheet,
 # flag wells to remove from analysis
 # wells_to_remove <- 'none' # 'none' or a regex of well names to remove
 
-# ENABLE BELOW TO MAKE A REGEX STRING FOR WELLS TO REMOVE
+# Enable the following line to manually flag wells to remove from plots and analysis (use A1, not A01)
 wells_to_remove <-
   c(
-    # 'A1', 'B1', 'A2', 'B2', 'H2', 'D4', 'H4', # wells with no chromosome amplification
-    'B6', 'G8', 'F9', 'F10', # wells with no chromosome amplification (outliers ~ Rd)
-    'F12' # wonky plasmid
+    # S091
+    'A1', # few total droplets
+    'F2' # Smear in positive
 
-    ) %>%
+    # S091b
+    # 'A7', 'B7', 'C7', 'F8', 'G8', 'H8', # different master mix, exclude NTC (C07)
+    # 'F12' # wonky plasmid amplification, exclude NTC
+  )
 
-  paste(., '$', sep = '') %>%  # add end of line anchors
+# older wells..
+# 'A1', 'B1', 'A2', 'B2', 'H2', 'D4', 'H4', # wells with no chromosome amplification
+# 'B6', 'G8', 'F9', 'F10', # wells with no chromosome amplification (outliers ~ Rd)
 
-  # collapse into a single regex string
-  str_c(collapse = '|') # regex to remove flagged wells
 
 # flag categories to remove from analysis
 categories_to_remove <- '^Ec' # 'none' or a regex of categories to remove

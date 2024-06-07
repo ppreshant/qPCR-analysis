@@ -76,11 +76,13 @@ LOD <- select(combined_data,
 if(0)
 {
   
-  # view stuff below LOD
+  # view stuff below LOD / == LOD_max_pos_droplets
   filter(combined_data,
          # flag_wells == 'Manual') %>%
-    (flag_wells == 'Below LOD' &  Target_name == 'Chromosome'),
-     Sample_category != 'Negative') %>%
+    (flag_wells == 'Below LOD' &  Target_name == 'Chromosome'), # below LOD for chromosome
+     Sample_category != 'Negative' # except negatives, which are obvious
+    
+        ) %>%
     
     relocate(PositiveDroplets, LOD_max_pos_droplets) %>%
     view
@@ -93,15 +95,17 @@ if(0)
   filter_na <- function(tbl, expr){
     tbl %>% filter({{expr}} %>% replace_na(T))
   }
-  
-  # check vals == LOD
-  filter(combined_data, PositiveDroplets == LOD_max_pos_droplets) %>% 
-    relocate(PositiveDroplets, LOD_max_pos_droplets, Target_name, .after = 4) %>%
-    view
+ 
   
 }
 
 
+# save data ----
+
+write_csv(ratio_data, 
+          str_c('excel files/processed_data/', title_name, '-ratio-combined.csv'), # save the ratio data
+          na = '') # remove NAs for clarity
+   
 # Plotting ----
 
 ## copies by target ----
@@ -123,8 +127,11 @@ copies_all_targets <-
 
 # geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
 
+# zoom in 
+copies_all_targets + ylim (c(0, 100))
+
 # save the plot
-ggsave(plot_as(title_name, '-ddPCR_raw'), plot = copies_all_targets,
+ggsave(plot_as(title_name, '-ddPCR_zoom'),
        width = 4.2, height = 4)
 
 # interactive plot
@@ -143,7 +150,7 @@ copy_num <-
 #   geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
 
 # save the plot
-ggsave(plot_as(title_name, '-ddPCR_plasmid-copies'), plot = copy_num, 
+ggsave(plot_as(title_name, '-ddPCR_plasmid-copies'),
        width = 4.2, height = 3)
 
 # interactive plot
@@ -165,11 +172,67 @@ copy_number_sorted <-
                       .colourvar_plot = NULL,
                       .label.var = Well, 
                       flipped_plot = FALSE, facet_scale_constraint = 'free',
-                      .facetvar_plot = Sample_category) + 
-  facet_wrap(facets = vars(Sample_category), scales = 'free')
+                      .facetvar_plot = Sample_category)
+  # facet_wrap(facets = vars(Sample_category), nrow = 1, scales = 'free')
 
 
 ggplotly(copy_number_sorted) # interactive plot
+
+# save the plot
+ggsave(plot_as('S091', '-sorted'),
+       width = 4.2, height = 3)
+
+# zoom in
+copy_number_sorted + ylim(c(0, 5)) # zoom in
+
+# save modified plot
+ggsave(plot_as('S091', '-sorted-zoom'),
+       width = 4.2, height = 3)
+
+
+### WT vs plasmid -----
+
+lysate_data <- filter(ratio_data, str_detect(assay_variable, 'WT|J23100'))
+
+# plot copies per target faceted by organism
+
+copy_number_lysate <- 
+  plot_facetted_assay(.data = lysate_data, 
+                      .yvar_plot = copy_number, .xvar_plot = assay_variable,
+                      .colourvar_plot = NULL,
+                      .label.var = Well, 
+                      flipped_plot = FALSE, facet_scale_constraint = 'free',
+                      .facetvar_plot = Sample_category)
+
+
+ggplotly(copy_number_lysate) # interactive plot
+
+# save the plot
+ggsave(plot_as('S091', '-lysate'),
+       width = 4.2, height = 3)
+
+
+### sort growth -----
+
+sorted_growth <- filter(ratio_data, str_detect(assay_variable, 'growth$'))
+
+# plot copies per target faceted by organism
+
+copy_number_growth <- 
+  plot_facetted_assay(.data = sorted_growth, 
+                      .yvar_plot = copy_number, .xvar_plot = assay_variable,
+                      .colourvar_plot = NULL,
+                      .label.var = Well, 
+                      flipped_plot = FALSE, facet_scale_constraint = 'free',
+                      .facetvar_plot = Sample_category)
+# facet_wrap(facets = vars(Sample_category), nrow = 1, scales = 'free')
+
+
+ggplotly(copy_number_growth) # interactive plot
+
+# save the plot
+ggsave(plot_as('S091', '-sorted-after growth'),
+       width = 4.2, height = 3)
 
 
 # adhoc ----

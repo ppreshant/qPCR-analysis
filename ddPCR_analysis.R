@@ -162,7 +162,7 @@ write_csv(ratio_data,
 
 # plot copies per target
 copies_all_targets <- 
-  plot_facetted_assay(.data = 
+  {plot_facetted_assay(.data = 
                       filter(processed_data, !flag_wells == 'Manual'), # removed flagged wells
                     
                     .yvar_plot = CopiesPer20uLWell, .xvar_plot = assay_variable, 
@@ -171,7 +171,9 @@ copies_all_targets <-
   
   # add LOD line
   geom_hline(data = LOD, aes(yintercept = LOD_max_copieswell), linetype = 'dashed', color = 'red') +
-  geom_hline(data = LOD, aes(yintercept = LOD_mean_copieswell), linetype = 'dashed', color = 'gray')
+  geom_hline(data = LOD, aes(yintercept = LOD_mean_copieswell), linetype = 'dashed', color = 'gray')} %>% 
+  
+  print()
   
   # geom_line(aes(group = Sample_category), alpha = 0.2, show.legend = F) # connect points for easy visual
 

@@ -19,8 +19,8 @@ template_source <- 'googlesheet' # googlesheet/excel = parse through a list of t
 
 ## qPCR options ----
 
-# Linregpcr options
-run_linregpcr <- TRUE
+# Linregpcr options (only applicable if calling the linregpcr_processing.R script)
+run_linregpcr <- TRUE # if false, that script will take linreg processed data and plot it
 
 # Traditional Cq analysis - options
 plot_mode <-  'absolute_quantification' # Options : ('absolute_quantification' or 'raw_quantification'); 

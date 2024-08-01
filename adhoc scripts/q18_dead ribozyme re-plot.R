@@ -106,8 +106,8 @@ label_data <-
     
     # label values
     geom_text(aes(x = mean_Copies.per.ul.template,
-                  label = scales::label_scientific(digits = 1)(mean_Copies.per.ul.template),
-                  # label = scales::label_log()(mean_Copies.per.ul.template), # for power notation
+                  # label = scales::label_scientific(digits = 1)(mean_Copies.per.ul.template),
+                  label = scientific_10(mean_Copies.per.ul.template), # for power notation
                   
                   vjust = 2),  # adjust position of label
               

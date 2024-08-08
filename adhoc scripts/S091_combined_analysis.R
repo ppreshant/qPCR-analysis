@@ -56,6 +56,8 @@ ratio_data <- combined_data %>%
   mutate(copy_number = Plasmid / Chromosome)
 
 
+# TODO: calculate the mean in the same dataset or different?
+
 # remove flagged wells (manual)
 plotting_data <- combined_data %>% 
   filter(!flag_wells == 'Manual') # remove manually flagged wells
@@ -167,12 +169,23 @@ sorted_data <- filter(ratio_data, str_detect(assay_variable, 'low$|med$|high$'))
 # plot copies per target faceted by organism
 
 copy_number_sorted <- 
-  plot_facetted_assay(.data = sorted_data, 
+  {plot_facetted_assay(.data = sorted_data, 
                       .yvar_plot = copy_number, .xvar_plot = assay_variable,
                       .colourvar_plot = NULL,
                       .label.var = Well, 
                       flipped_plot = FALSE, facet_scale_constraint = 'free',
-                      .facetvar_plot = Sample_category)
+                      .facetvar_plot = Sample_category) + 
+  
+      # show means and stdev
+      # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
+      stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange",
+                   colour = 'red', shape = '-', size = 3, linewidth = 1, alpha = 0.6)
+    
+    # stat_summary(fun = mean, geom = 'point', shape = '-', size = 10, alpha = 0.6)
+  } %>% 
+  
+  print()
+  
   # facet_wrap(facets = vars(Sample_category), nrow = 1, scales = 'free')
 
 
@@ -238,7 +251,7 @@ ggsave(plot_as('S091', '-sorted-after growth'),
 # adhoc ----
 if(0)
 {
-  # look at negatives ----
+  ## look at negatives ----
   filter(compiled_w_metadata, Sample_category == 'Negative', 
          !flag_wells == 'Manual') %>% 
     

@@ -166,25 +166,56 @@ ggplotly(copy_num)
 
 sorted_data <- filter(ratio_data, str_detect(assay_variable, 'low$|med$|high$'))
 
-# plot copies per target faceted by organism
 
-copy_number_sorted <- 
-  {plot_facetted_assay(.data = sorted_data, 
-                      .yvar_plot = copy_number, .xvar_plot = assay_variable,
-                      .colourvar_plot = NULL,
-                      .label.var = Well, 
-                      flipped_plot = FALSE, facet_scale_constraint = 'free',
-                      .facetvar_plot = Sample_category) + 
+### custom plot ----
+
+# make a plot of copy number by assay variable ; facet by sample_category
+copy_number_sorted <-
+  
+  {ggplot(sorted_data, 
+          aes(x = assay_variable, y = copy_number)) +
+      
+      # plot points in grey ; shift them to the left for clarity
+      geom_point(colour = 'grey', position = position_nudge(x = -0.2)) + 
   
       # show means and stdev
       # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
       stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange",
-                   colour = 'red', shape = '-', size = 3, linewidth = 1, alpha = 0.6)
-    
-    # stat_summary(fun = mean, geom = 'point', shape = '-', size = 10, alpha = 0.6)
-  } %>% 
+                   shape = '-', size = 3, linewidth = 1) +
+      
+      # facet by organism
+      facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
+      
+      # theme_minimal() +
+      # ggtitle('Plasmid copy number by assay variable') +
+      
+      # label axes
+      xlab('Bins of fluorescence: sorting') +
+      ylab('Plasmid copy number')} %>% 
   
-  print()
+  print
+
+
+
+# plot copies per target faceted by organism
+
+# copy_number_sorted <- 
+#   {plot_facetted_assay(.data = sorted_data, 
+#                       .yvar_plot = copy_number, .xvar_plot = assay_variable,
+#                       .colourvar_plot = NULL,
+#                       .label.var = Well, 
+#                       flipped_plot = FALSE, facet_scale_constraint = 'free',
+#                       .facetvar_plot = Sample_category) + 
+#   
+#       # show means and stdev
+#       # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
+#       stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange",
+#                    colour = 'red', shape = '-', size = 3, linewidth = 1, alpha = 0.6)
+#     
+#     # stat_summary(fun = mean, geom = 'point', shape = '-', size = 10, alpha = 0.6)
+#   } %>% 
+#   
+#   print()
   
   # facet_wrap(facets = vars(Sample_category), nrow = 1, scales = 'free')
 

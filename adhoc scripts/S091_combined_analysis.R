@@ -107,8 +107,85 @@ if(0)
 write_csv(ratio_data, 
           str_c('excel files/processed_data/', title_name, '-ratio-combined.csv'), # save the ratio data
           na = '') # remove NAs for clarity
+
+# Plotting/paper ----
+
+sorted_data <- filter(ratio_data, str_detect(assay_variable, 'low$|med$|high$'))
+
+
+# TODO: custom plotting: make into a function eventually?
+
+# make a plot of copy number by assay variable ; facet by sample_category
+copy_number_sorted <-
+  
+  {ggplot(sorted_data, 
+          aes(x = assay_variable, y = copy_number)) +
+      
+      # plot points in grey ; shift them to the left for clarity
+      geom_point(colour = 'grey', position = position_nudge(x = -0.2)) + 
+      
+      # show means and stdev
+      # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
+      stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange") + 
+      
+      # facet by organism
+      facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
+      
+      # theme_minimal() +
+      # ggtitle('Plasmid copy number by assay variable') +
+      
+      # label axes
+      xlab('Bins of fluorescence: sorting') +
+      ylab('Plasmid copy number')} %>% 
+  
+  print
+
+
+copy_number_sorted + ylim(c(0, 5)) # zoom in
+
+
+# plot individual targets
+
+raw_copies_sorted <- 
+
+  {ggplot(sorted_data, 
+          aes(x = assay_variable, y = Plasmid)) +
+      
+      # plot points in grey ; shift them to the left for clarity
+      geom_point(colour = 'grey', position = position_nudge(x = -0.2)) + 
+      
+      # show means and stdev
+      # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
+      stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange") + 
+      
+      # for chromosome
+      # plot points in grey ; shift them to the left for clarity
+      geom_point(aes(y = Chromosome),
+                 shape = '+',
+                 colour = 'grey', position = position_nudge(x = -0.2)) + 
+      
+      # show means and stdev
+      stat_summary(mapping = aes(y = Chromosome),
+                   shape = '-',
+                   fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange") + 
+      
+      
+      # facet by organism
+      facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
+      
+      # theme_minimal() +
+      # ggtitle('Plasmid copy number by assay variable') +
+      
+      # label axes
+      xlab('Bins of fluorescence: sorting') +
+      ylab('Copies of DNA/uL')} %>% 
+  
+  print
+
+
+
    
-# Plotting ----
+# Old plotting ---------------------------------
 
 ## copies by target ----
 
@@ -160,40 +237,10 @@ ggplotly(copy_num)
 
 
 
-## separate panels ----
+# Plot separate panels ----
 
 ### sort original -----
-
-sorted_data <- filter(ratio_data, str_detect(assay_variable, 'low$|med$|high$'))
-
-
-### custom plot ----
-
-# make a plot of copy number by assay variable ; facet by sample_category
-copy_number_sorted <-
-  
-  {ggplot(sorted_data, 
-          aes(x = assay_variable, y = copy_number)) +
-      
-      # plot points in grey ; shift them to the left for clarity
-      geom_point(colour = 'grey', position = position_nudge(x = -0.2)) + 
-  
-      # show means and stdev
-      # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
-      stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange",
-                   shape = '-', size = 3, linewidth = 1) +
-      
-      # facet by organism
-      facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
-      
-      # theme_minimal() +
-      # ggtitle('Plasmid copy number by assay variable') +
-      
-      # label axes
-      xlab('Bins of fluorescence: sorting') +
-      ylab('Plasmid copy number')} %>% 
-  
-  print
+# moved to plotting/paper section
 
 
 

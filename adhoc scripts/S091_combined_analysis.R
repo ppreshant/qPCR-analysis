@@ -110,6 +110,89 @@ write_csv(ratio_data,
 
 # Plotting/paper ----
 
+## plotting wrappers ----
+
+#' plots grey points for replicates ; mean and 1 stdev range in black
+#' mimics the figure2-b,c style of https://pubs.acs.org/doi/10.1021/ac501118v
+#' @param plt_object ggplot object with data and aesthetics
+#' @param ... Can pass additional arguments to the ggplot objects of 
+#' `geom_point()` and `stat_summary()`
+#' @return ggplot object
+#' @example: ggplot(...) %>% geom_mean_w_replicates(shape = '+', aes(y = a2))
+show_mean_w_replicates <- function(plt_object, ...)
+{
+  plt_object +
+    
+    # plot points in grey ; shift them to the left for clarity
+    geom_point(colour = 'grey', position = position_nudge(x = -0.2), ...) + 
+    
+    # show means and stdev
+    # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
+    stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange", ...)
+  
+}
+
+
+# Plot the individual copies of plasmid, chromosome; 2nd plot with plasmid copy number
+#' @param .data_subset data subset
+#' @param x_axis_label x axis label
+#' @return ggplot object
+#' @example: ggplot(...) %>% show_mean_w_replicates()
+# TODO: provide conditionally outputs of intermediate plots?
+
+plot_raw_copies_and_PCN <- function(.data_subset, x_axis_label)
+{
+  copy_number_plt <-
+    
+    ggplot(.data_subset, 
+           aes(x = assay_variable, y = copy_number)) %>% 
+    
+    # plot points in grey (left shifted), mean and stdev in black
+    show_mean_w_replicates() + 
+    
+    # facet by organism
+    facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
+    
+    # label axes
+    xlab(x_axis_label) +
+    
+    ylab(NULL) +
+    labs(subtitle = 'Plasmid copy number')
+  
+  
+  # plot individual targets
+  
+  raw_copies_plt <- 
+    
+    ggplot(.data_subset, 
+           aes(x = assay_variable, y = Plasmid)) %>% 
+    
+    # plot points in grey (left shifted), mean and stdev in black
+    show_mean_w_replicates() %>%  
+    
+    # Same for chromosome copies
+    show_mean_w_replicates(shape = '+', mapping = aes(y = Chromosome)) + 
+    
+    # facet by organism
+    facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
+    
+    # label axes
+    xlab(x_axis_label) +
+    ylab(NULL) +
+    labs(subtitle = 'Copies of DNA/uL')
+  
+  
+  # merge both plots
+  library(patchwork)
+  
+  raw_copies_plt + copy_number_plt + 
+    
+    # layout with single column ; collect x axis labels
+    plot_layout(ncol = 1, axis_titles = "collect")
+  
+}
+
+
 
 ## sorted data ----
 # TODO : remove Rd (outlier) to zoom in
@@ -117,81 +200,20 @@ write_csv(ratio_data,
 sorted_data <- filter(ratio_data, str_detect(assay_variable, 'low$|med$|high$'))
 
 
-# TODO: custom plotting -> make into a function eventually (to apply to other subsets)
+# make a plot of copy number by assay variable ; facet by sample_category
+sorted_plot <- 
+  plot_raw_copies_and_PCN(sorted_data, 'Bins of fluorescence, post sorting') %>% 
+  print()
+
+
+## WT vs plasmid -----
+
+lysate_data <- filter(ratio_data, str_detect(assay_variable, 'WT|J23100'))
 
 # make a plot of copy number by assay variable ; facet by sample_category
-copy_number_sorted <-
-  
-  {ggplot(sorted_data, 
-          aes(x = assay_variable, y = copy_number)) +
-      
-      # plot points in grey ; shift them to the left for clarity
-      geom_point(colour = 'grey', position = position_nudge(x = -0.2)) + 
-      
-      # show means and stdev
-      # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
-      stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange") + 
-      
-      # facet by organism
-      facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
-      
-      # theme_minimal() +
-      # ggtitle('Plasmid copy number by assay variable') +
-      
-      # label axes
-      xlab('Bins of fluorescence, post sorting') +
-      ylab('Plasmid copy number')} %>% 
-  
-  print
-
-
-copy_number_sorted + ylim(c(0, 5)) # zoom in
-
-
-# plot individual targets
-
-raw_copies_sorted <- 
-
-  {ggplot(sorted_data, 
-          aes(x = assay_variable, y = Plasmid)) +
-      
-      # plot points in grey ; shift them to the left for clarity
-      geom_point(colour = 'grey', position = position_nudge(x = -0.2)) + 
-      
-      # show means and stdev
-      # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
-      stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange") + 
-      
-      # for chromosome
-      # plot points in grey ; shift them to the left for clarity
-      geom_point(aes(y = Chromosome),
-                 shape = '+',
-                 colour = 'grey', position = position_nudge(x = -0.2)) + 
-      
-      # show means and stdev
-      stat_summary(mapping = aes(y = Chromosome),
-                   shape = '-',
-                   fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange") + 
-      
-      
-      # facet by organism
-      facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
-      
-      # theme_minimal() +
-      # ggtitle('Plasmid copy number by assay variable') +
-      
-      # label axes
-      xlab('Bins of fluorescence, post sorting') +
-      ylab('Copies of DNA/uL')} %>% 
-  
-  print
-
-
-# merge both plots
-library(patchwork)
-
-raw_copies_sorted + copy_number_sorted + 
-  plot_layout(ncol = 1) # merge both plots
+cultures_plot <- 
+  plot_raw_copies_and_PCN(lysate_data, 'Plasmid') %>% 
+  print()
 
    
 # Old plotting ---------------------------------

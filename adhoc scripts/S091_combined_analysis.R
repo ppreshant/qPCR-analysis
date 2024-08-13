@@ -110,10 +110,14 @@ write_csv(ratio_data,
 
 # Plotting/paper ----
 
+
+## sorted data ----
+# TODO : remove Rd (outlier) to zoom in
+
 sorted_data <- filter(ratio_data, str_detect(assay_variable, 'low$|med$|high$'))
 
 
-# TODO: custom plotting: make into a function eventually?
+# TODO: custom plotting -> make into a function eventually (to apply to other subsets)
 
 # make a plot of copy number by assay variable ; facet by sample_category
 copy_number_sorted <-
@@ -135,7 +139,7 @@ copy_number_sorted <-
       # ggtitle('Plasmid copy number by assay variable') +
       
       # label axes
-      xlab('Bins of fluorescence: sorting') +
+      xlab('Bins of fluorescence, post sorting') +
       ylab('Plasmid copy number')} %>% 
   
   print
@@ -177,12 +181,17 @@ raw_copies_sorted <-
       # ggtitle('Plasmid copy number by assay variable') +
       
       # label axes
-      xlab('Bins of fluorescence: sorting') +
+      xlab('Bins of fluorescence, post sorting') +
       ylab('Copies of DNA/uL')} %>% 
   
   print
 
 
+# merge both plots
+library(patchwork)
+
+raw_copies_sorted + copy_number_sorted + 
+  plot_layout(ncol = 1) # merge both plots
 
    
 # Old plotting ---------------------------------

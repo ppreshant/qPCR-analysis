@@ -138,6 +138,7 @@ show_mean_w_replicates <- function(plt_object, ...)
 #' @param x_axis_label x axis label
 #' @return ggplot object
 #' @example: ggplot(...) %>% show_mean_w_replicates()
+# TODO: need to show legend of the shapes (custom make?) in the raw copies/top plot
 # TODO: provide conditionally outputs of intermediate plots?
 
 plot_raw_copies_and_PCN <- function(.data_subset, x_axis_label)
@@ -199,12 +200,14 @@ plot_raw_copies_and_PCN <- function(.data_subset, x_axis_label)
 
 sorted_data <- filter(ratio_data, str_detect(assay_variable, 'low$|med$|high$'))
 
-
 # make a plot of copy number by assay variable ; facet by sample_category
 sorted_plot <- 
   plot_raw_copies_and_PCN(sorted_data, 'Bins of fluorescence, post sorting') %>% 
   print()
 
+# save the plot
+ggsave(plot_as('S091', '-sorted'),
+       width = 7, height = 5)
 
 ## WT vs plasmid -----
 
@@ -214,6 +217,42 @@ lysate_data <- filter(ratio_data, str_detect(assay_variable, 'WT|J23100'))
 cultures_plot <- 
   plot_raw_copies_and_PCN(lysate_data, 'Plasmid') %>% 
   print()
+
+# save the plot
+ggsave(plot_as('S091', '-lysate'),
+       width = 7, height = 5)
+
+
+## Sorted, post growth ----
+
+sorted_growth <- 
+  filter(ratio_data, str_detect(assay_variable, 'growth$')) %>% 
+  
+  # remove growth from assay_variable
+  mutate(across(assay_variable, ~ str_remove(.x, '-growth')))
+  
+
+# make a plot of copy number by assay variable ; facet by sample_category
+
+sort_growth_plot <- 
+  plot_raw_copies_and_PCN(sorted_growth, 'Bins of fluorescence, post sorting and growth') %>% 
+  print()
+
+
+# save the plot
+ggsave(plot_as('S091', '-sorted-after growth'),
+       width = 7, height = 5)
+
+
+# old code: plot copies per target faceted by organism
+
+# copy_number_lysate <- 
+#   plot_facetted_assay(.data = lysate_data, 
+#                       .yvar_plot = copy_number, .xvar_plot = assay_variable,
+#                       .colourvar_plot = NULL,
+#                       .label.var = Well, 
+#                       flipped_plot = FALSE, facet_scale_constraint = 'free',
+#                       .facetvar_plot = Sample_category)
 
    
 # Old plotting ---------------------------------
@@ -267,94 +306,6 @@ ggsave(plot_as(title_name, '-ddPCR_plasmid-copies'),
 ggplotly(copy_num)
 
 
-
-# Plot separate panels ----
-
-### sort original -----
-# moved to plotting/paper section
-
-
-
-# plot copies per target faceted by organism
-
-# copy_number_sorted <- 
-#   {plot_facetted_assay(.data = sorted_data, 
-#                       .yvar_plot = copy_number, .xvar_plot = assay_variable,
-#                       .colourvar_plot = NULL,
-#                       .label.var = Well, 
-#                       flipped_plot = FALSE, facet_scale_constraint = 'free',
-#                       .facetvar_plot = Sample_category) + 
-#   
-#       # show means and stdev
-#       # source: HMisc package/ https://stackoverflow.com/a/41848876/9049673
-#       stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "pointrange",
-#                    colour = 'red', shape = '-', size = 3, linewidth = 1, alpha = 0.6)
-#     
-#     # stat_summary(fun = mean, geom = 'point', shape = '-', size = 10, alpha = 0.6)
-#   } %>% 
-#   
-#   print()
-  
-  # facet_wrap(facets = vars(Sample_category), nrow = 1, scales = 'free')
-
-
-ggplotly(copy_number_sorted) # interactive plot
-
-# save the plot
-ggsave(plot_as('S091', '-sorted'),
-       width = 4.2, height = 3)
-
-# zoom in
-copy_number_sorted + ylim(c(0, 5)) # zoom in
-
-# save modified plot
-ggsave(plot_as('S091', '-sorted-zoom'),
-       width = 4.2, height = 3)
-
-
-### WT vs plasmid -----
-
-lysate_data <- filter(ratio_data, str_detect(assay_variable, 'WT|J23100'))
-
-# plot copies per target faceted by organism
-
-copy_number_lysate <- 
-  plot_facetted_assay(.data = lysate_data, 
-                      .yvar_plot = copy_number, .xvar_plot = assay_variable,
-                      .colourvar_plot = NULL,
-                      .label.var = Well, 
-                      flipped_plot = FALSE, facet_scale_constraint = 'free',
-                      .facetvar_plot = Sample_category)
-
-
-ggplotly(copy_number_lysate) # interactive plot
-
-# save the plot
-ggsave(plot_as('S091', '-lysate'),
-       width = 4.2, height = 3)
-
-
-### sort growth -----
-
-sorted_growth <- filter(ratio_data, str_detect(assay_variable, 'growth$'))
-
-# plot copies per target faceted by organism
-
-copy_number_growth <- 
-  plot_facetted_assay(.data = sorted_growth, 
-                      .yvar_plot = copy_number, .xvar_plot = assay_variable,
-                      .colourvar_plot = NULL,
-                      .label.var = Well, 
-                      flipped_plot = FALSE, facet_scale_constraint = 'free',
-                      .facetvar_plot = Sample_category)
-# facet_wrap(facets = vars(Sample_category), nrow = 1, scales = 'free')
-
-
-ggplotly(copy_number_growth) # interactive plot
-
-# save the plot
-ggsave(plot_as('S091', '-sorted-after growth'),
-       width = 4.2, height = 3)
 
 
 # adhoc ----

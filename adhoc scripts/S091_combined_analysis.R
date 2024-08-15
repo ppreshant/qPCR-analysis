@@ -143,6 +143,7 @@ show_mean_w_replicates <- function(plt_object, ...)
 
 plot_raw_copies_and_PCN <- function(.data_subset, x_axis_label)
 {
+  
   copy_number_plt <-
     
     ggplot(.data_subset, 
@@ -163,19 +164,33 @@ plot_raw_copies_and_PCN <- function(.data_subset, x_axis_label)
   
   # plot individual targets
   
+  # convert data into long format for plasmid and chromosome
+  .data_long <- 
+    select(.data_subset, -copy_number) %>% # remove copy number
+    
+    pivot_longer(cols = c(Plasmid, Chromosome), names_to = 'Target', values_to = 'copies')
+  
+  
+  # plotting
   raw_copies_plt <- 
     
-    ggplot(.data_subset, 
-           aes(x = assay_variable, y = Plasmid)) %>% 
+    ggplot(.data_long, 
+           aes(x = assay_variable, y = copies, shape = Target)) %>% 
     
     # plot points in grey (left shifted), mean and stdev in black
-    show_mean_w_replicates() %>%  
+    show_mean_w_replicates() + 
     
-    # Same for chromosome copies
-    show_mean_w_replicates(shape = '+', mapping = aes(y = Chromosome)) + 
+    # # Same for chromosome copies
+    # show_mean_w_replicates(shape = '+', mapping = aes(y = Chromosome)) + 
+    
+    # shape by target
+    scale_shape_manual(values = c(19, 3)) + 
     
     # facet by organism
     facet_grid(cols = vars(Sample_category), scales = 'free_x', space = 'free_x') +
+    
+    # thematic changes
+    theme(legend.position = 'top') + # legend on top ;; c(0.1, .9) for top left
     
     # label axes
     xlab(x_axis_label) +

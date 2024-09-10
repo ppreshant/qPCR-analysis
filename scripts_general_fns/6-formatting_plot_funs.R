@@ -78,10 +78,11 @@ fancy_scientific <- function(l) {
 #' @examples see below
 # source: https://stackoverflow.com/a/18530540/9049673
 
-scientific_10 <- function(x, output_format = 'string') 
+scientific_10 <- function(x, use_digits = 1, output_format = 'string') 
 {   
+  # convert to scientific format and change text for easier visualization
   parse(text=gsub("e\\+*", " %*% 10^", 
-                  scales::scientific_format()(x))) %>% 
+                  scales::scientific_format(digits = use_digits)(x))) %>% 
     
     {if(output_format == 'string')
     {map_chr(as.list(.), deparse)  # return as string

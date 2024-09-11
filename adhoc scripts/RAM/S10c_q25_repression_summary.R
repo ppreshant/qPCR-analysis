@@ -69,14 +69,18 @@ label_data <-
                shape = '|', size = 5) + 
     
     # label values
-    geom_text(aes(x = mean_Copies.per.ul.template,
-                  label = scales::label_scientific(digits = 1)(mean_Copies.per.ul.template),
-                  # label = scales::label_parse(mean_Copies.per.ul.template), # for power notation
+    geom_text(
+      aes(x = mean_Copies.per.ul.template,
+                  label = scientific_10(mean_Copies.per.ul.template),
+      ),
+      parse = TRUE,
+      # label = scales::label_scientific(digits = 1)(mean_Copies.per.ul.template),
+      # label = scales::label_parse(mean_Copies.per.ul.template), # for power notation
                   
-                  vjust = 2),  # adjust position of label
-              
-              data = label_data) +
-
+      vjust = 2,  # adjust position of label
+      
+      data = label_data) +
+    
     # direct label instead of legend
     geom_text(aes(x = mean_Copies.per.ul.template,
                   label = label_categories,

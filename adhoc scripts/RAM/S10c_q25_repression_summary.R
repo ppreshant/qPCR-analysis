@@ -1,4 +1,5 @@
 # S10_q25.R
+# for fig S14 check the same script in the branch figS10to14
 
 # Prerequisites ----
 

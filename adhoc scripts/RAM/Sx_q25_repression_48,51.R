@@ -1,7 +1,8 @@
 # copied from S10_q25.R with slightly different samples being plotted
 
 # changed this figure in S10c format now -- using modified "S10c_q25_repression_summary.R"
-# from the stash "plot 51 for Sx_RAM"
+# for fig S14 check the mentioned script in the branch "figS10to14"
+# or from the stash "plot 51 for Sx_RAM"
 
 
 # Prerequisites ----

@@ -4,7 +4,7 @@
 
 # File name ----
 
-flnm <- 'S091-marine-withsort-5-5-24' # mention the file name without the "-linreg" or "-processed" suffixes
+flnm <- 'q50_S080_RAM 80a_mjd61 repression_new barcode' # mention the file name without the "-linreg" or "-processed" suffixes
 
 # Default standards : When using same standards for multiple plates (not considered best practice..but I do it anyways)
 default_std.to.retrieve <-  'Std30' # if the file name doesn't hold any std curve, it will default to this (Std30 for RAM)
@@ -13,7 +13,7 @@ skip.std.curves_already.exist <- TRUE # If TRUE, will retrieve std curve data fr
 # Options ----
 
 # get templates from google sheet or from data excel file
-template_source <- 'googlesheet' # googlesheet/excel = parse through a list of templates in the respective formats and
+template_source <- 'excel' # googlesheet/excel = parse through a list of templates in the respective formats and
 # get the template with the matching qxx ID. 'excel' looks for the file 'excel files/Plate layouts.xlsx'
 
 

@@ -131,11 +131,12 @@ if(experiment_mode == 'assay')
     
     # Std curve params ---- 
     
+    ## 1. User defined Std curve id present in filename (flnm) 
     std_to_retrieve <- str_extract(flnm, 'Std[:alnum:]*') # Find the Std id to retrieve
     if(is.na(std_to_retrieve))
     
     
-    
+    ## 2. Reuse previously calculated Std curve (std_to_retrieve parameter) 
     if(skip.std.curves_already.exist)
     { # if Std curve already exists in sheet, read from google sheet
       
@@ -152,10 +153,12 @@ if(experiment_mode == 'assay')
       filter(str_detect(ID, std_to_retrieve ))
     
       } else { # standard curves don't already exist ..
-        
+       
+        ## 3. Assume file contains std curve data and use the run number  
         # fill missing Std curve ID (Stdxx) with the run number (From qxx)
         if(is.na(std_to_retrieve)) 
           {std_to_retrieve <- str_c('Std', str_match(flnm, 'q([:alnum:]*)')[2])
+          flnm <- str_c(flnm, '_', std_to_retrieve) # add the std name to the file
           print(glue::glue('No Stdxx ID detected in the filename, using : "{std_to_retrieve}"'))}
         
         

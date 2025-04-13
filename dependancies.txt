@@ -1,0 +1,8 @@
+tidyverse
+plotly
+plyr
+glue
+rmarkdown
+patchwork
+broom
+scales

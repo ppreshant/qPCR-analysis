@@ -1,14 +1,13 @@
 # Read in the file and do manual analysis and plotting
 # Author: Prashant Kalvapalle;  October 10 2018
 
-source('./0-general_functions_main.R') # Source the general_functions file before running this
-
 # Source user inputs  ----
 # choose file name, title for plots (file name starts in the same directory as Rproject)
 
 source('./0.5-user-inputs.R') # source the user inputs from a different script
 title_name <- base_title_name
 
+source('./0-general_functions_main.R') # Source the general_functions file before running this
 
 # Labeling translators ----
 

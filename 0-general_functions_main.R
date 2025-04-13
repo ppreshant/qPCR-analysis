@@ -8,9 +8,6 @@
 library(tidyverse); library(rlang); # tidyverse general tabular stuff. rlang -- unconventional tidyeval stuff
 library(plotly) # interactive plots
 
-# extras (10/April/25 - with PK)
-library(readxl); library(plyr)
-
 # library(magrittr); # special chaining functions beyond "%>%"
 # library(ggrepel); # for non-overlapping labels of points on plots
 # library(lubridate); # for advanced date operations

@@ -41,7 +41,7 @@ get_template_for <- function(bait, sheet_url = sheeturls$plate_layouts_PK)
   
     {googlesheets4::read_sheet(sheet_url, sheet = 'qPCR plate layouts', range = 'C:C', col_types = 'c') } else {
       
-      readxl::read_excel(path = 'excel files/Plate layouts.xlsx', range = cell_cols('C:C'), col_types = 'text')
+      readxl::read_excel(path = 'excel files/Plate layouts.xlsx', range = readxl::cell_cols('C:C'), col_types = 'text')
     } 
   
   # get the plate ID from the full filename / bait

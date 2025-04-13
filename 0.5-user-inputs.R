@@ -78,6 +78,13 @@ assay_var_order <- c('J23100',
                  'blank', 'NTC') # order the assay variables
 
 
+# Labelling option ----
+# if you use a different format for labelling your qPCR runs,
+# adjust this regular expression (regex) to capture that
+
+plate_id_regex <- '^(q|S)[:alpha:]*([:alnum:]+)'
+
+
 # error check ----
 if(stringr::str_detect(flnm, '-linreg|-processed')) 
 {stop('Invalid filename (flnm) in 0.5-user-inputs.R,

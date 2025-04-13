@@ -157,7 +157,7 @@ if(experiment_mode == 'assay')
         ## 3. Assume file contains std curve data and use the run number  
         # fill missing Std curve ID (Stdxx) with the run number (From qxx)
         if(is.na(std_to_retrieve)) 
-          {std_to_retrieve <- str_c('Std', str_match(flnm, 'q([:alnum:]*)')[2])
+          {std_to_retrieve <- str_c('Std', str_match(flnm, plate_id_regex)[3])
           flnm <- str_c(flnm, '_', std_to_retrieve) # add the std name to the file
           print(glue::glue('No Stdxx ID detected in the filename, using : "{std_to_retrieve}"'))}
         

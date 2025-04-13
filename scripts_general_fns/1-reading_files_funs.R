@@ -45,11 +45,11 @@ get_template_for <- function(bait, sheet_url = sheeturls$plate_layouts_PK)
     } 
   
   # get the plate ID from the full filename / bait
-  plate_id <- str_extract(bait, '^(q|S)[:alnum:]*') # get the first part containing the plate ID
+  plate_id <- str_extract(bait, plate_id_regex) # get the first part containing the plate ID
   
   # find the row number that matches the plate_id
   m_row <- plate_names_row %>% unlist() %>% as.character() %>% 
-    {str_extract(., '^(q|S)[:alnum:]*') == plate_id} %>% # select the q0xya digits/letters part of the filename
+    {str_extract(., plate_id_regex) == plate_id} %>% # select the q0xya digits/letters part of the filename
     which() + 1 # extract the row with an exact match to the plate_id and add 1 to get the plate contents
   
   # Eror message and terminate if plate ID is not unique
@@ -130,7 +130,7 @@ get_processed_datasets <- function(.flnms)
                  
                    # read excel file exported by Quantstudio
                  ~ read_csv(str_c('excel files/processed_data/', .x , '-processed.csv')) %>%  
-                   mutate(run_ID = str_extract(.x, '(q|S)[:alnum:]*')) # add the run_ID from the filename
+                   mutate(run_ID = str_extract(.x, plate_id_regex)) # add the run_ID from the filename
   )
   
   

@@ -17,7 +17,9 @@ library(plotly) # interactive plots
 sheeturls <- list(plate_layouts_PK = 'https://docs.google.com/spreadsheets/d/1RffyflHCQ_GzlRHbeH3bAkiYo4zNlnFWx4FXo7xkUt8/edit#gid=0')
 
 # pre-authorization for google sheets: Works if there is only 1 cached account (after first access)
-googlesheets4::gs4_auth(email = TRUE) # reference: https://googlesheets4.tidyverse.org/reference/gs4_auth.html
+if(template_source == 'googlesheet') # googlesheet vs excel options
+  { googlesheets4::gs4_auth(email = TRUE) # reference: https://googlesheets4.tidyverse.org/reference/gs4_auth.html
+} 
 
 # Convenience function for plotting directory and .png suffix for adhoc plots
 plot_as <- function(plt_name, ...)  str_c('qPCR analysis/Archive/', plt_name, ..., '.png')

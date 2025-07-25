@@ -4,7 +4,7 @@
 
 # File name ----
 
-flnm <- 'q50_S080_RAM 80a_mjd61 repression_new barcode' # mention the file name without the "-linreg" or "-processed" suffixes
+flnm <- 'qLNK003' # mention the file name without the "-linreg" or "-processed" suffixes
 
 # Default standards : When using same standards for multiple plates (not considered best practice..but I do it anyways)
 default_std.to.retrieve <-  'Std30' # if the file name doesn't hold any std curve, it will default to this (Std30 for RAM)

@@ -1,7 +1,10 @@
 # S091_combined_analysis.R
 
 # Prelims ----
+template_source <- 'googlesheet'
 source('./0-general_functions_main.R') # Source the general_functions file before running this
+# constant values from 0.5-user-inputs.R
+plate_id_regex <- '^(q|S)[:alpha:]*([:alnum:]+)'
 
 
 # User inputs
@@ -133,21 +136,13 @@ show_mean_w_replicates <- function(plt_object, ...)
 }
 
 
-# Plot the individual copies of plasmid, chromosome; 2nd plot with plasmid copy number
-#' @param .data_subset data subset
-#' @param x_axis_label x axis label
-#' @return ggplot object
-#' @example: ggplot(...) %>% show_mean_w_replicates()
-# TODO: need to show legend of the shapes (custom make?) in the raw copies/top plot
-# TODO: provide conditionally outputs of intermediate plots?
+# plot the plasmid copy number
 
-plot_raw_copies_and_PCN <- function(.data_subset, x_axis_label)
+plot_pcn <- function(.data_subset, x_axis_label)
 {
   
-  copy_number_plt <-
-    
-    ggplot(.data_subset, 
-           aes(x = assay_variable, y = copy_number)) %>% 
+  ggplot(.data_subset, 
+         aes(x = assay_variable, y = copy_number)) %>% 
     
     # plot points in grey (left shifted), mean and stdev in black
     show_mean_w_replicates() + 
@@ -161,6 +156,21 @@ plot_raw_copies_and_PCN <- function(.data_subset, x_axis_label)
     ylab(NULL) +
     labs(subtitle = 'Plasmid copy number')
   
+}
+
+
+# Plot the individual copies of plasmid, chromosome; 2nd plot with plasmid copy number
+#' @param .data_subset data subset
+#' @param x_axis_label x axis label
+#' @return ggplot object
+#' @example: ggplot(...) %>% show_mean_w_replicates()
+# TODO: need to show legend of the shapes (custom make?) in the raw copies/top plot
+# TODO: provide conditionally outputs of intermediate plots?
+
+plot_raw_copies_and_PCN <- function(.data_subset, x_axis_label)
+{
+  
+  copy_number_plt <- plot_pcn(.data_subset, x_axis_label) 
   
   # plot individual targets
   
@@ -224,19 +234,7 @@ sorted_plot <-
 ggsave(plot_as('S091', '-sorted'),
        width = 7, height = 5)
 
-## WT vs plasmid -----
-
-lysate_data <- filter(ratio_data, str_detect(assay_variable, 'WT|J23100'))
-
-# make a plot of copy number by assay variable ; facet by sample_category
-cultures_plot <- 
-  plot_raw_copies_and_PCN(lysate_data, 'Plasmid') %>% 
-  print()
-
-# save the plot
-ggsave(plot_as('S091', '-lysate'),
-       width = 7, height = 5)
-
+# WT vs plasmid ; Check in the end
 
 ## Sorted, post growth ----
 
@@ -336,3 +334,45 @@ if(0)
     
     view
 }
+
+
+# Paper plots --------------------------------------------
+
+## WT vs plasmid -----
+
+lysate_data <- filter(ratio_data, str_detect(assay_variable, 'WT|J23100')) |> 
+
+  # replace J23100 with pBBR1
+  mutate(assay_variable = str_replace(assay_variable, 'J23100', 'pBBR1')) |> 
+  
+  # replace pi with pg
+  mutate(Sample_category = str_replace(Sample_category, 'Pi', 'Pg')) |> 
+  
+  # remove rows with ytss using regex
+  filter(!str_detect(Sample_category, 'ytss')) |> 
+  
+  # order the facets: Ds, Rd, Pg, Rp
+  mutate(Sample_category = factor(Sample_category, levels = c('Ds', 'Rd', 'Pg', 'Rp')))
+
+# make a plot of copy number by assay variable ; facet by sample_category
+# cultures_plot_full <- 
+#   plot_raw_copies_and_PCN(lysate_data, 'Plasmid') %>% 
+#   print()
+
+# make a copy number plot
+pcn_plot_lysates <- 
+  {plot_pcn(lysate_data, 'Plasmid') + 
+
+  # y-axis title
+  ggtitle(NULL, subtitle = NULL) +
+    ylab('Plasmid copy number\n(copies of ChlR per 16S)')} |> print()
+
+# save the plot
+ggsave(plot_as('S091', '-for-paper'),
+       width = 5, height = 2.5)
+
+# save PDF and EPS
+fig_path <- 'C:/Users/new/Box Sync/Stadler lab/Writing/marine_plots_pk'
+
+ggsave(str_c(fig_path, 'ddPCR_S091.pdf', sep = '/'), width = 5, height = 2.5)
+ggsave(str_c(fig_path, 'ddPCR_S091.eps', sep = '/'), width = 5, height = 2.5)
